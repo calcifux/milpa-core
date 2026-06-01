@@ -1,0 +1,49 @@
+{% extends "demo/layout.html.j2" %}
+{% block title %}Registro · {{ app_name }}{% endblock %}
+{% block content %}
+<article x-data="registerForm()" style="max-width: 420px; margin: 2.5rem auto;">
+  <h2>Crear cuenta</h2>
+
+  {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+
+  <form method="post" action="/register" novalidate @submit.prevent="submit($event)">
+    <label>Nombre <input type="text" name="name" autocomplete="name" /></label>
+    <label>
+      Email
+      <input type="email" name="email" autocomplete="username"
+             @input="errors.email = ''" x-bind:aria-invalid="errors.email ? 'true' : null" />
+      <small class="field-error" x-show="errors.email" x-text="errors.email"></small>
+    </label>
+    <label>
+      Password
+      <input type="password" name="password" autocomplete="new-password"
+             x-bind:type="showPassword ? 'text' : 'password'"
+             @input="errors.password = ''" x-bind:aria-invalid="errors.password ? 'true' : null" />
+      <small class="field-error" x-show="errors.password" x-text="errors.password"></small>
+    </label>
+    <label><input type="checkbox" x-model="showPassword" /> Mostrar contraseña</label>
+    <button type="submit" x-bind:aria-busy="submitting" x-bind:disabled="submitting">Registrarme</button>
+  </form>
+
+  <p><small style="color: var(--pico-muted-color);"><a href="/login">¿Ya tienes cuenta? Entra</a></small></p>
+</article>
+
+<script>
+  function registerForm() {
+    return {
+      errors: {}, showPassword: false, submitting: false,
+      submit(event) {
+        const form = event.target;
+        this.errors = {};
+        const email = form.email.value.trim();
+        if (!email) this.errors.email = "Escribe tu correo.";
+        else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) this.errors.email = "Correo no válido.";
+        if (form.password.value.length < 4) this.errors.password = "Mínimo 4 caracteres.";
+        if (Object.keys(this.errors).length > 0) return;
+        this.submitting = true;
+        form.submit();
+      },
+    };
+  }
+</script>
+{% endblock %}

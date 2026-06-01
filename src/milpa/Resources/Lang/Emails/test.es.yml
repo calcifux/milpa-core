@@ -1,0 +1,13 @@
+# Traducciones ES para `Emails/Trans/test.html.j2` (smoke del TestMailable).
+# Sin equivalente en el legacy: file propio para validar la pila end-to-end.
+es:
+  # `active_locale` en vez de `locale` porque `locale` es kwarg reservado de
+  # i18nice.t() (= sobreescribir el locale de la llamada). Ver Core/Translate/I18n.
+  subject: 'Smoke test del Mailer en %{active_locale}'
+  welcome_message: 'Hola <strong>%{name}</strong>, este correo prueba la infraestructura de Mailables.'
+  summary_message: 'Si ves esto en Mailpit con el layout y la firma, toda la pila funciona:'
+  feature_jinja: 'Templates con Jinja2 (extends + block)'
+  feature_i18n: 'i18n con t() y placeholders %{name}'
+  feature_inheritance: 'Herencia de layouts (master / mastersigned)'
+  feature_smtp: 'Envío MIME por SMTP (smtplib + EmailMessage)'
+  locale_info: 'Locale activo: <strong>%{active_locale}</strong>'

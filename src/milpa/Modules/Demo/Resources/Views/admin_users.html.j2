@@ -1,0 +1,17 @@
+{% extends "demo/layout.html.j2" %}
+{% block title %}Usuarios · {{ app_name }}{% endblock %}
+{% block content %}
+<hgroup>
+  <h2>Usuarios</h2>
+  <p>Solo visible para el rol <code>admin</code> (RBAC) · búsqueda en vivo + scroll infinito.</p>
+</hgroup>
+
+<form role="search" hx-get="/partials/users" hx-trigger="keyup changed delay:300ms, search"
+      hx-target="#users-results" hx-swap="innerHTML" hx-include="this">
+  <input type="search" name="q" placeholder="Buscar por nombre o email…" autocomplete="off" />
+</form>
+
+<div id="users-results">
+  {% include "demo/_users_results.html.j2" %}
+</div>
+{% endblock %}

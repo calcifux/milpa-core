@@ -1,0 +1,22 @@
+{# Template del MailableSignedCheck — smoke del layout FIRMADO.
+   Igual que test.html.j2 pero extendiendo `mastersigned` (incluye estilos +
+   footer firmado con datos del firmante + aviso de privacidad). Verifica que
+   la herencia del layout con firma se vea bien en Mailpit.
+#}
+{% extends "Emails/Trans/mastersigned.html.j2" %}
+
+{% block content %}
+    <p>{{ t('Emails/test.welcome_message', {'name': name}, locale) | safe }}</p>
+    <p>{{ t('Emails/test.summary_message', {}, locale) | safe }}</p>
+
+    <ul>
+        <li>{{ t('Emails/test.feature_jinja', {}, locale) }}</li>
+        <li>{{ t('Emails/test.feature_i18n', {}, locale) }}</li>
+        <li>{{ t('Emails/test.feature_inheritance', {}, locale) }}</li>
+        <li>{{ t('Emails/test.feature_smtp', {}, locale) }}</li>
+    </ul>
+
+    <p style="color:#5698C8;">
+        {{ t('Emails/test.locale_info', {'active_locale': locale}, locale) | safe }}
+    </p>
+{% endblock %}

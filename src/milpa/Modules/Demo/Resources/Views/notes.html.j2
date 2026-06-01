@@ -1,0 +1,24 @@
+{% extends "demo/layout.html.j2" %}
+{% block title %}Mis notas · {{ app_name }}{% endblock %}
+{% block content %}
+<h2>Mis notas</h2>
+
+<article>
+  <form hx-post="/notes" hx-target="#notes-results" hx-swap="innerHTML"
+        hx-on::after-request="if(event.detail.successful) this.reset()">
+    <input type="text" name="title" placeholder="Título" required />
+    <textarea name="body" placeholder="Contenido…"></textarea>
+    <button type="submit">Agregar nota</button>
+  </form>
+</article>
+
+{# Búsqueda en vivo (debounce 300ms): reemplaza la lista (offset 0 => append_only False). #}
+<form role="search" hx-get="/partials/notes" hx-trigger="keyup changed delay:300ms, search"
+      hx-target="#notes-results" hx-swap="innerHTML" hx-include="this">
+  <input type="search" name="q" placeholder="Buscar mis notas…" autocomplete="off" />
+</form>
+
+<div id="notes-results">
+  {% include "demo/_notes_results.html.j2" %}
+</div>
+{% endblock %}

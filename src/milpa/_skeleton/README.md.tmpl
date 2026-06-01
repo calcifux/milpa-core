@@ -1,0 +1,40 @@
+# __PROJECT__
+
+Proyecto construido con [milpa](https://pypi.org/project/milpa) 🌽 — un microframework
+Python estilo Laravel/Spring (FastAPI + Celery + SQLAlchemy + Typer).
+
+## Arrancar
+
+```bash
+uv sync                    # instala milpa y dependencias
+cp .env.example .env       # ajusta DATABASE_URL y secretos
+python jornal serve        # levanta la API en http://127.0.0.1:8000
+```
+
+Prueba: abre <http://127.0.0.1:8000/> (página de bienvenida) y
+<http://127.0.0.1:8000/hello> (ruta JSON del módulo de ejemplo).
+
+## Estructura
+
+```
+app/
+  Models/        # tus modelos (tablas) — un archivo por modelo
+  Modules/       # tus módulos (rutas, jobs, crons, vistas, i18n). Empieza con Hello/
+  Console/       # tus comandos de consola
+  Resources/     # tus vistas (Jinja2), traducciones y estáticos
+migrations/      # migraciones Alembic
+jornal           # tu consola (./jornal list)
+.env             # tu configuración (no se sube a git)
+```
+
+milpa descubre todo **por convención** (no hay que registrar nada): crea un controller
+con `router = APIRouter(...)` bajo `app/Modules/<X>/Http/` y la ruta queda viva.
+
+## Comandos útiles
+
+```bash
+python jornal list            # todos los comandos
+python jornal serve           # servidor web
+python jornal make:module Foo # genera un módulo nuevo
+python jornal migrate run     # aplica migraciones
+```

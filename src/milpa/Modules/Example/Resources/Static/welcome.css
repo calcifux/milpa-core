@@ -1,0 +1,19 @@
+/* Asset estático PROPIO del módulo Example. Se auto-monta en "/static/example/"
+   (Registry.iter_static_mounts) y se enlaza desde example/welcome.html.j2. Prueba
+   que el pipeline de estáticos por módulo funciona end-to-end: archivo en disco ->
+   montado -> servido -> aplicado en el navegador. Viaja con el módulo al extraerlo. */
+:root { color-scheme: light dark; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+main { text-align: center; padding: 2rem; }
+
+h1 { margin: 0 0 .25rem; font-size: 2rem; }
+
+p { margin: 0; opacity: .7; }

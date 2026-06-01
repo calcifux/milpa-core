@@ -1,0 +1,99 @@
+/* ============================================================================
+   milpa demo — tema StackCraft (DARK) sobre Pico.css, con guiños a MUI v7.
+
+   Mismos colores que el front (MUI):
+     Forge #FF6B1A (primary) · Spark #FF8A4D (hover) · Carbon #0A0A0A (canvas)
+     Iron #1A1A1A (card) · Steel #4A4A4A · Mist #E6E6E6 (texto) · error #f87171
+   ============================================================================ */
+
+:root {
+    /* Rojo de error (mismo que error.main del tema dark del front). Lo usamos
+       directo en vez de --pico-color-red-500, que NO existe en este build de
+       Pico (por eso los errores salian en blanco). */
+    --app-error: #f87171;
+}
+
+[data-theme="dark"] {
+    /* ── Marca / acentos (Forge / Spark) ── */
+    --pico-primary:                  #FF6B1A;
+    --pico-primary-hover:            #FF8A4D;
+    --pico-primary-focus:            rgba(255, 107, 26, 0.375);
+    --pico-primary-background:       #FF6B1A;   /* fondo del boton */
+    --pico-primary-hover-background: #FF8A4D;
+    --pico-primary-inverse:          #0A0A0A;   /* texto oscuro sobre el naranja */
+
+    /* ── Fondos y texto (Carbon / Iron / Mist / Cloud) ── */
+    --pico-background-color:         #0A0A0A;
+    --pico-card-background-color:    #1A1A1A;
+    --pico-card-border-color:        #2A2A2A;
+    --pico-color:                    rgba(230, 230, 230, 0.92);
+    --pico-h1-color:                 #FAFAFA;
+    --pico-h2-color:                 #FAFAFA;
+    --pico-muted-color:              rgba(230, 230, 230, 0.55);
+
+    /* ── Inputs ── */
+    --pico-form-element-background-color:      #141414;
+    --pico-form-element-border-color:          #3A3A3A;
+    --pico-form-element-color:                 rgba(230, 230, 230, 0.92);
+    --pico-form-element-active-border-color:   #FF6B1A;       /* foco = Forge (como MUI) */
+    --pico-form-element-focus-color:           rgba(255, 107, 26, 0.375);
+
+    /* Estado invalido = rojo (MUI error) */
+    --pico-form-element-invalid-border-color:         var(--app-error);
+    --pico-form-element-invalid-active-border-color:  var(--app-error);
+    --pico-form-element-invalid-focus-color:          rgba(248, 113, 113, 0.30);
+    --pico-del-color:                                 var(--app-error);
+
+    --pico-border-radius: 8px;   /* esquinas suaves MUI-ish */
+}
+
+/* ── Guiños a MUI v7 ──────────────────────────────────────────────────────── */
+
+/* Card del login = un "Paper" de MUI: borde sutil + esquinas redondeadas. */
+main.container > article {
+    border: 1px solid var(--pico-card-border-color);
+    border-radius: 12px;
+}
+
+/* Inputs y boton con radio MUI. */
+input:not([type=checkbox]):not([type=radio]) { border-radius: 8px; }
+
+/* Boton contenido tipo MUI: solido, peso medio. */
+button[type=submit] {
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+/* Helper text de error por campo (rojo, chico) — como FormHelperText error. */
+small.field-error {
+    color: var(--app-error);
+    font-size: 0.78rem;
+}
+
+/* Mensaje general (credenciales/servicio caido) — banner sutil rojo. */
+.form-error {
+    color: var(--app-error);
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.30);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+/* ── Header de marca (que se vea "mismo sistema" que el front) ─────────────── */
+.app-header {
+    border-bottom: 1px solid #2A2A2A;
+    padding: 0.7rem 0;
+}
+.app-header a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    color: var(--pico-color);
+}
+.app-header .brand-mark { width: 28px; height: 28px; display: block; }
+.app-header .brand-name { font-weight: 700; }
+.app-header .brand-sub  { color: var(--pico-muted-color); font-size: 0.85em; }

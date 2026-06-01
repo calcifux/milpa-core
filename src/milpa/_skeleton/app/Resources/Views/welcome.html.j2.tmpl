@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ titulo }} · milpa</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f1115; color: #e7e9ee;
+           display: grid; place-items: center; min-height: 100vh; margin: 0; }
+    .card { text-align: center; padding: 2rem 3rem; }
+    h1 { font-size: 2.4rem; margin: 0 0 .4rem; }
+    .corn { font-size: 3rem; }
+    a { color: #8ad; }
+    code { background: #1b1f27; padding: .15rem .4rem; border-radius: .3rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="corn">🌽</div>
+    <h1>{{ titulo }}</h1>
+    <p>Tu proyecto <strong>{{ app_name }}</strong> está corriendo sobre <strong>milpa</strong>.</p>
+    <p>Prueba la ruta JSON: <a href="/hello">/hello</a> · estado: <a href="/status">/status</a></p>
+    <p>Edita esta vista en <code>app/Resources/Views/welcome.html.j2</code>
+       o el módulo en <code>app/Modules/Hello/</code>.</p>
+  </div>
+</body>
+</html>

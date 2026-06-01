@@ -1,0 +1,32 @@
+{#
+  Resultados de usuarios (tabla): búsqueda (append_only=False → tabla completa, reemplaza
+  #users-results) y load-more (append_only=True → solo <tr>s + nuevo marcador, reemplaza el
+  marcador via outerHTML dentro del <tbody>).
+#}
+{% if not append_only %}
+<table>
+  <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Roles</th></tr></thead>
+  <tbody>
+{% endif %}
+  {% for person in users %}
+  <tr>
+    <td>{{ person.id }}</td>
+    <td>{{ person.name or "—" }}</td>
+    <td><code>{{ person.email }}</code></td>
+    <td>{{ person.get_roles() | join(", ") or "—" }}</td>
+  </tr>
+  {% endfor %}
+  {% if has_more %}
+  <tr hx-get="/partials/users?offset={{ next_offset }}&q={{ q | urlencode }}"
+      hx-trigger="revealed" hx-swap="outerHTML">
+    <td colspan="4" style="text-align: center; color: var(--pico-muted-color)" aria-busy="true">
+      <small>Cargando más…</small>
+    </td>
+  </tr>
+  {% elif not users and not append_only %}
+  <tr><td colspan="4"><em>Sin resultados{% if q %} para "{{ q }}"{% endif %}.</em></td></tr>
+  {% endif %}
+{% if not append_only %}
+  </tbody>
+</table>
+{% endif %}

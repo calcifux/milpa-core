@@ -1,0 +1,37 @@
+# Entorno Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Secretos y configuración local (NUNCA al repo)
+.env
+# Ignora TODO el contenido de secrets/ (llaves, etc.) pero conserva la carpeta vacía.
+secrets/*
+!secrets/.gitkeep
+
+# Logs (no versionamos contenido, sí la carpeta)
+logs/*
+!logs/.gitkeep
+
+# BD sqlite local (p. ej. la del demo: DATABASE_URL=sqlite:///milpa.db)
+*.db
+*.sqlite3
+
+# Runtime: PID del servidor web (lo escribe start.sh, lo lee stop.sh)
+app.pid
+
+# Handoff local entre sesiones (estado actual + pendientes); NO se versiona.
+NEXT_SESSION.md
+
+# Editor / SO
+.idea/
+.DS_Store
+docs/
+
+# Sitio generado por MkDocs (se construye en CI; no se versiona)
+site/
+
+# Artefactos de build/empaquetado (uv build)
+/dist/
+*.egg-info/

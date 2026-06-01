@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+{# data-theme="dark": tema oscuro de Pico; app.css lo mapea a la identidad StackCraft
+   (Forge / Carbon / Iron / Mist). #}
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}{{ app_name }} · demo{% endblock %}</title>
+    <link rel="icon" href="{{ asset('demo/favicon.ico') }}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    {# ?v= cache-bust: sube el número si cambias app.css. #}
+    <link rel="stylesheet" href="{{ asset('demo/css/app.css') }}?v=1" />
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+      // Reenvía el token CSRF (cookie NO HttpOnly) en cada request HTMX no-segura.
+      document.addEventListener("htmx:configRequest", function (e) {
+        var m = document.cookie.match(/(?:^|; ){{ csrf_cookie }}=([^;]+)/);
+        if (m) { e.detail.headers["{{ csrf_header }}"] = m[1]; }
+      });
+    </script>
+  </head>
+  <body>
+    {# Header de marca StackCraft (mark Forge inline + producto + org). #}
+    <header class="app-header">
+      <nav class="container">
+        <a href="/" aria-label="{{ app_name }}">
+          <svg class="brand-mark" width="28" height="28" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-hidden="true">
+            <rect width="512" height="512" rx="110" fill="#FF6B1A" />
+            <g transform="translate(102, 175) scale(3.08)">
+              <path d="M 0 20 L 8 12 L 92 12 L 100 20 L 92 28 L 58 28 L 58 50 L 80 50 L 82 72 L 18 72 L 20 50 L 42 50 L 42 28 L 8 28 Z" fill="#FAFAFA" />
+            </g>
+          </svg>
+          <span class="brand-name">{{ app_name }}</span>
+          <span class="brand-sub">· StackCraft</span>
+        </a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <nav>
+        <ul><li><small class="brand-sub">demo</small></li></ul>
+        <ul>
+          {% if user %}
+            <li><a href="/dashboard">Panel</a></li>
+            <li><a href="/notes">Mis notas</a></li>
+            {% if "admin" in user.get_roles() %}<li><a href="/admin/users">Usuarios</a></li>{% endif %}
+            <li><small>{{ user.name or user.email }}</small></li>
+            <li><button class="secondary outline" hx-post="/logout">Salir</button></li>
+          {% else %}
+            <li><a href="/login">Entrar</a></li>
+            <li><a href="/register" role="button">Registro</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

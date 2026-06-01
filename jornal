@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""jornal — entrypoint de consola en la RAÍZ del proyecto.
+
+Es el "artisan" de **milpa** (el microframework): un LAUNCHER fino. El "kernel"
+de consola (descubrimiento de commands + la app de Typer) vive en el framework,
+en app/Core/Console/Cli.py; aquí solo se arranca, para tenerlo a la mano en la raíz.
+
+Uso:
+    uv run python jornal list                  # ve todos los comandos
+    uv run python jornal serve                 # levanta la API (= artisan serve)
+    uv run python jornal queue work            # arranca el worker de Celery
+    ./jornal list                              # si el venv está activo
+"""
+
+from milpa.Core.Console.Cli import milpa
+
+if __name__ == "__main__":
+    app()

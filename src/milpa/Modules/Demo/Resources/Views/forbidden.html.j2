@@ -1,0 +1,10 @@
+{% extends "demo/layout.html.j2" %}
+{% block content %}
+<article>
+  <hgroup>
+    <h2>403 · No autorizado</h2>
+    <p>Necesitas el rol <code>admin</code> para ver esta página.</p>
+  </hgroup>
+  <a href="/notes" role="button">Volver a mis notas</a>
+</article>
+{% endblock %}

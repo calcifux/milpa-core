@@ -1,0 +1,15 @@
+{# Template MONOLINGUE de ejemplo: texto fijo en espanol, SIN t(), SIN extends.
+   Demuestra el caso "no i18n": no hereda los layouts compartidos (que usan t())
+   ni llama traduccion alguna; solo interpola variables del contexto. #}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family:Arial,sans-serif;font-size:14px;color:#123C6A;">
+    <p>Hola {{ cliente }},</p>
+    <p>Tu pedido <strong>{{ folio }}</strong> ya esta listo para descargar.</p>
+    <p>Gracias por tu preferencia.</p>
+</body>
+</html>

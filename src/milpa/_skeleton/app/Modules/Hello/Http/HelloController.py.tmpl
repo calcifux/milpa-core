@@ -1,0 +1,28 @@
+"""Módulo de ejemplo 'Hello' — generado por `milpa new`.
+
+milpa descubre este router SOLO: escanea `app/Modules/*/Http/` buscando cualquier
+`router = APIRouter(...)` y lo monta. No hay que registrarlo en ningún lado (igual que
+Laravel descubre tus rutas). Copia esta carpeta para tu primer módulo real, o bórrala.
+"""
+
+from __future__ import annotations
+
+from fastapi.responses import HTMLResponse
+
+from fastapi import APIRouter
+
+from milpa.Core.View import view
+
+router = APIRouter(tags=["hello"])
+
+
+@router.get("/hello")
+async def hello() -> dict[str, str]:
+    """Ruta JSON de cortesía: confirma que milpa descubrió tu módulo."""
+    return {"mensaje": "¡milpa está sembrada! 🌽", "modulo": "Hello"}
+
+
+@router.get("/", response_class=HTMLResponse)
+async def welcome() -> HTMLResponse:
+    """Página de bienvenida: renderiza app/Resources/Views/welcome.html.j2."""
+    return view("welcome", {"titulo": "__PROJECT__"})

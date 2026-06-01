@@ -1,0 +1,23 @@
+[project]
+name = "__PROJECT__"
+version = "0.1.0"
+description = "Proyecto __PROJECT__ construido con milpa 🌽."
+requires-python = ">=3.14"
+dependencies = [
+    "milpa>=0.2.0",
+]
+
+# Driver de BD: por default sqlite (incluido en Python). Para MySQL/Postgres/etc.
+# instala el extra del motor que uses, p. ej.:  uv add "milpa[postgres]"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+]
+
+# Este proyecto NO es una librería: se corre con `./jornal serve`, no se instala como
+# paquete. Por eso NO lleva [build-system]. uv lo trata como proyecto "virtual"
+# (instala las dependencias, no el proyecto en sí).
+[tool.pytest.ini_options]
+testpaths = ["Tests"]
+addopts = "-q --import-mode=importlib"

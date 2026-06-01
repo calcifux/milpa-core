@@ -1,0 +1,22 @@
+"""Modelo User de __PROJECT__ (Authenticatable). Es `AUTH_USER_MODEL` por default.
+
+Si MIGRAS de una app existente: apunta `AUTH_USER_MODEL` (en .env) a tu propia tabla
+`users` y ajusta las columnas. `roles` es CSV ("admin" / "" / "admin,editor").
+"""
+
+from __future__ import annotations
+
+from sqlalchemy.orm import Mapped, mapped_column
+
+from milpa.Core.Auth.Contracts import AuthenticatableMixin
+from milpa.Core.Database import Base, TimestampMixin
+
+
+class User(TimestampMixin, AuthenticatableMixin, Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(default="")
+    email: Mapped[str] = mapped_column(unique=True, index=True)
+    password: Mapped[str] = mapped_column()  # hash (argon2id), NUNCA en claro
+    roles: Mapped[str] = mapped_column(default="")  # CSV para RBAC

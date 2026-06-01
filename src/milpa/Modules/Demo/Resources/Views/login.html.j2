@@ -1,0 +1,53 @@
+{% extends "demo/layout.html.j2" %}
+{% block title %}Entrar · {{ app_name }}{% endblock %}
+{% block content %}
+{# Validación de cliente con Alpine (sin los globos del navegador): novalidate + validamos
+   a mano y pintamos en rojo (clases .form-error / .field-error de app.css). #}
+<article x-data="loginForm()" style="max-width: 420px; margin: 2.5rem auto;">
+  <hgroup>
+    <h2>Entrar</h2>
+    <p>Demo: <code>admin@demo.test</code> / <code>password</code></p>
+  </hgroup>
+
+  {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+
+  <form method="post" action="/login" novalidate @submit.prevent="submit($event)">
+    <label>
+      Email
+      <input type="email" name="email" value="admin@demo.test" autocomplete="username"
+             @input="errors.email = ''" x-bind:aria-invalid="errors.email ? 'true' : null" />
+      <small class="field-error" x-show="errors.email" x-text="errors.email"></small>
+    </label>
+    <label>
+      Password
+      <input type="password" name="password" value="password" autocomplete="current-password"
+             x-bind:type="showPassword ? 'text' : 'password'"
+             @input="errors.password = ''" x-bind:aria-invalid="errors.password ? 'true' : null" />
+      <small class="field-error" x-show="errors.password" x-text="errors.password"></small>
+    </label>
+    <label><input type="checkbox" x-model="showPassword" /> Mostrar contraseña</label>
+    <button type="submit" x-bind:aria-busy="submitting" x-bind:disabled="submitting">Entrar</button>
+  </form>
+
+  <p><small style="color: var(--pico-muted-color);"><a href="/register">¿No tienes cuenta? Regístrate</a></small></p>
+</article>
+
+<script>
+  function loginForm() {
+    return {
+      errors: {}, showPassword: false, submitting: false,
+      submit(event) {
+        const form = event.target;
+        this.errors = {};
+        const email = form.email.value.trim();
+        if (!email) this.errors.email = "Escribe tu correo.";
+        else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) this.errors.email = "Correo no válido.";
+        if (!form.password.value) this.errors.password = "Escribe tu contraseña.";
+        if (Object.keys(this.errors).length > 0) return;
+        this.submitting = true;
+        form.submit();  // submit nativo (no re-dispara @submit.prevent)
+      },
+    };
+  }
+</script>
+{% endblock %}

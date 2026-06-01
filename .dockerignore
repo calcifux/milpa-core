@@ -1,0 +1,17 @@
+# Entorno y caches locales (la imagen instala sus propias dependencias).
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Secretos y datos que NUNCA deben entrar a la imagen (se montan como volumen).
+.env
+secrets/
+logs/
+
+# Cosas del editor / control de versiones.
+.idea/
+.git/
+.gitignore
+.claude
+README.md

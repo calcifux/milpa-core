@@ -1,0 +1,30 @@
+{% extends "demo/layout.html.j2" %}
+{% block title %}Panel · {{ app_name }}{% endblock %}
+{% block content %}
+<hgroup>
+  <h2>Hola, {{ user.name or user.email }} 👋</h2>
+  <p>Tu panel del demo</p>
+</hgroup>
+
+<div class="grid">
+  <article>
+    <header>Mis notas</header>
+    <h3 style="color: var(--pico-primary)">{{ notes_count }}</h3>
+    <a href="/notes" role="button" class="secondary">Ver notas</a>
+  </article>
+
+  <article>
+    <header>Tu rol</header>
+    <h3 style="color: var(--pico-primary)">{{ user.get_roles() | join(", ") or "usuario" }}</h3>
+    <small>RBAC + ABAC en acción.</small>
+  </article>
+
+  {% if users_count is not none %}
+  <article>
+    <header>Usuarios</header>
+    <h3 style="color: var(--pico-primary)">{{ users_count }}</h3>
+    <a href="/admin/users" role="button" class="secondary">Administrar</a>
+  </article>
+  {% endif %}
+</div>
+{% endblock %}

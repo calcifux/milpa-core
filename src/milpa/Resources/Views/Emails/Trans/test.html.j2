@@ -1,0 +1,21 @@
+{# Template del TestMailable — smoke de la infra completa.
+   Demuestra: herencia con extends/block, i18n con t(), variables del contexto,
+   y un poquito de HTML (negritas, lista) para verificar que el plano se ve bien.
+#}
+{% extends "Emails/Trans/master.html.j2" %}
+
+{% block content %}
+    <p>{{ t('Emails/test.welcome_message', {'name': name}, locale) | safe }}</p>
+    <p>{{ t('Emails/test.summary_message', {}, locale) | safe }}</p>
+
+    <ul>
+        <li>{{ t('Emails/test.feature_jinja', {}, locale) }}</li>
+        <li>{{ t('Emails/test.feature_i18n', {}, locale) }}</li>
+        <li>{{ t('Emails/test.feature_inheritance', {}, locale) }}</li>
+        <li>{{ t('Emails/test.feature_smtp', {}, locale) }}</li>
+    </ul>
+
+    <p style="color:#5698C8;">
+        {{ t('Emails/test.locale_info', {'active_locale': locale}, locale) | safe }}
+    </p>
+{% endblock %}

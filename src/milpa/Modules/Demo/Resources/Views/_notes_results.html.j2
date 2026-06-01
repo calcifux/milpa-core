@@ -1,0 +1,32 @@
+{#
+  Resultados de notas: sirve para la búsqueda (append_only=False → grid completo, reemplaza
+  #notes-results) y para el load-more del scroll infinito (append_only=True → solo cards +
+  nuevo marcador, reemplaza el marcador via outerHTML). El marcador con hx-trigger="revealed"
+  + hx-swap="outerHTML" es el patrón clave (outerHTML evita el memory leak de marcadores).
+#}
+{% if not append_only %}
+<div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));">
+{% endif %}
+  {% for note in notes %}
+  <article>
+    <header><strong>{{ note.title }}</strong></header>
+    <p>{{ note.body }}</p>
+    <footer>
+      <button class="secondary outline"
+              hx-post="/notes/{{ note.id }}/delete" hx-target="#notes-results" hx-swap="innerHTML"
+              hx-confirm="¿Borrar esta nota?">Borrar</button>
+    </footer>
+  </article>
+  {% endfor %}
+  {% if has_more %}
+  <article style="grid-column: 1 / -1; text-align: center;" aria-busy="true"
+           hx-get="/partials/notes?offset={{ next_offset }}&q={{ q | urlencode }}"
+           hx-trigger="revealed" hx-swap="outerHTML">
+    <small>Cargando más…</small>
+  </article>
+  {% elif not notes and not append_only %}
+  <p style="grid-column: 1 / -1"><em>{% if q %}Sin resultados para "{{ q }}".{% else %}Aún no tienes notas. ¡Crea la primera arriba!{% endif %}</em></p>
+  {% endif %}
+{% if not append_only %}
+</div>
+{% endif %}
