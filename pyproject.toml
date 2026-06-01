@@ -4,10 +4,14 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+# Versión única (single-source): hatch la lee de __version__ en src/milpa/__init__.py.
+[tool.hatch.version]
+path = "src/milpa/__init__.py"
+
 [project]
 name = "milpa"
-version = "0.2.0"
-description = "Microframework Python estilo Laravel/Spring (FastAPI + Celery + SQLAlchemy + Typer) para construir monolitos modulares y migrar apps legacy."
+dynamic = ["version"]                # versión single-source: se lee de src/milpa/__init__.py
+description = "Microframework Python modular en construcción (FastAPI · Celery · SQLAlchemy · Typer): núcleo instalable para monolitos modulares y migrar apps legacy. Inspirado en Laravel/Spring."
 authors = [{ name = "@Calcifux (Carlos Guillermo Reyes Ramiro)" }]
 license = "MIT"
 license-files = ["LICENSE"]
@@ -25,7 +29,6 @@ dependencies = [
     "pwdlib[argon2,bcrypt]>=0.3.0",
     "pydantic-settings>=2.14.1",
     "pyjwt[crypto]>=2.13.0",
-    "pymysql>=1.2.0",
     "python-multipart>=0.0.29",
     "redis>=6.4.0",
     "rich>=15.0.0",
@@ -37,12 +40,11 @@ dependencies = [
     "uvicorn>=0.48.0",
 ]
 
-# Drivers de BD por motor (opcionales). El engine es agnostico del dialecto
-# (ver app/Core/Database/Session.py); aqui solo decides QUE driver instalar.
-# pymysql (MySQL/MariaDB) ya va en el core porque ESTE proyecto usa MySQL.
-# Otros proyectos instalan solo el suyo:  uv sync --extra postgres
-#                                         pip install ".[postgres]"
+# Drivers de BD por motor (opcionales). El core es AGNÓSTICO del dialecto: instala solo el
+# driver que use tu proyecto. Para sqlite (dev) no necesitas nada (viene en Python).
+#   uv add "milpa[postgres]"   /   pip install "milpa[mysql]"
 [project.optional-dependencies]
+mysql = ["pymysql>=1.2.0"]           # MySQL / MariaDB
 postgres = ["psycopg[binary]>=3.2"]  # PostgreSQL (psycopg v3, binario: sin libpq-dev)
 oracle = ["oracledb>=2.5"]           # Oracle (reemplaza al viejo cx_Oracle)
 mssql = ["pyodbc>=5.2"]              # SQL Server (requiere el ODBC Driver del SO)

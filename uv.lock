@@ -825,7 +825,6 @@ wheels = [
 
 [[package]]
 name = "milpa"
-version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "alembic" },
@@ -840,7 +839,6 @@ dependencies = [
     { name = "pwdlib", extra = ["argon2", "bcrypt"] },
     { name = "pydantic-settings" },
     { name = "pyjwt", extra = ["crypto"] },
-    { name = "pymysql" },
     { name = "python-multipart" },
     { name = "redis" },
     { name = "rich" },
@@ -855,6 +853,9 @@ dependencies = [
 [package.optional-dependencies]
 mssql = [
     { name = "pyodbc" },
+]
+mysql = [
+    { name = "pymysql" },
 ]
 oracle = [
     { name = "oracledb" },
@@ -891,7 +892,7 @@ requires-dist = [
     { name = "pwdlib", extras = ["argon2", "bcrypt"], specifier = ">=0.3.0" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.13.0" },
-    { name = "pymysql", specifier = ">=1.2.0" },
+    { name = "pymysql", marker = "extra == 'mysql'", specifier = ">=1.2.0" },
     { name = "pyodbc", marker = "extra == 'mssql'", specifier = ">=5.2" },
     { name = "python-multipart", specifier = ">=0.0.29" },
     { name = "redis", specifier = ">=6.4.0" },
@@ -903,7 +904,7 @@ requires-dist = [
     { name = "tzlocal", specifier = ">=5.3.1" },
     { name = "uvicorn", specifier = ">=0.48.0" },
 ]
-provides-extras = ["postgres", "oracle", "mssql"]
+provides-extras = ["mssql", "mysql", "oracle", "postgres"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -16,17 +16,16 @@ jobs:
   quality:
     name: Lint + Types + Imports + Tests
     runs-on: ubuntu-latest
-    # `settings = Settings()` corre al importar y exige DATABASE_URL (sin default). En CI no
-    # hay .env, así que damos un sqlite dummy: basta para importar (el engine es perezoso) y
-    # los tests son sin BD. Igual lo necesitan lint-imports y pytest (importan app.*).
+    # Sin .env en CI: damos un sqlite dummy explícito (DATABASE_URL ya tiene default, pero
+    # lo dejamos claro). Basta para importar (el engine es perezoso) y los tests son sin BD.
     env:
       DATABASE_URL: "sqlite://"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Instalar uv (con Python 3.14 + caché)
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: "3.14"
           enable-cache: true
@@ -49,3 +48,15 @@ jobs:
 
       - name: Pytest (rápidos, sin BD)
         run: uv run pytest
+
+      # --- Gates de empaquetado (Fase D): el wheel se construye e instala/usa en limpio ---
+      - name: Build sanity (uv build construye sdist + wheel)
+        run: uv build
+
+      - name: Smoke de instalación (wheel limpio + scaffolder milpa new)
+        run: |
+          uv venv /tmp/milpa-smoke
+          uv pip install --python /tmp/milpa-smoke/bin/python dist/*.whl
+          /tmp/milpa-smoke/bin/python -c "import milpa; print('milpa', milpa.__version__)"
+          ( cd /tmp && /tmp/milpa-smoke/bin/milpa new smokeapp )
+          test -f /tmp/smokeapp/app/Modules/Hello/Http/HelloController.py && echo "scaffolder OK"

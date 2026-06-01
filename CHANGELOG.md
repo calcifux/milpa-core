@@ -7,6 +7,30 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Unreleased]
 
+## [0.3.0a0] - 2026-06-01
+
+Primera versión **INSTALABLE**: milpa se extrae como paquete (`pip install milpa`) con un
+scaffolder de proyectos. Alpha — la API puede cambiar entre versiones.
+
+### Added
+
+- **Paquete instalable** (`pip install milpa` / `uv add milpa`): src-layout (`src/milpa`),
+  `[build-system]` hatchling, comando de consola `milpa`, versión single-source en `__init__`.
+- **`milpa new <app>`** — scaffolder que genera un proyecto listo para correr (estilo
+  `laravel new` / `django-admin startproject`) desde un skeleton embebido en el paquete.
+- **Config-seam**: el Core resuelve módulos/modelos/recursos/migraciones del proyecto desde
+  `Settings`/`.env` (`MODULES_PACKAGE`, `MODELS_PACKAGE`, `USER_VIEWS_DIR`, …) en vez de rutas
+  hardcodeadas — un proyecto externo apunta milpa a su propio código. Nuevo `milpa.Core.Discovery`.
+- Pipeline de release a PyPI (Trusted Publishing OIDC) + gates de empaquetado en CI
+  (`uv build` + smoke de instalación).
+
+### Changed
+
+- **`DATABASE_URL`** ahora tiene default `sqlite:///./milpa.db` (zero-config: milpa arranca sin
+  configurar nada, como Django en dev). En QA/prod se pone el motor real en `.env`.
+- **`pymysql`** sale del core → extra opcional `milpa[mysql]` (el core queda agnóstico de dialecto).
+- El paquete importable se renombró `app` → `milpa`.
+
 ## [0.2.0] - 2026-05-30
 
 DX de la consola: más comandos `jornal` (estilo `artisan`) y una lista coherente y legible.
