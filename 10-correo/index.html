@@ -1,0 +1,1980 @@
+
+<!doctype html>
+<html lang="es" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Microframework Python (FastAPI + Celery + SQLAlchemy + Typer) estilo Laravel/Spring, para construir monolitos modulares y migrar apps legacy de Laravel.">
+      
+      
+        <meta name="author" content="@Calcifux">
+      
+      
+      
+        <link rel="prev" href="../12-programacion-cron/">
+      
+      
+        <link rel="next" href="../13-localizacion-i18n/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Correo - milpa</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-orange" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#correo" class="md-skip">
+          Saltar a contenido
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Cabecera">
+    <a href=".." title="milpa" class="md-header__button md-logo" aria-label="milpa" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 12H8.82c.8.5 1.53 1.07 2.18 1.68zm-4-1c.27-5.12 2.37-9 5-9 2.66 0 4.77 3.94 5 9.12 1.5-.69 3.17-1.12 5-1.12-5.75 2.57-3.75 12-10 12-6 0-4.07-9.43-10-12 1.82 0 3.5.4 5 1m4 0V9H8.24l-.21 2zm0-3V6H9.05c-.25.6-.45 1.27-.62 2zm0-3V3.3c-.55.33-1.05.92-1.5 1.7zm1-2v2h1v1h-1v2h2v1h-2v2h3v1h-3v2h2v1h-1.77c1.19 1.45 1.92 3 2.09 4.23.99-1.67 1.64-4.39 1.68-7.47C15.94 7 14.13 3 12 3"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            milpa
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Correo
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-orange" data-md-color-accent="deep-orange"  aria-label="Cambiar a oscuro"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Cambiar a oscuro" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-orange" data-md-color-accent="deep-orange"  aria-label="Cambiar a claro"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Cambiar a claro" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Búsqueda" placeholder="Búsqueda" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Buscar">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Limpiar" aria-label="Limpiar" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inicializando búsqueda
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/calcifux/milpa" title="Ir al repositorio" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    calcifux/milpa
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navegación" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="milpa" class="md-nav__button md-logo" aria-label="milpa" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 12H8.82c.8.5 1.53 1.07 2.18 1.68zm-4-1c.27-5.12 2.37-9 5-9 2.66 0 4.77 3.94 5 9.12 1.5-.69 3.17-1.12 5-1.12-5.75 2.57-3.75 12-10 12-6 0-4.07-9.43-10-12 1.82 0 3.5.4 5 1m4 0V9H8.24l-.21 2zm0-3V6H9.05c-.25.6-.45 1.27-.62 2zm0-3V3.3c-.55.33-1.05.92-1.5 1.7zm1-2v2h1v1h-1v2h2v1h-2v2h3v1h-3v2h2v1h-1.77c1.19 1.45 1.92 3 2.09 4.23.99-1.67 1.64-4.39 1.68-7.47C15.94 7 14.13 3 12 3"/></svg>
+
+    </a>
+    milpa
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/calcifux/milpa" title="Ir al repositorio" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    calcifux/milpa
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inicio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Primeros pasos
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Primeros pasos
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduccion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introducción
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-instalacion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instalación
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-configuracion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuración
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-estructura-directorios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estructura de directorios
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-ciclo-de-vida/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ciclo de vida
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Arquitectura
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Arquitectura
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-monolito-modular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monolito modular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    HTTP
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-rutas-y-controladores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rutas y controladores
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-vistas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vistas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../15-autenticacion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autenticación y autorización
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Consola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-consola-jornal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    jornal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datos
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Datos
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../16-base-de-datos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Base de datos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../17-modelos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modelos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../18-repositorios-y-transacciones/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Repositorios y transacciones
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Background
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Background
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-colas-y-tareas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colas y tareas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-programacion-cron/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Programación (cron)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Más
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Más
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Correo
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Correo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Tabla de contenidos">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tabla de contenidos
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#anatomia-mailable-mailcontent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anatomía: Mailable + MailContent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Anatomía: Mailable + MailContent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#campos-de-mailcontent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campos de MailContent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enviar-la-facade-mail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enviar: la facade Mail
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Enviar: la facade Mail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sincrono-mailsend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Síncrono — Mail.send
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#encolado-mailqueue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Encolado — Mail.queue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#el-contrato-del-constructor-solo-primitivos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        El contrato del constructor: solo primitivos
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adjuntos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adjuntos
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adjuntos">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#por-bytes-recomendado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Por bytes (recomendado)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#por-archivo-cleanup-opt-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Por archivo + cleanup opt-in
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logo-inline-por-cid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logo inline por CID
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers-mail_driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drivers (MAIL_DRIVER)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monolingue-vs-i18n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monolingüe vs. i18n
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ejemplos-del-modulo-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ejemplos del módulo Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#siguiente-paso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Siguiente paso
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-localizacion-i18n/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Localización (i18n)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../14-logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Tabla de contenidos">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tabla de contenidos
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#anatomia-mailable-mailcontent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anatomía: Mailable + MailContent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Anatomía: Mailable + MailContent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#campos-de-mailcontent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campos de MailContent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enviar-la-facade-mail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enviar: la facade Mail
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Enviar: la facade Mail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sincrono-mailsend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Síncrono — Mail.send
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#encolado-mailqueue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Encolado — Mail.queue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#el-contrato-del-constructor-solo-primitivos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        El contrato del constructor: solo primitivos
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adjuntos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adjuntos
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adjuntos">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#por-bytes-recomendado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Por bytes (recomendado)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#por-archivo-cleanup-opt-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Por archivo + cleanup opt-in
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logo-inline-por-cid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logo inline por CID
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drivers-mail_driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drivers (MAIL_DRIVER)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monolingue-vs-i18n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monolingüe vs. i18n
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ejemplos-del-modulo-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ejemplos del módulo Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#siguiente-paso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Siguiente paso
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="correo">Correo<a class="headerlink" href="#correo" title="Permanent link">&para;</a></h1>
+<p>El correo en milpa sigue el patrón <strong>Mailable</strong> de Laravel: una clase encapsula "qué
+correo es" (asunto, template, contexto, adjuntos) y la facade <code>Mail</code> lo envía, síncrono
+o encolado.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.Core.Mail</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mail</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">Mail</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">WelcomeMailable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Calcifux&quot;</span><span class="p">),</span> <span class="n">to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;calcifux@example.com&quot;</span><span class="p">])</span>
+</code></pre></div>
+<h2 id="anatomia-mailable-mailcontent">Anatomía: <code>Mailable</code> + <code>MailContent</code><a class="headerlink" href="#anatomia-mailable-mailcontent" title="Permanent link">&para;</a></h2>
+<p>Un Mailable hereda de la ABC <code>Mailable</code> (<code>app/Core/Mail/Mailable.py</code>) e implementa
+<code>build()</code>, que devuelve un <code>MailContent</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.Core.Mail.Mailable</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mailable</span><span class="p">,</span> <span class="n">MailContent</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.Core.Translate</span><span class="w"> </span><span class="kn">import</span> <span class="n">t</span><span class="p">,</span> <span class="n">current_locale</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">WelcomeMailable</span><span class="p">(</span><span class="n">Mailable</span><span class="p">):</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="c1"># SOLO primitivos serializables (ver &quot;Encolar&quot; más abajo).</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MailContent</span><span class="p">:</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="k">return</span> <span class="n">MailContent</span><span class="p">(</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>            <span class="n">subject</span><span class="o">=</span><span class="n">t</span><span class="p">(</span><span class="s2">&quot;emails.welcome.subject&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">}),</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>            <span class="n">template</span><span class="o">=</span><span class="s2">&quot;mymodule/mail/welcome.html.j2&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>            <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="s2">&quot;locale&quot;</span><span class="p">:</span> <span class="n">current_locale</span><span class="p">()},</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="p">)</span>
+</code></pre></div>
+<p><code>build()</code> arma el <strong>payload puro</strong> — no toca SMTP ni Jinja directamente.</p>
+<h3 id="campos-de-mailcontent">Campos de <code>MailContent</code><a class="headerlink" href="#campos-de-mailcontent" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Tipo</th>
+<th>Para qué</th>
+<th>Laravel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>subject</code></td>
+<td><code>str</code></td>
+<td>Asunto (ya traducido por ti).</td>
+<td><code>-&gt;subject()</code></td>
+</tr>
+<tr>
+<td><code>template</code></td>
+<td><code>str</code></td>
+<td>Ruta del template Jinja (compartido o <code>modulo/...</code>).</td>
+<td><code>-&gt;view()</code></td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td><code>dict</code></td>
+<td>Variables del template.</td>
+<td><code>-&gt;with()</code></td>
+</tr>
+<tr>
+<td><code>from_email</code> / <code>from_name</code></td>
+<td><code>str \| None</code></td>
+<td>Remitente; si <code>None</code>, usa el default de settings.</td>
+<td><code>-&gt;from()</code></td>
+</tr>
+<tr>
+<td><code>inline_assets</code></td>
+<td><code>dict[str, Path]</code></td>
+<td>CID → ruta (imagen embebida). En HTML: <code>&lt;img src="cid:logo"&gt;</code>.</td>
+<td><code>$message-&gt;embed()</code></td>
+</tr>
+<tr>
+<td><code>attachments</code></td>
+<td><code>list[Path]</code></td>
+<td>Adjuntos por ruta (archivos en disco).</td>
+<td><code>-&gt;attach()</code></td>
+</tr>
+<tr>
+<td><code>data_attachments</code></td>
+<td><code>list[DataAttachment]</code></td>
+<td>Adjuntos por <strong>bytes</strong> en memoria.</td>
+<td><code>-&gt;attachData()</code></td>
+</tr>
+<tr>
+<td><code>cleanup_paths</code></td>
+<td><code>list[Path]</code></td>
+<td>Rutas a borrar tras enviar (opt-in).</td>
+<td><code>File::delete()</code> en <code>finally</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="enviar-la-facade-mail">Enviar: la facade <code>Mail</code><a class="headerlink" href="#enviar-la-facade-mail" title="Permanent link">&para;</a></h2>
+<h3 id="sincrono-mailsend">Síncrono — <code>Mail.send</code><a class="headerlink" href="#sincrono-mailsend" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">Mail</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">mailable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">to</span><span class="p">,</span> <span class="n">cc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bcc</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+<p>Construye y manda <strong>en el acto</strong> por SMTP. No usa redis ni worker; bloquea hasta que
+SMTP responde. Ideal para local sin broker, tests, o cuando necesitas confirmar el envío.</p>
+<h3 id="encolado-mailqueue">Encolado — <code>Mail.queue</code><a class="headerlink" href="#encolado-mailqueue" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">Mail</span><span class="o">.</span><span class="n">queue</span><span class="p">(</span><span class="n">mailable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">to</span><span class="p">,</span> <span class="n">cc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bcc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+<p>Encola el envío en Celery (no bloquea). Parámetros:</p>
+<ul>
+<li><code>queue</code>: cola de Celery (ej. <code>"emails"</code>); <code>None</code> = cola por defecto.</li>
+<li><code>init_kwargs</code>: los argumentos primitivos para <strong>reinstanciar</strong> el Mailable en el
+  worker. Deben coincidir con el <code>__init__</code>.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">mailable</span> <span class="o">=</span> <span class="n">WelcomeMailable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Calcifux&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">Mail</span><span class="o">.</span><span class="n">queue</span><span class="p">(</span><span class="n">mailable</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;calcifux@example.com&quot;</span><span class="p">],</span> <span class="n">queue</span><span class="o">=</span><span class="s2">&quot;emails&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>           <span class="n">init_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Calcifux&quot;</span><span class="p">})</span>
+</code></pre></div>
+<p>Si el broker está caído, <code>Mail.queue</code> lanza <code>QueueUnavailableError</code> (un mensaje claro,
+no un 500 técnico). En un endpoint conviene traducirlo a un 503:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.Core.CeleryApp</span><span class="w"> </span><span class="kn">import</span> <span class="n">QueueUnavailableError</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">Mail</span><span class="o">.</span><span class="n">queue</span><span class="p">(</span><span class="n">mailable</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="n">to</span><span class="p">,</span> <span class="n">init_kwargs</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">except</span> <span class="n">QueueUnavailableError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">503</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+</code></pre></div>
+<h2 id="el-contrato-del-constructor-solo-primitivos">El contrato del constructor: solo primitivos<a class="headerlink" href="#el-contrato-del-constructor-solo-primitivos" title="Permanent link">&para;</a></h2>
+<p>Al encolar, el Mailable se <strong>reinstancia en el worker</strong> desde su dotted path +
+<code>init_kwargs</code>, y <strong><code>build()</code> corre allí</strong> (worker-side). Por eso el constructor solo
+debe recibir primitivos serializables (str, int, listas de str, ids). Nada de sesiones
+de BD ni clientes HTTP: no se serializan. Si necesitas más datos, pasa un id y recupéralo
+en <code>build()</code>.</p>
+<p>Ventaja: si <code>build()</code> genera bytes (un PDF), esos bytes <strong>no viajan por la cola</strong> — se
+generan en el worker.</p>
+<h2 id="adjuntos">Adjuntos<a class="headerlink" href="#adjuntos" title="Permanent link">&para;</a></h2>
+<h3 id="por-bytes-recomendado">Por bytes (recomendado)<a class="headerlink" href="#por-bytes-recomendado" title="Permanent link">&para;</a></h3>
+<p>Sin tocar disco, sin cleanup:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.Core.Mail.Mailable</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataAttachment</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">content</span><span class="o">.</span><span class="n">data_attachments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">DataAttachment</span><span class="p">(</span><span class="s2">&quot;reporte.pdf&quot;</span><span class="p">,</span> <span class="n">pdf_bytes</span><span class="p">,</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="por-archivo-cleanup-opt-in">Por archivo + cleanup opt-in<a class="headerlink" href="#por-archivo-cleanup-opt-in" title="Permanent link">&para;</a></h3>
+<p>Si el PDF ya vive en disco como temporal, adjúntalo por ruta y <strong>declara</strong> su limpieza:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">content</span><span class="o">.</span><span class="n">attachments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp_path</span><span class="p">)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">content</span><span class="o">.</span><span class="n">cleanup_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp_path</span><span class="p">)</span>   <span class="c1"># el Mailer lo borra tras enviar (finally)</span>
+</code></pre></div>
+<p>El framework <strong>nunca</strong> borra un <code>attachments</code> por su cuenta: solo lo que declares en
+<code>cleanup_paths</code>. Un asset persistente (un PDF fijo) va en <code>attachments</code> y NO en
+<code>cleanup_paths</code>.</p>
+<h3 id="logo-inline-por-cid">Logo inline por CID<a class="headerlink" href="#logo-inline-por-cid" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">content</span><span class="o">.</span><span class="n">inline_assets</span><span class="p">[</span><span class="s2">&quot;logo&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;app/Resources/Images/Emails/logo.png&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">content</span><span class="o">.</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;logo_cid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;logo&quot;</span>
+</code></pre></div>
+<p>En el template: <code>&lt;img src="cid:logo"&gt;</code>. (El header SMTP usa <code>&lt;logo&gt;</code>; en el HTML va sin
+ángulos.)</p>
+<h2 id="drivers-mail_driver">Drivers (<code>MAIL_DRIVER</code>)<a class="headerlink" href="#drivers-mail_driver" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Driver</th>
+<th>Comportamiento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>smtp</code> (default)</td>
+<td>Envío real por SMTP, según <code>MAIL_*</code> y <code>MAIL_ENCRYPTION</code> (<code>""</code>/<code>tls</code>/<code>ssl</code>).</td>
+</tr>
+<tr>
+<td><code>log</code></td>
+<td>Loguea el correo completo, <strong>no</strong> lo envía. Útil en dev sin SMTP.</td>
+</tr>
+<tr>
+<td><code>null</code> / <code>array</code></td>
+<td>No-op: lo descarta.</td>
+</tr>
+</tbody>
+</table>
+<p>En local apunta <code>MAIL_HOST</code>/<code>MAIL_PORT</code> a <strong>Mailpit</strong> (<code>docker compose up -d</code>) y ve los
+correos en <code>http://localhost:8025</code>.</p>
+<h2 id="monolingue-vs-i18n">Monolingüe vs. i18n<a class="headerlink" href="#monolingue-vs-i18n" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Caso</th>
+<th>Patrón</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>i18n</strong></td>
+<td><code>subject</code> con <code>t()</code>, template que extiende los layouts y usa <code>t()</code>. El locale viene del ambiente (Accept-Language).</td>
+</tr>
+<tr>
+<td><strong>Monolingüe</strong></td>
+<td><code>subject</code> literal, template con texto fijo (sin <code>t()</code>, sin <code>extends</code>).</td>
+</tr>
+</tbody>
+</table>
+<p>Una app es monolingüe salvo que decidas traducir. Ver <a href="../13-localizacion-i18n/">Localización</a>.
+El locale se captura al encolar y se restaura en el worker, así el correo sale en el
+idioma del request que lo disparó.</p>
+<h2 id="ejemplos-del-modulo-example">Ejemplos del módulo <code>Example</code><a class="headerlink" href="#ejemplos-del-modulo-example" title="Permanent link">&para;</a></h2>
+<p>El módulo <code>Example</code> trae Mailables de referencia y endpoints en <code>/example/mail/*</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Mailable</th>
+<th>Demuestra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MailableCheck</code></td>
+<td>Smoke básico, logo por CID, adjuntos por ruta, i18n.</td>
+</tr>
+<tr>
+<td><code>MailableSignedCheck</code></td>
+<td>Layout firmado (footer con datos del remitente + aviso de privacidad).</td>
+</tr>
+<tr>
+<td><code>MailableAttachmentCheck</code></td>
+<td>Adjunto por bytes vs. por archivo + cleanup.</td>
+</tr>
+<tr>
+<td><code>PedidoListoMailable</code></td>
+<td>Monolingüe: subject literal, template sin i18n.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="siguiente-paso">Siguiente paso<a class="headerlink" href="#siguiente-paso" title="Permanent link">&para;</a></h2>
+<p><a href="../11-colas-y-tareas/">Colas y tareas</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Volver al principio
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      milpa · MIT
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "navigation.tracking", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado al portapapeles", "clipboard.copy": "Copiar al portapapeles", "search.result.more.one": "1 m\u00e1s en esta p\u00e1gina", "search.result.more.other": "# m\u00e1s en esta p\u00e1gina", "search.result.none": "No se encontraron documentos", "search.result.one": "1 documento encontrado", "search.result.other": "# documentos encontrados", "search.result.placeholder": "Teclee para comenzar b\u00fasqueda", "search.result.term.missing": "Falta", "select.version": "Seleccionar versi\u00f3n"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
