@@ -201,6 +201,10 @@ class Settings(BaseSettings):
     user_static_dir: str = ""  # p. ej. "app/Resources/Static" (se sirve en "/static")
     # Carpeta de migraciones Alembic, relativa al cwd del proyecto. Default "migrations".
     migrations_dir: str = "migrations"
+    # Raíz del código del USUARIO donde escribe `make:*` (modelos/controllers/módulos),
+    # relativa al cwd. Default "app" (el layout que genera `milpa new`). En el repo del
+    # PROPIO framework, donde el código vive en src/milpa, pon APP_DIR=src/milpa en .env.
+    app_dir: str = "app"
 
     @property
     def effective_broker_url(self) -> str:

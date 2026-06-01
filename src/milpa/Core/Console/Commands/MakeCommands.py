@@ -10,10 +10,15 @@ from pathlib import Path
 
 import typer
 
+from milpa.Core.Config import settings
 from milpa.Core.Console import console_command
 
-# app/ del proyecto: …/app/Core/Console/Commands/MakeCommands.py → parents[3] = app/
-_APP_DIR = Path(__file__).resolve().parents[3]
+
+def _app_dir() -> Path:
+    """Raíz del código del USUARIO donde escribe `make:*` (cwd/app por default,
+    configurable con APP_DIR). Se resuelve en CADA llamada → relativa al cwd donde el dev
+    corre `jornal`, NO a la ubicación del paquete instalado (que es el bug que evita)."""
+    return Path(settings.app_dir).resolve()
 
 
 def _write(path: Path, content: str) -> None:
@@ -61,17 +66,17 @@ def model_stub(name: str) -> str:
     name="controller", group="make", help="Crea un controller class-based en un módulo. (≈ php artisan make:controller)"
 )
 def make_controller(module: str, name: str) -> None:
-    _write(_APP_DIR / "Modules" / module / "Http" / f"{name}Controller.py", controller_stub(name))
+    _write(_app_dir() / "Modules" / module / "Http" / f"{name}Controller.py", controller_stub(name))
 
 
 @console_command(name="model", group="make", help="Crea un modelo SQLAlchemy en app/Models. (≈ php artisan make:model)")
 def make_model(name: str) -> None:
-    _write(_APP_DIR / "Models" / f"{name}.py", model_stub(name))
+    _write(_app_dir() / "Models" / f"{name}.py", model_stub(name))
 
 
 @console_command(name="module", group="make", help="Crea el esqueleto de un módulo (paquete + Http + controller).")
 def make_module(name: str) -> None:
-    base = _APP_DIR / "Modules" / name
+    base = _app_dir() / "Modules" / name
     _write(base / "__init__.py", f'"""Módulo {name}."""\n')
     _write(base / "Http" / "__init__.py", '"""Controllers del módulo (se auto-montan)."""\n')
     _write(base / "Http" / f"{name}Controller.py", controller_stub(name))
