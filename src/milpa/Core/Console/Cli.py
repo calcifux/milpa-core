@@ -1,7 +1,7 @@
 """Kernel de consola — arma la app de Typer (≈ app/Console/Kernel.php de Laravel).
 
 NO es el entrypoint: ese es `jornal` (en la RAÍZ), que solo hace
-`from milpa.Core.Console.Cli import milpa; app()`. Aquí vive la lógica: descubre los
+`from milpa.Core.Console.Cli import app; app()`. Aquí vive la lógica: descubre los
 commands (Core + generales + módulos) y los monta como sub-apps de Typer. No
 declara commands hardcodeados; se auto-descubren (`@console_command` + discovery),
 así que agregar uno nuevo es solo crear su archivo — este módulo no se vuelve a editar.
