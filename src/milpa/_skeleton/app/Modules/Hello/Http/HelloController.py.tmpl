@@ -1,28 +1,27 @@
 """Módulo de ejemplo 'Hello' — generado por `milpa new`.
 
-milpa descubre este router SOLO: escanea `app/Modules/*/Http/` buscando cualquier
-`router = APIRouter(...)` y lo monta. No hay que registrarlo en ningún lado (igual que
-Laravel descubre tus rutas). Copia esta carpeta para tu primer módulo real, o bórrala.
+milpa descubre este controller SOLO: escanea `app/Modules/*/Http/` y monta cualquier
+`@Controller`. Estilo class-based (parecido a Spring): la clase agrupa las rutas del módulo
+y `self` te da estado por-request si lo necesitas. No hay que registrarlo en ningún lado.
+Copia esta carpeta para tu primer módulo real (o usa `jornal make module <Nombre>`), o bórrala.
 """
 
 from __future__ import annotations
 
 from fastapi.responses import HTMLResponse
 
-from fastapi import APIRouter
-
+from milpa.Core.Http import Controller, Get
 from milpa.Core.View import view
 
-router = APIRouter(tags=["hello"])
 
+@Controller("", tags=["hello"])
+class HelloController:
+    @Get("/hello")
+    def hello(self) -> dict[str, str]:
+        """Ruta JSON de cortesía: confirma que milpa descubrió tu módulo."""
+        return {"mensaje": "¡milpa está sembrada! 🌽", "modulo": "Hello"}
 
-@router.get("/hello")
-async def hello() -> dict[str, str]:
-    """Ruta JSON de cortesía: confirma que milpa descubrió tu módulo."""
-    return {"mensaje": "¡milpa está sembrada! 🌽", "modulo": "Hello"}
-
-
-@router.get("/", response_class=HTMLResponse)
-async def welcome() -> HTMLResponse:
-    """Página de bienvenida: renderiza app/Resources/Views/welcome.html.j2."""
-    return view("welcome", {"titulo": "__PROJECT__"})
+    @Get("/")
+    def welcome(self) -> HTMLResponse:
+        """Página de bienvenida: renderiza app/Resources/Views/welcome.html.j2."""
+        return view("welcome", {"titulo": "__PROJECT__"})

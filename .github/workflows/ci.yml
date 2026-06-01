@@ -59,4 +59,7 @@ jobs:
           uv pip install --python /tmp/milpa-smoke/bin/python dist/*.whl
           /tmp/milpa-smoke/bin/python -c "import milpa; print('milpa', milpa.__version__)"
           ( cd /tmp && /tmp/milpa-smoke/bin/milpa new smokeapp )
-          test -f /tmp/smokeapp/app/Modules/Hello/Http/HelloController.py && echo "scaffolder OK"
+          test -f /tmp/smokeapp/app/Modules/Hello/Http/HelloController.py
+          # El controller generado debe IMPORTAR (ejecuta @Controller/@Get): cubre que el
+          # skeleton no esté roto, no solo que el archivo exista.
+          ( cd /tmp/smokeapp && /tmp/milpa-smoke/bin/python -c "import app.Modules.Hello.Http.HelloController; print('scaffolder OK')" )
