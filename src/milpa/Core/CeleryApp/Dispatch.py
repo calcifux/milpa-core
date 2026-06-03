@@ -15,10 +15,21 @@ import redis.exceptions
 from kombu.exceptions import OperationalError
 
 from milpa.Core.Config import settings
+from milpa.Core.Errors import DomainError
 
 
-class QueueUnavailableError(RuntimeError):
-    """No se pudo encolar porque el broker (redis) no está disponible."""
+class QueueUnavailableError(DomainError):
+    """No se pudo encolar porque el broker (redis) no está disponible (= 503).
+
+    Hereda de `DomainError`: el handler global RFC 9457 lo rinde como
+    `application/problem+json` (503 Service Unavailable) SOLO — el controller/job que
+    despacha NO necesita `try/except ... raise HTTPException(503)`. Faro, no silencio:
+    el broker caído sale como un error claro y observable, nunca un 500 técnico ni un drop mudo.
+    """
+
+    status_code = 503
+    error_code = "queue_unavailable"
+    title = "Queue unavailable"
 
 
 @contextmanager

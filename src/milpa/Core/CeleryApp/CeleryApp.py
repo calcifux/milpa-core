@@ -1,5 +1,7 @@
 """Celery central. Descubre tareas y crons de los módulos presentes."""
 
+from __future__ import annotations
+
 from typing import Any
 
 from celery import Celery
@@ -51,4 +53,5 @@ def _discover_modules(sender: Celery, **_: Any) -> None:
     """
     import_all_tasks()
     import_submodules("milpa.Core.Mail")  # tasks de correo del framework (mail.send) para el worker
+    import_submodules("milpa.Core.Events")  # task events.handle: el worker corre observers encolados
     sender.conf.beat_schedule = collect_beat_schedule()

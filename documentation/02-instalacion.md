@@ -44,9 +44,10 @@ Con el venv **activado**, corre los comandos **sin** el prefijo `uv run`.
 
 ## Drivers de base de datos
 
-`pymysql` (MySQL/MariaDB) ya viene en el core. Para otros motores, instala su extra:
+El core es **agnóstico del motor**: instala el extra del tuyo (sqlite no necesita nada, viene en Python):
 
 ```bash
+uv sync --extra mysql         # MySQL / MariaDB (pymysql)
 uv sync --extra postgres      # PostgreSQL (psycopg v3)
 uv sync --extra oracle        # Oracle (oracledb)
 uv sync --extra mssql         # SQL Server (pyodbc; requiere el ODBC Driver del SO)

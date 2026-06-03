@@ -4,6 +4,8 @@ contratos y dependencies. Impórtalos desde aquí:
     from milpa.Core.Auth import Auth, CurrentUser, Hash, authenticated, guarded
 """
 
+from __future__ import annotations
+
 from milpa.Core.Auth.Auth import (
     Auth,
     CurrentUser,
@@ -13,7 +15,7 @@ from milpa.Core.Auth.Auth import (
     optional_user,
     set_current_user,
 )
-from milpa.Core.Auth.Authorization import Can, Gate, Roles, require_roles
+from milpa.Core.Auth.Authorization import Can, Gate, Roles, policy, require_roles
 from milpa.Core.Auth.Contracts import Authenticatable, AuthenticatableMixin, UserProvider
 from milpa.Core.Auth.Guards import JwtGuard, PassportGuard, SessionGuard, get_guard
 from milpa.Core.Auth.Hash import Hash
@@ -42,6 +44,7 @@ __all__ = [
     "get_user_provider",
     "guarded",
     "optional_user",
+    "policy",
     "require_roles",
     "require_scopes",
     "set_current_user",

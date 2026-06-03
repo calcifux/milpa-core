@@ -8,7 +8,7 @@ Sanctum**: dos carriles a la vez —
 - **Sesión cookie + CSRF (browser)** — cookie firmada (Secure/HttpOnly/SameSite=Lax). Para HTMX/
   server-rendered de primera-parte.
 
-Todo vive en `app/Core/Auth`. Hay un demo corrible que usa los dos carriles: ver el
+Todo vive en `milpa/Core/Auth`. Hay un demo corrible que usa los dos carriles: ver el
 [Quickstart del demo](https://github.com/calcifux/milpa#-demo-corrible).
 
 ## Guards
@@ -27,7 +27,7 @@ Un **guard** resuelve el usuario autenticado desde el request. milpa trae tres:
 ## Hashing
 
 ```python
-from app.Core.Auth import Hash
+from milpa.Core.Auth import Hash
 
 hashed = Hash.make("secreto")      # argon2id
 Hash.verify("secreto", hashed)     # True — verifica argon2 y también bcrypt ($2y$ de Laravel)
@@ -57,7 +57,7 @@ migras de una BD legacy, registra tu propio provider con `set_user_provider(...)
 
 **API (JWT):**
 ```python
-from app.Core.Auth import Auth
+from milpa.Core.Auth import Auth
 
 token = Auth.attempt(email, password)   # JWT (str) o None si las credenciales fallan
 # -> el cliente manda luego: Authorization: Bearer <token>
@@ -75,7 +75,7 @@ Auth.logout(request)             # cierra la sesión
 ## Proteger rutas (autenticación)
 
 ```python
-from app.Core.Auth import CurrentUser, authenticated, guarded, Authenticatable
+from milpa.Core.Auth import CurrentUser, authenticated, guarded, Authenticatable
 from fastapi import Depends
 
 # Guard por default (AUTH_GUARD):
@@ -94,7 +94,7 @@ def web_me(user: Authenticatable = Depends(guarded("session"))): ...
 
 **RBAC — por rol:**
 ```python
-from app.Core.Auth import require_roles, Roles
+from milpa.Core.Auth import require_roles, Roles
 from fastapi import Depends
 
 def admin_only(user = Depends(require_roles("admin", guard="jwt"))): ...   # 403 si no tiene el rol
@@ -108,7 +108,7 @@ class AdminController:
 
 **ABAC — por policy (atributos del recurso):**
 ```python
-from app.Core.Auth import Gate
+from milpa.Core.Auth import Gate
 
 # 1) Registra la policy (típicamente en app/Modules/<X>/Policies.py):
 Gate.define("note.update", lambda user, note: note.owner_id == user.get_auth_identifier())
@@ -140,7 +140,7 @@ el guard `passport` (resuelve el user por el claim `sub` vía tu provider) o las
 clásicas de scopes:
 
 ```python
-from app.Core.Auth import get_current_token, require_scopes, TokenPrincipal
+from milpa.Core.Auth import get_current_token, require_scopes, TokenPrincipal
 
 def profile(principal: TokenPrincipal = Depends(get_current_token)): ...
 def admin(principal: TokenPrincipal = Depends(require_scopes("admin"))): ...

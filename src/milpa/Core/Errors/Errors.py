@@ -83,3 +83,55 @@ class ForbiddenError(DomainError):
     status_code = 403
     error_code = "forbidden"
     title = "Forbidden"
+
+
+class InvalidFilterError(DomainError):
+    """El cliente pidió un filtro/orden NO permitido (campo fuera de la whitelist, etc.) (= 422).
+
+    Es error de CLIENTE, no bug: el `FilterQueryModel` lo lanza en vez de ignorar el parámetro en
+    silencio (esa fuga deja al cliente creyendo que ordenó/filtró cuando no pasó nada). El `errors`
+    lleva la lista de campos permitidos para que el cliente se corrija.
+    """
+
+    status_code = 422
+    error_code = "invalid_filter"
+    title = "Invalid filter"
+
+
+class HandlerNotFoundError(DomainError):
+    """No hay handler registrado para el comando despachado por el [[Mediator]].
+
+    Es un BUG de programación (olvidaste `@handles(MiComando)` o el módulo no se
+    descubrió), no un error de cliente: por eso 500 y no 4xx. Los handlers globales
+    lo rinden como problem+json sin código de transporte nuevo.
+    """
+
+    status_code = 500
+    error_code = "handler_not_found"
+    title = "Handler not found"
+
+    def __init__(self, *, command_type: str) -> None:
+        super().__init__(
+            f"No hay handler registrado para el comando {command_type!r}.",
+            details={"command_type": command_type},
+        )
+
+
+class UndefinedAbilityError(DomainError):
+    """Se evaluó una ability del `Gate` que NO está registrada (con `AUTH_STRICT_ABILITIES`).
+
+    Es un BUG de configuración (olvidaste `@policy("...")` o el discovery no la importó), no un
+    error de cliente: por eso 500. En modo no-estricto el Gate deniega + loguea en vez de lanzar
+    (secure-by-default), pero NUNCA en silencio.
+    """
+
+    status_code = 500
+    error_code = "undefined_ability"
+    title = "Undefined ability"
+
+    def __init__(self, *, ability: str) -> None:
+        super().__init__(
+            f"La ability {ability!r} sin policy. Defínela: @policy({ability!r}) en Modules/<X>/Policies/ "
+            f"(se auto-descubre al arranque).",
+            details={"ability": ability},
+        )

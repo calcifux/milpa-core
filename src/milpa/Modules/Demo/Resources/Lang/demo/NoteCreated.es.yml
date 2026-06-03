@@ -1,0 +1,4 @@
+es:
+  subject: "Tu nota «%{title}» fue creada"
+  greeting: "¡Hola!"
+  body: "Tu nota «%{title}» se guardó correctamente. Gracias por usar %{app_name}."

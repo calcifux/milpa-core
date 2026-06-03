@@ -4,6 +4,8 @@ Re-exporta el protocolo y las implementaciones para que
 `from milpa.Core.Clock import Clock, SystemClock, FixedClock` siga funcionando.
 """
 
+from __future__ import annotations
+
 from milpa.Core.Clock.Clock import Clock, FixedClock, SystemClock
 
 __all__ = ["Clock", "FixedClock", "SystemClock"]

@@ -4,6 +4,8 @@ naming_convention estabiliza los nombres de índices/constraints (clave para
 Alembic en el futuro). Todos los modelos de app/Models heredan de esta Base.
 """
 
+from __future__ import annotations
+
 from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase
 

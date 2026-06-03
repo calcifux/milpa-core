@@ -14,7 +14,7 @@ transacciona**.
 
 La sesión vive en un contextvar scoped por request/task (como el `EntityManager`
 thread-bound de Spring), **no** es global de proceso. Tres primitivos la gobiernan
-(`app/Core/Database/Transactional.py`):
+(`milpa/Core/Database/Transactional.py`):
 
 | Primitivo | Qué hace | Cuándo usarlo |
 |-----------|----------|---------------|
@@ -32,7 +32,7 @@ abrió. Esto hace que anidar servicios `@transactional` produzca **una sola** tr
 ```python
 # app/Models/Repositories/InvoiceRepository.py
 from sqlalchemy import select
-from app.Core.Database import Repository
+from milpa.Core.Database import Repository
 from app.Models.Invoice import Invoice
 
 class InvoiceRepository(Repository[Invoice, int]):
@@ -87,7 +87,7 @@ cliente = ClienteRepository().first_or_create({"rfc": "XAXX010101000"}, {"nombre
 ```python
 # app/Modules/Billing/Services/InvoiceService.py
 from decimal import Decimal
-from app.Core.Database import transactional
+from milpa.Core.Database import transactional
 from app.Models.Invoice import Invoice
 from app.Models.Repositories.InvoiceRepository import InvoiceRepository
 
@@ -141,7 +141,7 @@ def get_invoice(invoice_id: int) -> InvoiceDTO:
 Para flujos con varios checkpoints de commit (procesos por lotes):
 
 ```python
-from app.Core.Database import session_scope
+from milpa.Core.Database import session_scope
 
 def procesar_lote(ids: list[int]) -> None:
     repo = InvoiceRepository()

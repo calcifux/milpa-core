@@ -6,7 +6,7 @@ tocan.
 
 ## La app de Celery
 
-`app/Core/CeleryApp/CeleryApp.py` configura la instancia `celery_app` de forma
+`milpa/Core/CeleryApp/CeleryApp.py` configura la instancia `celery_app` de forma
 agnóstica:
 
 | Setting (`.env`) | Default | Para qué |
@@ -31,7 +31,7 @@ Una task es una función decorada con `@celery_app.task`. Ponla bajo `Modules/<X
 ```python
 # app/Modules/Example/Jobs/HelloJob.py
 from loguru import logger
-from app.Core.CeleryApp import celery_app
+from milpa.Core.CeleryApp import celery_app
 
 @celery_app.task(name="example.hello")
 def hello_world(name: str = "mundo") -> str:
@@ -72,7 +72,7 @@ Si el broker está caído, despachar lanza errores de bajo nivel (kombu/redis). 
 `broker_guard()` los traduce a un `QueueUnavailableError` accionable:
 
 ```python
-from app.Core.CeleryApp import broker_guard, QueueUnavailableError
+from milpa.Core.CeleryApp import broker_guard, QueueUnavailableError
 
 try:
     with broker_guard():
@@ -110,13 +110,13 @@ Si nadie consume esa cola, el mensaje se queda ahí hasta que un worker la atien
 
 Una task que toca la red (SMTP, HTTP, otra BD) puede fallar por algo **momentáneo**: el
 servicio se cayó un segundo, un timeout, la conexión se reinició. Para eso está el helper
-`retry_policy(...)` (`app/Core/CeleryApp`): cablea `autoretry_for` + **backoff exponencial**
+`retry_policy(...)` (`milpa/Core/CeleryApp`): cablea `autoretry_for` + **backoff exponencial**
 de forma reutilizable y **configurable de dos maneras** — por `.env` o **a mano en código**.
 
 ```python
 from smtplib import SMTPException
 
-from app.Core.CeleryApp import celery_app, retry_policy
+from milpa.Core.CeleryApp import celery_app, retry_policy
 
 # (1) Defaults framework-wide desde .env (TASK_MAX_RETRIES / TASK_RETRY_BACKOFF / ...):
 @celery_app.task(bind=True, name="mail.send", **retry_policy(retry_for=(SMTPException,)))

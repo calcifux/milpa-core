@@ -7,7 +7,14 @@ core en producción (no lo jala `app.Core.Database.__init__`).
 
 from __future__ import annotations
 
-from faker import Faker
+try:
+    from faker import Faker
+except ModuleNotFoundError as error:  # pista accionable, no el ModuleNotFoundError pelón
+    raise ModuleNotFoundError(
+        "Faker no está instalado y las factories/seeders lo necesitan. Es dependencia de "
+        "DESARROLLO (no de producción): instálalo con `uv add faker` (ya viene en el dev-group "
+        "del proyecto scaffoldeado, así que normalmente basta `uv sync`)."
+    ) from error
 
 from milpa.Core.Config import settings
 

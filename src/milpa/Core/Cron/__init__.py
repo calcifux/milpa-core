@@ -3,6 +3,8 @@
 `schedule run`. Re-exportado para `from milpa.Core.Cron import cron_task, daily_at`.
 """
 
+from __future__ import annotations
+
 from milpa.Core.Cron.Cron import (
     RegisteredCron,
     cron_task,

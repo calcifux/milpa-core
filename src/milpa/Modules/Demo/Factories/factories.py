@@ -1,5 +1,5 @@
 """Factories del demo (User/Note) con datos de Faker. El locale es configurable
-(`FAKER_LOCALE` en .env; default es_MX) — ver `app/Core/Database/Faker`.
+(`FAKER_LOCALE` en .env; default es_MX) — ver `milpa.Core.Database.Faker`.
 """
 
 from __future__ import annotations

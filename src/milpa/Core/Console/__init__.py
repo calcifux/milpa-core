@@ -4,6 +4,8 @@ Re-exporta la API pública para que los consumers importen con
 `from milpa.Core.Console import console_command` (mismo patrón que `Core/Cron`).
 """
 
+from __future__ import annotations
+
 from milpa.Core.Console.Console import (
     RegisteredCommand,
     build_cli_apps,

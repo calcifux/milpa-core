@@ -28,6 +28,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from milpa.Core.Discovery import _module_absent
+
 
 @dataclass(frozen=True)
 class RegisteredCommand:
@@ -112,12 +114,16 @@ def import_submodules(package_name: str) -> None:
     para disparar sus decoradores (@console_command, @cron_task). Discovery por
     convención con `pkgutil` — el mismo mecanismo que usan Celery/Django/pytest.
 
-    Si el paquete no existe, no hace nada (un módulo puede no tener esa carpeta).
+    Si la carpeta de convención no existe, no hace nada (ausencia esperada). PERO si un
+    archivo del módulo tiene un import roto, se RE-LANZA (faro: nunca silenciamos un bug real,
+    si no tu @console_command/@cron_task "no se registra" sin señal).
     """
     try:
         package = importlib.import_module(package_name)
-    except ModuleNotFoundError:
-        return
+    except ModuleNotFoundError as error:
+        if _module_absent(error, package_name):
+            return  # la carpeta de convención no existe: ausencia esperada
+        raise  # import roto DENTRO del módulo del usuario: que truene
     if not hasattr(package, "__path__"):
         return
     for info in pkgutil.iter_modules(package.__path__):

@@ -25,7 +25,7 @@ Para dos escenarios:
 
 ### El kernel es el framework
 
-Todo lo genérico y reutilizable vive en `app/Core`. Lo específico de tu proyecto vive
+Todo lo genérico y reutilizable vive en `milpa/Core`. Lo específico de tu proyecto vive
 **fuera** de `Core`:
 
 - `app/Modules/<Nombre>/` — tus features (rutas, jobs, correos, servicios).
@@ -33,7 +33,7 @@ Todo lo genérico y reutilizable vive en `app/Core`. Lo específico de tu proyec
 - `app/Dictionaries/` — tus constantes de dominio.
 - `app/Resources/` — tus vistas, traducciones y estáticos compartidos.
 
-Puedes copiar `app/Core` a otro proyecto y empezar de cero: es la "cosecha" reutilizable.
+Puedes copiar `milpa/Core` a otro proyecto y empezar de cero: es la "cosecha" reutilizable.
 
 ### Convención sobre configuración
 

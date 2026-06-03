@@ -1,7 +1,7 @@
 """Factory base estilo Laravel: construye/persiste modelos con atributos por default.
 
 La subclase fija `model` y define `definition()` (los atributos por default — típicamente con
-Faker; ver `app/Core/Database/Faker`). `make()` construye SIN persistir; `create()`/`count()`
+Faker; ver `milpa.Core.Database.Faker`). `make()` construye SIN persistir; `create()`/`count()`
 PERSISTEN en la sesión AMBIENTE (la del seeder `@transactional` o la del test). Mismo idiom
 genérico que `Repository[Model, Id]`, y se apoya en las mismas primitivas (`current_session`).
 

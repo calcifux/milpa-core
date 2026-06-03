@@ -5,9 +5,14 @@ entrypoints (`app/Core/Http`,
 `from milpa.Core.Registry import ...`.
 """
 
+from __future__ import annotations
+
 from milpa.Core.Registry.Registry import (
     collect_beat_schedule,
+    import_all_handlers,
     import_all_models,
+    import_all_observers,
+    import_all_policies,
     import_all_seeders,
     import_all_tasks,
     iter_cli_apps,
@@ -18,7 +23,10 @@ from milpa.Core.Registry.Registry import (
 
 __all__ = [
     "collect_beat_schedule",
+    "import_all_handlers",
     "import_all_models",
+    "import_all_observers",
+    "import_all_policies",
     "import_all_seeders",
     "import_all_tasks",
     "iter_cli_apps",

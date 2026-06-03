@@ -24,12 +24,14 @@ queries custom llevan cuerpo, pero usan `self.session`.
 
 from __future__ import annotations
 
+import base64
+import json
 from collections.abc import Sequence
 from dataclasses import dataclass
 from types import FunctionType
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from milpa.Core.Database.Transactional import auto_session, current_session, transactional
@@ -47,6 +49,29 @@ class Page[T]:
     items: Sequence[T]
     has_more: bool
     next_offset: int
+
+
+@dataclass(frozen=True)
+class CursorPage[T]:
+    """Página por CURSOR (keyset/seek): `next_cursor` es un marcador OPACO de la última fila.
+
+    A diferencia del offset, NO se salta/duplica filas cuando hay inserts concurrentes y es O(1)
+    a cualquier profundidad (no escanea offset filas). = `CursorPagination` de DRF. Pasa
+    `next_cursor` como `?cursor=...` para la siguiente página; `None` = no hay más.
+    """
+
+    items: Sequence[T]
+    has_more: bool
+    next_cursor: str | None
+
+
+def _encode_cursor(value: Any) -> str:
+    """Marcador opaco (base64 de JSON) del valor de la columna-llave de la última fila."""
+    return base64.urlsafe_b64encode(json.dumps(value).encode()).decode()
+
+
+def _decode_cursor(cursor: str) -> Any:
+    return json.loads(base64.urlsafe_b64decode(cursor.encode()).decode())
 
 
 class Repository[ModelT, IdT]:
@@ -82,6 +107,15 @@ class Repository[ModelT, IdT]:
         return self.session.execute(select(self.model)).scalars().all()
 
     @auto_session
+    def count(self, *, where: Any = None) -> int:
+        """Cuenta filas con un `COUNT(*)` server-side (O(1) en transferencia, SIN hidratar ORM).
+        Úsalo para totales/badges en vez de `len(all())`, que trae todas las filas a memoria."""
+        statement = select(func.count()).select_from(self.model)
+        if where is not None:
+            statement = statement.where(where)
+        return int(self.session.execute(statement).scalar_one())
+
+    @auto_session
     def paginate(self, *, offset: int = 0, limit: int = 20, order_by: Any = None, where: Any = None) -> Page[ModelT]:
         """Página por `offset`/`limit` (estilo scroll infinito). Pasa `order_by` para orden
         ESTABLE (p. ej. `Model.id.desc()`) y `where` como condición opcional. No hace COUNT:
@@ -93,6 +127,37 @@ class Repository[ModelT, IdT]:
             statement = statement.order_by(order_by)
         rows = list(self.session.execute(statement.offset(offset).limit(limit + 1)).scalars().all())
         return Page(items=rows[:limit], has_more=len(rows) > limit, next_offset=offset + limit)
+
+    @auto_session
+    def cursor_paginate(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int = 20,
+        key: Any = None,
+        descending: bool = False,
+        where: Any = None,
+    ) -> CursorPage[ModelT]:
+        """Paginación por CURSOR (keyset/seek). `key` debe ser una columna ÚNICA y estable
+        (default: la PK `id`); ordena por ella y avanza con un marcador opaco — sin COUNT, sin
+        offset, estable ante inserts concurrentes. = `CursorPagination` de DRF.
+
+        Útil para feeds/listados grandes o en tiempo real. (KISS: una sola columna-llave única;
+        para desempates por columnas no únicas, ordena por una llave compuesta que incluya la PK.)
+        """
+        key_col: Any = key if key is not None else getattr(self.model, "id")  # noqa: B009
+        statement = select(self.model)
+        if where is not None:
+            statement = statement.where(where)
+        if cursor is not None:
+            last = _decode_cursor(cursor)
+            statement = statement.where(key_col < last if descending else key_col > last)
+        statement = statement.order_by(key_col.desc() if descending else key_col.asc())
+        rows = list(self.session.execute(statement.limit(limit + 1)).scalars().all())
+        items = rows[:limit]
+        has_more = len(rows) > limit
+        next_cursor = _encode_cursor(getattr(items[-1], key_col.key)) if (has_more and items) else None
+        return CursorPage(items=items, has_more=has_more, next_cursor=next_cursor)
 
     @transactional
     def add(self, entity: ModelT) -> ModelT:

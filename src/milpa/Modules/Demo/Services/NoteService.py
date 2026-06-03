@@ -9,14 +9,24 @@ from typing import Any
 from milpa.Core.Auth import Authenticatable, Gate
 from milpa.Core.Database import current_session, transactional
 from milpa.Core.Errors import ResourceNotFoundError
+from milpa.Core.Pipeline import Pipeline
 from milpa.Models.Note import Note
+from milpa.Modules.Demo.Pipes.CleanContent import CollapseWhitespace, NoteDraft, TrimContent
 from milpa.Modules.Demo.Serializers import note_dict
 
 
 class NoteService:
     @transactional
     def create(self, owner_id: int, title: str, body: str) -> dict[str, Any]:
-        note = Note(owner_id=owner_id, title=title, body=body)
+        # estilo milpa: el contenido se NORMALIZA con un Pipeline (etapas componibles) antes de
+        # persistir, en vez de strip()/split() sueltos. Ver Pipes/CleanContent.py.
+        draft: NoteDraft = (
+            Pipeline()
+            .send(NoteDraft(title=title, body=body))
+            .through([TrimContent(), CollapseWhitespace()])
+            .then_return()
+        )
+        note = Note(owner_id=owner_id, title=draft.title, body=draft.body)
         current_session().add(note)
         current_session().flush()  # asigna PK
         return note_dict(note)

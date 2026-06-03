@@ -4,6 +4,14 @@ __pycache__/
 *.pyc
 *.pyo
 
+# Caches de herramientas (se regeneran solas; NO se versionan). graphify también las
+# IGNORA al indexar porque respeta .gitignore — antes ensuciaban el grafo con nodos basura.
+.import_linter_cache/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.claude/settings.local.json
+
 # Secretos y configuración local (NUNCA al repo)
 .env
 # Ignora TODO el contenido de secrets/ (llaves, etc.) pero conserva la carpeta vacía.

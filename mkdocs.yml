@@ -63,9 +63,18 @@ nav:
       - Ciclo de vida: 05-ciclo-de-vida.md
   - Arquitectura:
       - Monolito modular: 06-monolito-modular.md
+      - Errores y RFC 9457: 28-errores-y-rfc9457.md
+  - Patrones (estilo milpa):
+      - Eventos y Observers: 19-eventos-y-observers.md
+      - Mediator (command bus): 20-mediator.md
+      - Pipeline: 21-pipeline.md
   - HTTP:
       - Rutas y controladores: 07-rutas-y-controladores.md
+      - Versionado de la API: 23-versionado-api.md
+      - Rate limiting: 24-rate-limiting.md
       - Vistas: 09-vistas.md
+      - Negociación de contenido: 26-negociacion-de-contenido.md
+      - Serializadores: 27-serializadores.md
       - Autenticación y autorización: 15-autenticacion.md
   - Consola:
       - jornal: 08-consola-jornal.md
@@ -73,7 +82,9 @@ nav:
       - Base de datos: 16-base-de-datos.md
       - Modelos: 17-modelos.md
       - Repositorios y transacciones: 18-repositorios-y-transacciones.md
+      - Filtrado y paginación: 25-filtrado-y-paginacion.md
   - Background:
+      - Jobs (@job): 22-jobs.md
       - Colas y tareas: 11-colas-y-tareas.md
       - Programación (cron): 12-programacion-cron.md
   - Más:

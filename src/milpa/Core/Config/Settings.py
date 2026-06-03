@@ -3,6 +3,8 @@ de verdad de secretos/config por-entorno; infraestructura va SIN default
 (obligatoria) para fallar claro si falta.
 """
 
+from __future__ import annotations
+
 from typing import Self
 
 from pydantic import AliasChoices, Field, model_validator
@@ -76,7 +78,7 @@ class Settings(BaseSettings):
     # no se pasa locale explícito. Override en .env con APP_FALLBACK_LOCALE.
     app_fallback_locale: str = "es"
     # Locale de Faker para factories/seeders (datos falsos). Configurable: "es_MX", "es_ES",
-    # "en_US", … (cualquier locale de Faker). Lo usa app/Core/Database/Faker.
+    # "en_US", … (cualquier locale de Faker). Lo usa milpa.Core.Database.Faker.
     faker_locale: str = "es_MX"
     # Default = zona del HOST (no la imponemos). El dev/devops DEBE fijar TIMEZONE en .env.
     timezone: str = Field(default_factory=_host_timezone)
@@ -144,6 +146,28 @@ class Settings(BaseSettings):
     jwt_secret: str = ""  # HS256: OBLIGATORIO para emitir/validar los JWT propios
     jwt_algorithm: str = "HS256"
     jwt_ttl_seconds: int = 3600  # vigencia del JWT (1 h)
+    # Tenet "nunca falla en silencio": una ability sin @policy registrada se DENIEGA (seguro)
+    # y se LOGUEA (WARNING). Con esto en True (dev/test), TRUENA en su lugar — para cazar el
+    # olvido del @policy o del discovery de inmediato. Default False (secure en prod).
+    auth_strict_abilities: bool = False
+    # Igual para los Observers: un observer que falla se loguea ruidoso (best-effort). Con esto
+    # en True (dev/test), RE-LANZA — para que el bug del observer truene fuerte. Default False.
+    events_strict: bool = False
+
+    # --- Rate limiting (SlowAPI) ---
+    # Activa los @rate_limit declarados. En False, TODOS son no-op (útil para tests/local).
+    rate_limit_enabled: bool = True
+    # Límite GLOBAL opcional aplicado a toda la app (p. ej. "200/minute"). Vacío = sin global;
+    # solo cuentan los @rate_limit por-ruta.
+    rate_limit_default: str = ""
+    # Backend de conteo: "memory://" (por-proceso, default) o "redis://host:6379" en prod
+    # multi-worker (memoria NO se comparte entre workers; ahí el límite se multiplica por worker).
+    rate_limit_storage_uri: str = "memory://"
+    # X-RateLimit-* + Retry-After en las respuestas. Default OFF (la estilo milpa: endpoints limpios):
+    # SlowAPI EXIGE un `response: Response` en cada handler limitado para inyectarlos, y nosotros
+    # devolvemos dicts. Actívalo solo si añades `response: Response` a tus rutas limitadas; entonces
+    # el 429 también sale con headers completos.
+    rate_limit_headers: bool = False
 
     # --- Cookies ---
     # Prefijo de TODAS las cookies de la app (sesión, CSRF). Si los nombres de abajo se

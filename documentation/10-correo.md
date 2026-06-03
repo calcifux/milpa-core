@@ -5,18 +5,18 @@ correo es" (asunto, template, contexto, adjuntos) y la facade `Mail` lo envía, 
 o encolado.
 
 ```python
-from app.Core.Mail import Mail
+from milpa.Core.Mail import Mail
 Mail.send(WelcomeMailable(name="Calcifux"), to=["calcifux@example.com"])
 ```
 
 ## Anatomía: `Mailable` + `MailContent`
 
-Un Mailable hereda de la ABC `Mailable` (`app/Core/Mail/Mailable.py`) e implementa
+Un Mailable hereda de la ABC `Mailable` (`milpa/Core/Mail/Mailable.py`) e implementa
 `build()`, que devuelve un `MailContent`:
 
 ```python
-from app.Core.Mail.Mailable import Mailable, MailContent
-from app.Core.Translate import t, current_locale
+from milpa.Core.Mail.Mailable import Mailable, MailContent
+from milpa.Core.Translate import t, current_locale
 
 class WelcomeMailable(Mailable):
     def __init__(self, name: str):
@@ -79,7 +79,7 @@ Si el broker está caído, `Mail.queue` lanza `QueueUnavailableError` (un mensaj
 no un 500 técnico). En un endpoint conviene traducirlo a un 503:
 
 ```python
-from app.Core.CeleryApp import QueueUnavailableError
+from milpa.Core.CeleryApp import QueueUnavailableError
 
 try:
     Mail.queue(mailable, to=to, init_kwargs={...})
@@ -105,7 +105,7 @@ generan en el worker.
 Sin tocar disco, sin cleanup:
 
 ```python
-from app.Core.Mail.Mailable import DataAttachment
+from milpa.Core.Mail.Mailable import DataAttachment
 
 content.data_attachments.append(
     DataAttachment("reporte.pdf", pdf_bytes, "application/pdf")

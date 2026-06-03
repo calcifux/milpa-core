@@ -1,6 +1,6 @@
 # Ciclo de vida de la petición
 
-El corazón HTTP de milpa es la fábrica `create_app()` en `app/Core/Http/Http.py`. Es el
+El corazón HTTP de milpa es la fábrica `create_app()` en `milpa/Core/Http/Http.py`. Es el
 equivalente al bootstrap de Laravel: arma la app de FastAPI, monta middlewares,
 descubre los módulos y fija el ciclo de vida.
 
@@ -25,7 +25,7 @@ Es una **app factory**: uvicorn la llama con `--factory`, así cada arranque con
 instancia fresca (necesario para `--reload`).
 
 ```bash
-uv run python jornal serve            # = uvicorn app.Core.Http.Http:create_app --factory ...
+uv run python jornal serve            # = uvicorn milpa.Core.Http.Http:create_app --factory ...
 ```
 
 ## Lifespan (arranque y apagado)
@@ -57,7 +57,7 @@ Es **async a propósito**: una dependency sync correría en un threadpool distin
 
 ## Middlewares
 
-`app/Core/Http/Middleware.py` → `register_middlewares(app)`. Cada middleware se monta
+`milpa/Core/Http/Middleware.py` → `register_middlewares(app)`. Cada middleware se monta
 **solo si su setting lo activa** (defaults seguros: nada de más):
 
 | Middleware | Se monta si… | Settings |

@@ -7,7 +7,7 @@ respuesta en vez de re-lanzar la excepción dentro del test.
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 from milpa.Core.Errors import ConflictError, DomainError, ResourceNotFoundError
@@ -38,6 +38,10 @@ def _client() -> TestClient:
     @app.get("/_test/validate")
     def _validate(n: int) -> dict[str, int]:  # n inválido => 422 de Pydantic
         return {"n": n}
+
+    @app.get("/_test/http-error")
+    def _http_error() -> dict[str, str]:  # HTTPException de Starlette => problem+json
+        raise HTTPException(status_code=401, detail="API key inválida")
 
     return TestClient(app, raise_server_exceptions=False)
 
@@ -89,8 +93,8 @@ def test_validation_error_is_problem_json_grouped_by_field() -> None:
 
 
 def test_http_exception_is_normalized_to_problem_json() -> None:
-    # El 401 de require_api_key (HTTPException) AHORA también sale en problem+json.
-    response = _client().get("/example/secured/ping")
+    # Una HTTPException de Starlette (p. ej. un 401 de un guard) AHORA sale en problem+json.
+    response = _client().get("/_test/http-error")
     assert response.status_code == 401
     assert response.headers["content-type"] == "application/problem+json"
     body = response.json()

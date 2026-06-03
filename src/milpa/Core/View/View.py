@@ -23,7 +23,11 @@ Reglas:
 
 from __future__ import annotations
 
-from fastapi.responses import HTMLResponse
+from typing import Any
+
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import HTMLResponse, JSONResponse, Response
+from starlette.requests import Request
 
 from milpa.Core.View.TemplateEngine import template_engine
 
@@ -36,3 +40,43 @@ def view(template: str, context: dict[str, object] | None = None) -> HTMLRespons
     """
     name = template if template.endswith(".html.j2") else f"{template}.html.j2"
     return HTMLResponse(template_engine.render(name, context or {}))
+
+
+def prefers_html(request: Request) -> bool:
+    """¿El cliente prefiere HTML sobre JSON? (negociación de contenido por `Accept`).
+
+    Heurística KISS por POSICIÓN (no parsea q-values completos, suficiente en la práctica): hay
+    HTML solo si `text/html` está presente Y (no hay `application/json` O `text/html` aparece
+    antes). Un navegador manda `text/html,...` primero → HTML; un fetch con `application/json` o un
+    cliente con `*/*` (curl) → JSON. Así una sola ruta sirve los dos carriles con buenos defaults.
+    """
+    accept = request.headers.get("accept", "").lower()
+    if "text/html" not in accept:
+        return False
+    if "application/json" not in accept:
+        return True
+    return accept.index("text/html") < accept.index("application/json")
+
+
+def negotiate(
+    request: Request,
+    data: Any,
+    template: str,
+    *,
+    context: dict[str, object] | None = None,
+    data_key: str = "data",
+) -> Response:
+    """Negociación de contenido (≈ DRF): MISMA ruta, HTML o JSON según `Accept`.
+
+    Si el cliente prefiere HTML (`prefers_html`), renderiza `template` con `data` bajo `data_key`
+    (+ `context` extra); si no, devuelve `data` como JSON (`jsonable_encoder`, soporta Pydantic/
+    dataclasses/dict). Evita duplicar la lógica en dos controllers cuando una ruta sirve ambos.
+
+        @Get("/notes")
+        def notes(self, request: Request) -> Response:
+            data = [note_dict(n) for n in NoteRepository().all()]
+            return negotiate(request, data, "demo/notes", data_key="notes")
+    """
+    if prefers_html(request):
+        return view(template, {data_key: data, **(context or {})})
+    return JSONResponse(jsonable_encoder(data))

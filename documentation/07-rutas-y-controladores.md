@@ -34,7 +34,7 @@ con `@Get/@Post/@Put/@Patch/@Delete` sobre los métodos. Se auto-monta igual que
 **convive** con el estilo función de arriba:
 
 ```python
-from app.Core.Http import Controller, Get, Post
+from milpa.Core.Http import Controller, Get, Post
 
 @Controller("/cats", tags=["cats"])
 class CatsController:
@@ -59,7 +59,7 @@ Para devolver HTML (Jinja2) en vez de JSON, usa el helper `view()`:
 
 ```python
 from fastapi.responses import HTMLResponse
-from app.Core.View import view
+from milpa.Core.View import view
 
 @router.get("/welcome", response_class=HTMLResponse)
 def welcome() -> HTMLResponse:
@@ -112,10 +112,10 @@ def secured_ping() -> dict[str, str]:
 ### Con tokens OAuth2 de Passport
 
 Si migras desde Laravel y validas tokens de Passport, usa las dependencies de
-`app/Core/Auth`. Ver [Autenticación](15-autenticacion.md):
+`milpa/Core/Auth`. Ver [Autenticación](15-autenticacion.md):
 
 ```python
-from app.Core.Auth import get_current_token, require_scopes, TokenPrincipal
+from milpa.Core.Auth import get_current_token, require_scopes, TokenPrincipal
 
 @router.get("/profile")
 def profile(principal: TokenPrincipal = Depends(get_current_token)) -> dict:
@@ -138,13 +138,13 @@ Prefiere **por router** para que la lógica quede dentro del módulo (extraíble
 ## Manejo de errores (RFC 9457 — Problem Details)
 
 No traduzcas a mano cada error de negocio a `HTTPException` en el controller. Lanza un
-**error de dominio** (`app/Core/Errors`) desde donde ocurra (service, repository) y un
-**handler global** (`app/Core/Http/ExceptionHandler.py`, ya montado por `create_app`) lo
+**error de dominio** (`milpa/Core/Errors`) desde donde ocurra (service, repository) y un
+**handler global** (`milpa/Core/Http/ExceptionHandler.py`, ya montado por `create_app`) lo
 convierte al sobre JSON **estándar de la industria**: [RFC 9457 *Problem Details*](https://www.rfc-editor.org/rfc/rfc9457)
 (`application/problem+json`).
 
 ```python
-from app.Core.Errors import ResourceNotFoundError, DomainError
+from milpa.Core.Errors import ResourceNotFoundError, DomainError
 
 # En un service / repository (NO lo atrapes en el controller):
 raise ResourceNotFoundError("La compañía 7 no existe", details={"id": 7})

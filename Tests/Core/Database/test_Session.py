@@ -5,6 +5,8 @@ Cubre: el offset de zona, y que la sentencia de zona de sesión se elija POR DIA
 ejecución real contra Postgres/Oracle se valida aparte (no hay esos motores en CI).
 """
 
+from __future__ import annotations
+
 import re
 
 from milpa.Core.Database.Session import _app_timezone_offset, _set_timezone_statement

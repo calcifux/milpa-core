@@ -11,7 +11,7 @@ from decimal import Decimal
 from sqlalchemy import String, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.Core.Database import Base, TimestampMixin, SoftDeleteMixin
+from milpa.Core.Database import Base, TimestampMixin, SoftDeleteMixin
 
 class Invoice(TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "invoices"
@@ -21,7 +21,7 @@ class Invoice(TimestampMixin, SoftDeleteMixin, Base):
     monto: Mapped[Decimal] = mapped_column(Numeric(12, 2))
 ```
 
-`Base` (de `app/Core/Database`) es la `DeclarativeBase` del proyecto. Trae una
+`Base` (de `milpa/Core/Database`) es la `DeclarativeBase` del proyecto. Trae una
 `naming_convention` estable para índices/constraints (migraciones Alembic reproducibles).
 
 ## Auto-discovery

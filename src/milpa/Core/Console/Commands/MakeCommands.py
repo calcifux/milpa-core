@@ -31,6 +31,17 @@ def _write(path: Path, content: str) -> None:
     typer.echo(f"✓ creado: {path}")
 
 
+def _ensure_pkg(directory: Path) -> None:
+    """Crea el __init__.py de la carpeta de convención si falta (idempotente, NO aborta).
+    Así Observers/, Handlers/, Pipes/, ... son paquetes y el discovery los importa."""
+    init = directory / "__init__.py"
+    if init.exists():
+        return
+    directory.mkdir(parents=True, exist_ok=True)
+    init.write_text(f'"""{directory.name} del módulo."""\n', encoding="utf-8")
+    typer.echo(f"✓ creado: {init}")
+
+
 def controller_stub(name: str) -> str:
     """Stub de un controller class-based (estilo Spring)."""
     slug = name.lower()
@@ -62,11 +73,336 @@ def model_stub(name: str) -> str:
     )
 
 
+def observer_stub(name: str) -> str:
+    """Stub de un Observer (+ su evento) — patrón opt-in Events (estilo Laravel Listener)."""
+    return (
+        f'"""Observer {name}: reacciona a un evento de aplicación (se auto-descubre)."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from dataclasses import dataclass\n\n"
+        "from milpa.Core.Events import Observer\n\n\n"
+        "@dataclass(frozen=True)\n"
+        f"class {name}Event:\n"
+        '    """El hecho ocurrido. Campos = primitivos planos (viajan al worker si hay broker)."""\n\n'
+        "    # TODO: agrega los datos del evento, p. ej.:\n"
+        "    # entity_id: int\n\n\n"
+        f"class {name}Observer(Observer):\n"
+        f"    observes = {name}Event\n\n"
+        f"    def handle(self, event: {name}Event) -> None:\n"
+        "        # TODO: reacciona aquí. Corre sobre el broker si hay; si no, síncrono.\n"
+        "        ...\n"
+    )
+
+
+def handler_stub(name: str) -> str:
+    """Stub de un command handler — patrón opt-in Mediator (un caso de uso = un archivo)."""
+    return (
+        f'"""Handler {name}: un caso de uso (comando + handler), se resuelve con Mediator.send."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from dataclasses import dataclass\n\n"
+        "from milpa.Core.Mediator import handles\n\n\n"
+        "@dataclass(frozen=True)\n"
+        f"class {name}:\n"
+        '    """El comando = la intención. Campos = primitivos."""\n\n'
+        "    # TODO: agrega los parámetros del comando, p. ej.:\n"
+        "    # entity_id: int\n\n\n"
+        f"@handles({name})\n"
+        f"class {name}Handler:\n"
+        f"    def handle(self, command: {name}) -> object:\n"
+        "        # TODO: ejecuta el caso de uso y devuelve el resultado.\n"
+        "        ...\n"
+    )
+
+
+def repository_stub(model: str) -> str:
+    """Stub de un Repository[Model, Id] (CRUD tipado)."""
+    return (
+        f'"""Repositorio de {model}: CRUD tipado heredado de Repository[Model, Id]."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from milpa.Core.Database import Repository\n\n"
+        f"from app.Models.{model} import {model}\n\n\n"
+        f"class {model}Repository(Repository[{model}, int]):\n"
+        f"    model = {model}\n"
+    )
+
+
+def pipe_stub(name: str) -> str:
+    """Stub de un Pipe (etapa de un Pipeline)."""
+    return (
+        f'"""Pipe {name}: una etapa de un Pipeline. Transforma `passable` y sigue, o corta."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from collections.abc import Callable\n"
+        "from typing import Any\n\n\n"
+        f"class {name}:\n"
+        "    def handle(self, passable: Any, next: Callable[[Any], Any]) -> Any:  # noqa: A002\n"
+        "        # TODO: transforma `passable`; llama next(passable) para seguir, o NO lo llames para cortar.\n"
+        "        return next(passable)\n"
+    )
+
+
+def mailable_stub(name: str) -> str:
+    """Stub de un Mailable (build() -> MailContent)."""
+    return (
+        f'"""Mailable {name}: arma un correo (build() -> MailContent)."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from milpa.Core.Mail import Mailable, MailContent\n\n\n"
+        f"class {name}Mailable(Mailable):\n"
+        "    def __init__(self, name: str) -> None:\n"
+        "        self._name = name\n\n"
+        "    def build(self) -> MailContent:\n"
+        "        # TODO: subject / template (vista Jinja) / context de tu correo.\n"
+        "        return MailContent(\n"
+        '            subject=f"Hola {self._name}",\n'
+        '            template="TODO/mi_correo.html.j2",\n'
+        '            context={"name": self._name},\n'
+        "        )\n"
+    )
+
+
+def job_stub(module: str, name: str) -> str:
+    """Stub de un Job de background on-demand (`@job` + `.dispatch()`, estilo milpa)."""
+    func = name.lower()
+    return (
+        f'"""Job {name}: corre en el worker (background). Dispáralo con {func}.dispatch(...)."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from milpa.Core.Jobs import job\n\n\n"
+        f'@job(name="{module.lower()}.{func}")\n'
+        f"def {func}() -> None:\n"
+        "    # TODO: el trabajo en background (lo corre `queue work`). Despáchalo desde tu código:\n"
+        f"    #     {func}.dispatch()        # encola (broker_guard: 503 limpio si el broker cae)\n"
+        "    ...\n"
+    )
+
+
+def service_stub(name: str) -> str:
+    """Stub de un Service: un caso de uso en UNA transacción (@transactional), que serializa a
+    dict ANTES del commit (estilo NoteService) para no chocar con DetachedInstanceError."""
+    return (
+        f'"""Servicio {name}: un caso de uso en UNA transacción. Serializa a dict ANTES del\n'
+        'commit (para no chocar con expire_on_commit / DetachedInstanceError)."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from typing import Any\n\n"
+        "from milpa.Core.Database import current_session, transactional\n\n\n"
+        f"class {name}Service:\n"
+        "    @transactional\n"
+        "    def handle(self) -> dict[str, Any]:\n"
+        "        # TODO: carga/muta el recurso vía current_session(); usa .flush() para asignar PK.\n"
+        "        _ = current_session\n"
+        "        # Serializa ANTES del commit (devuelve un dict JSON-able):\n"
+        "        return {}\n"
+    )
+
+
+def policy_stub(name: str) -> str:
+    """Stub de una Policy (ABAC) auto-registrada con `@policy` (estilo milpa)."""
+    slug = name.lower()
+    return (
+        f'"""Policy {name}: abilities ABAC `(user, resource) -> bool`, auto-registradas con @policy.\n\n'
+        "Se auto-descubren: `import_all_policies()` importa esta carpeta al arranque y cada `@policy`\n"
+        "registra su ability en el Gate. Adiós a `register_policies()` manual (que se olvidaba y\n"
+        "dejaba el Gate fallando en silencio).\n"
+        '"""\n\n'
+        "from __future__ import annotations\n\n"
+        "from typing import Any\n\n"
+        "from milpa.Core.Auth import Authenticatable, policy\n\n\n"
+        f'@policy("{slug}.update")\n'
+        f"def can_update_{slug}(user: Authenticatable | None, {slug}: Any) -> bool:\n"
+        f'    """¿`user` puede actualizar el `{slug}`? (dueño y/o rol)."""\n'
+        "    if user is None:\n"
+        "        return False\n"
+        "    # TODO: cruza un ATRIBUTO del recurso con el user, p. ej.:\n"
+        f'    # return getattr({slug}, "owner_id", None) == user.get_auth_identifier()\n'
+        "    return False\n"
+    )
+
+
+def seeder_stub(name: str) -> str:
+    """Stub de un Seeder (subclase de Seeder con run()). Se auto-descubre por import_all_seeders."""
+    return (
+        f'"""Seeder {name}: puebla la BD con datos iniciales/demo (se auto-descubre). '
+        'La IDEMPOTENCIA es tu responsabilidad: revisa si el dato ya existe antes de crearlo."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from milpa.Core.Database import current_session\n"
+        "from milpa.Core.Database.Seeder import Seeder\n\n\n"
+        f"class {name}Seeder(Seeder):\n"
+        "    def run(self) -> None:\n"
+        "        # TODO: siembra tus datos aquí (corre dentro de su propia transacción).\n"
+        "        # Idempotencia: revisa si ya existe antes de crear.\n"
+        "        _ = current_session\n"
+        "        ...\n"
+    )
+
+
+def factory_stub(model: str) -> str:
+    """Stub de una Factory[Model] (datos por default con Faker)."""
+    return (
+        f'"""Factory de {model}: construye/persiste {model} con datos por default (Faker)."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from typing import Any\n\n"
+        "from milpa.Core.Database import Factory\n\n"
+        f"from app.Models.{model} import {model}\n\n\n"
+        f"class {model}Factory(Factory[{model}]):\n"
+        f"    model = {model}\n\n"
+        "    def definition(self) -> dict[str, Any]:\n"
+        "        # TODO: atributos por default. Para Faker instala `uv add faker` y, p. ej.:\n"
+        "        #   from milpa.Core.Database.Faker import faker\n"
+        '        #   return {"name": faker.name(), "email": faker.unique.email()}\n'
+        "        return {}\n"
+    )
+
+
+def serializer_stub(name: str) -> str:
+    """Stub de un Serializer: una función modelo → dict JSON-able (estilo *_dict del demo)."""
+    obj = name.lower()
+    return (
+        f'"""Serializer de {name}: modelo → dict JSON-able. Llámalo MIENTRAS la sesión sigue\n'
+        'abierta (en writes @transactional, antes del commit)."""\n\n'
+        "from __future__ import annotations\n\n"
+        "from typing import Any\n\n"
+        f"from app.Models.{name} import {name}\n\n\n"
+        f"def {obj}_dict({obj}: {name}) -> dict[str, Any]:\n"
+        "    # TODO: agrega los campos a exponer, p. ej.:\n"
+        f'    # return {{"id": {obj}.id, "name": {obj}.name}}\n'
+        f'    return {{"id": {obj}.id}}\n'
+    )
+
+
+def view_stub(module: str, name: str) -> str:
+    """Stub de una vista Jinja: extiende el layout del módulo (namespacing por '/')."""
+    ns = module.lower()
+    return (
+        '{% extends "' + ns + '/layout.html.j2" %}\n'
+        "{% block title %}" + name + " · {{ app_name }}{% endblock %}\n"
+        "{% block content %}\n"
+        "<h2>" + name + "</h2>\n"
+        '{# TODO: tu contenido. La vista se resuelve como "' + ns + "/" + name + '". #}\n'
+        "{% endblock %}\n"
+    )
+
+
+def lang_stub(module: str, file: str, locale: str) -> str:
+    """Stub de un catálogo de traducciones YAML (un locale) para un módulo.
+
+    Convención carpeta-prefijo de I18n: vive en `Resources/Lang/<module-lower>/<file>.<locale>.yml`,
+    así la key en código es `t("<module-lower>/<file>.<key>")`. Placeholders i18nice: `%{name}`.
+    """
+    example = "Hola desde el módulo " + module if locale == "es" else f"Hello from the {module} module"
+    return (
+        f"# Traducciones {locale.upper()} del módulo {module}.\n"
+        f'# Key en código: t("{module.lower()}/{file}.hello")  (folder-prefijo = namespace).\n'
+        f"{locale}:\n"
+        f'  hello: "{example}"\n'
+        "  # TODO: agrega tus claves; placeholders con %{name}, p. ej.:\n"
+        '  # welcome: "Bienvenido %{name}"\n'
+    )
+
+
 @console_command(
     name="controller", group="make", help="Crea un controller class-based en un módulo. (≈ php artisan make:controller)"
 )
 def make_controller(module: str, name: str) -> None:
-    _write(_app_dir() / "Modules" / module / "Http" / f"{name}Controller.py", controller_stub(name))
+    target = _app_dir() / "Modules" / module / "Http" / f"{name}Controller.py"
+    _ensure_pkg(target.parent)
+    _write(target, controller_stub(name))
+
+
+@console_command(name="observer", group="make", help="Crea un Observer (+ su evento) en un módulo. (≈ make:observer)")
+def make_observer(module: str, name: str) -> None:
+    target = _app_dir() / "Modules" / module / "Observers" / f"{name}Observer.py"
+    _ensure_pkg(target.parent)
+    _write(target, observer_stub(name))
+
+
+@console_command(name="handler", group="make", help="Crea un command handler (Mediator) en un módulo. (≈ make:handler)")
+def make_handler(module: str, name: str) -> None:
+    target = _app_dir() / "Modules" / module / "Handlers" / f"{name}Handler.py"
+    _ensure_pkg(target.parent)
+    _write(target, handler_stub(name))
+
+
+@console_command(name="repository", group="make", help="Crea un Repository[Model,Id] en un módulo. (≈ make:repository)")
+def make_repository(module: str, model: str) -> None:
+    target = _app_dir() / "Modules" / module / "Repositories" / f"{model}Repository.py"
+    _ensure_pkg(target.parent)
+    _write(target, repository_stub(model))
+
+
+@console_command(name="pipe", group="make", help="Crea un Pipe (etapa de Pipeline) en un módulo. (≈ make:pipe)")
+def make_pipe(module: str, name: str) -> None:
+    target = _app_dir() / "Modules" / module / "Pipes" / f"{name}.py"
+    _ensure_pkg(target.parent)
+    _write(target, pipe_stub(name))
+
+
+@console_command(name="mailable", group="make", help="Crea un Mailable en un módulo. (≈ php artisan make:mail)")
+def make_mailable(module: str, name: str) -> None:
+    target = _app_dir() / "Modules" / module / "Mail" / f"{name}Mailable.py"
+    _ensure_pkg(target.parent)
+    _write(target, mailable_stub(name))
+
+
+@console_command(name="job", group="make", help="Crea un Job de Celery en un módulo. (≈ php artisan make:job)")
+def make_job(module: str, name: str) -> None:
+    target = _app_dir() / "Modules" / module / "Jobs" / f"{name}.py"
+    _ensure_pkg(target.parent)
+    _write(target, job_stub(module, name))
+
+
+@console_command(
+    name="service", group="make", help="Crea un Service (caso de uso, @transactional) en un módulo. (≈ make:service)"
+)
+def make_service(module: str, name: str) -> None:
+    target = _app_dir() / "Modules" / module / "Services" / f"{name}Service.py"
+    _ensure_pkg(target.parent)
+    _write(target, service_stub(name))
+
+
+@console_command(name="policy", group="make", help="Crea una Policy (ABAC) en un módulo. (≈ php artisan make:policy)")
+def make_policy(module: str, name: str) -> None:
+    target = _app_dir() / "Modules" / module / "Policies" / f"{name}Policy.py"
+    _ensure_pkg(target.parent)
+    _write(target, policy_stub(name))
+
+
+@console_command(name="seeder", group="make", help="Crea un Seeder en un módulo. (≈ php artisan make:seeder)")
+def make_seeder(module: str, name: str) -> None:
+    target = _app_dir() / "Modules" / module / "Seeders" / f"{name}Seeder.py"
+    _ensure_pkg(target.parent)
+    _write(target, seeder_stub(name))
+
+
+@console_command(
+    name="factory", group="make", help="Crea una Factory[Model] (Faker) en un módulo. (≈ php artisan make:factory)"
+)
+def make_factory(module: str, model: str) -> None:
+    target = _app_dir() / "Modules" / module / "Factories" / f"{model}Factory.py"
+    _ensure_pkg(target.parent)
+    _write(target, factory_stub(model))
+
+
+@console_command(
+    name="serializer", group="make", help="Crea un Serializer (modelo → dict) en un módulo. (≈ make:resource)"
+)
+def make_serializer(module: str, name: str) -> None:
+    target = _app_dir() / "Modules" / module / "Serializers" / f"{name}Serializer.py"
+    _ensure_pkg(target.parent)
+    _write(target, serializer_stub(name))
+
+
+@console_command(name="view", group="make", help="Crea una vista Jinja en un módulo. (≈ php artisan make:view)")
+def make_view(module: str, name: str) -> None:
+    # Recurso de PATH (no es paquete Python): NO _ensure_pkg, solo _write.
+    target = _app_dir() / "Modules" / module / "Resources" / "Views" / f"{name}.html.j2"
+    _write(target, view_stub(module, name))
+
+
+@console_command(
+    name="lang", group="make", help="Crea un catálogo de traducciones (.es.yml + .en.yml) en un módulo. (≈ make:lang)"
+)
+def make_lang(module: str, file: str) -> None:
+    base = _app_dir() / "Modules" / module / "Resources" / "Lang" / module.lower()
+    # Recurso de PATH (i18nice lee YAML por carpeta), NO un paquete Python → sin _ensure_pkg.
+    _write(base / f"{file}.es.yml", lang_stub(module, file, "es"))
+    _write(base / f"{file}.en.yml", lang_stub(module, file, "en"))
 
 
 @console_command(name="model", group="make", help="Crea un modelo SQLAlchemy en app/Models. (≈ php artisan make:model)")

@@ -29,9 +29,11 @@ auth (Fase D: `@Authenticated`/`@Roles`/`@Can`) anexan dependencies a la misma m
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from enum import Enum
 from typing import Any, TypeVar
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from starlette.requests import Request
 
 # Atributos donde se cuelga la metadata: en la FUNCIÓN (la ruta) y en la CLASE (el router armado).
 ROUTE_ATTR = "__milpa_route__"
@@ -46,7 +48,7 @@ def _route_meta(func: Callable[..., Any]) -> dict[str, Any]:
     `dependencies` lo rellenan también los decoradores de auth."""
     meta: dict[str, Any] | None = func.__dict__.get(ROUTE_ATTR)
     if meta is None:
-        meta = {"methods": [], "path": "/", "kwargs": {}, "dependencies": []}
+        meta = {"methods": [], "path": "/", "kwargs": {}, "dependencies": [], "wrappers": []}
         func.__dict__[ROUTE_ATTR] = meta
     return meta
 
@@ -80,25 +82,62 @@ def add_route_dependency(func: Callable[..., Any], dependency: Any) -> None:
     _route_meta(func)["dependencies"].append(dependency)
 
 
+def add_route_wrapper(func: Callable[..., Any], wrapper: Callable[[Callable[..., Any]], Callable[..., Any]]) -> None:
+    """Marca un decorador que el `@Controller` aplicará al endpoint YA LIGADO (bound method),
+    no a la función con `self`. Lo necesitan los decoradores que DEBEN envolver el endpoint (no
+    bastan dependencies) y asumen firma función-style — p. ej. SlowAPI en `@rate_limit`: contar
+    `self` le descuadra el índice de `request`; envolver el bound method (firma ya sin `self`) lo
+    arregla. Igual que `add_route_dependency`, no depende del orden de decoradores."""
+    _route_meta(func)["wrappers"].append(wrapper)
+
+
+def _set_api_version(version: str) -> Callable[[Request], None]:
+    """Dependency de router que fija la versión de API de la ruta en `request.state`."""
+
+    def dependency(request: Request) -> None:
+        request.state.api_version = version
+
+    return dependency
+
+
+def api_version(request: Request) -> str | None:
+    """La versión de API de la ruta actual (la del `@Controller(version=...)`), o `None` si la
+    ruta no está versionada. Útil para ramificar o marcar deprecación dentro del handler.
+    Úsalo con `Annotated[str | None, Depends(api_version)]` o `api_version(request)`."""
+    return getattr(request.state, "api_version", None)
+
+
 def Controller(
     prefix: str = "",
     *,
     tags: Sequence[str] | None = None,
     dependencies: Sequence[Any] | None = None,
+    version: str | None = None,
 ) -> Callable[[C], C]:
     """Convierte una clase en un `APIRouter` auto-montable (≈ `@RestController` de Spring).
 
     `prefix`/`tags`/`dependencies` aplican a TODO el router (las `dependencies` corren antes de
     cada ruta, como un middleware del controller). El router queda en `cls.__milpa_router__` y el
     Registry lo descubre; la clase sigue siendo una clase usable.
+
+    `version` (p. ej. `"v1"`) versiona la API por URL-path: el prefijo pasa a `/{version}{prefix}`
+    (ej. `/v1/notes`), se agrega a los tags (Swagger agrupa por versión) y queda accesible en el
+    handler vía `api_version(request)`. Evolucionas la API sin romper clientes (= DRF versioning).
     """
 
     def decorator(cls: C) -> C:
         instance = cls()  # singleton del proceso (stateless o auto-construye sus deps)
+        effective_prefix = f"/{version}{prefix}" if version else prefix
+        router_tags: list[str | Enum] = [*tags] if tags is not None else []
+        router_dependencies: list[Any] = [*dependencies] if dependencies is not None else []
+        if version:
+            if version not in router_tags:
+                router_tags.append(version)  # Swagger agrupa por versión
+            router_dependencies.append(Depends(_set_api_version(version)))
         router = APIRouter(
-            prefix=prefix,
-            tags=list(tags) if tags is not None else None,
-            dependencies=list(dependencies) if dependencies is not None else None,
+            prefix=effective_prefix,
+            tags=router_tags or None,
+            dependencies=router_dependencies or None,
         )
         # Recorre los métodos en orden de definición; registra los marcados con un verbo.
         for name, attribute in list(vars(cls).items()):
@@ -106,6 +145,10 @@ def Controller(
             if meta is None:
                 continue
             endpoint = getattr(instance, name)  # bound method: self ya resuelto
+            # Decoradores que DEBEN envolver (p. ej. SlowAPI): se aplican AQUÍ, sobre el bound
+            # method (firma ya sin `self`), no en el cuerpo de la clase. Ver add_route_wrapper.
+            for wrapper in meta["wrappers"]:
+                endpoint = wrapper(endpoint)
             route_kwargs = dict(meta["kwargs"])
             extra_dependencies = meta["dependencies"]
             if extra_dependencies:

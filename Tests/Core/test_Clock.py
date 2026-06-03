@@ -1,5 +1,7 @@
 """Unit tests del reloj de la app (sin BD). Espeja app/Core/Clock.py."""
 
+from __future__ import annotations
+
 from datetime import datetime
 
 from milpa.Core.Clock import FixedClock, SystemClock

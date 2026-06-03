@@ -16,3 +16,5 @@ class Note(TimestampMixin, Base):
     title: Mapped[str] = mapped_column(default="")
     body: Mapped[str] = mapped_column(default="")
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    # Archivado lógico (lo alterna el comando ArchiveNote vía [[Mediator]]); por default activa.
+    archived: Mapped[bool] = mapped_column(default=False)

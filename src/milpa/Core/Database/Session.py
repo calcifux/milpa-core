@@ -11,6 +11,8 @@ El acceso a la sesión va por la sesión AMBIENTE (`Transactional`): `@transacti
 (commit/rollback) o `session_scope` (manual); los repos la toman con `current_session()`.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo

@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from milpa.Core.Database.Base import Base
 from milpa.Core.Database.Factory import Factory
-from milpa.Core.Database.Repository import Page, Repository
+from milpa.Core.Database.Filtering import FilterQueryModel
+from milpa.Core.Database.Repository import CursorPage, Page, Repository
 from milpa.Core.Database.Session import SessionLocal, engine
 from milpa.Core.Database.SoftDelete import SoftDeleteMixin
 from milpa.Core.Database.Timestamp import TimestampMixin
@@ -8,7 +11,9 @@ from milpa.Core.Database.Transactional import auto_session, current_session, ses
 
 __all__ = [
     "Base",
+    "CursorPage",
     "Factory",
+    "FilterQueryModel",
     "Page",
     "Repository",
     "SessionLocal",

@@ -8,7 +8,7 @@ detrás de una estructura opinada y un kernel reutilizable.
 Esta documentación está pensada para leerse en orden, como la de Laravel: empieza por
 "Primeros pasos", luego "Conceptos de arquitectura", y profundiza por tema.
 
-> Filosofía en una línea: el kernel (`app/Core`) es el framework; lo tuyo vive en
+> Filosofía en una línea: el kernel (`milpa/Core`) es el framework; lo tuyo vive en
 > `app/Modules`, `app/Models`, `app/Dictionaries` y `app/Resources`. Tú escribes
 > features; el framework descubre y conecta solo.
 

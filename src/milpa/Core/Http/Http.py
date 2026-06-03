@@ -21,8 +21,17 @@ from milpa.Core.Config import settings
 from milpa.Core.Database import Base, engine
 from milpa.Core.Http.ExceptionHandler import register_exception_handlers
 from milpa.Core.Http.Middleware import register_middlewares
+from milpa.Core.Http.RateLimit import register_rate_limit
 from milpa.Core.Logging import setup_logging
-from milpa.Core.Registry import import_all_models, iter_routers, iter_static_mounts, module_packages
+from milpa.Core.Registry import (
+    import_all_handlers,
+    import_all_models,
+    import_all_observers,
+    import_all_policies,
+    iter_routers,
+    iter_static_mounts,
+    module_packages,
+)
 from milpa.Core.Translate import resolve_accept_language, set_request_locale
 
 
@@ -46,6 +55,12 @@ def _module_names() -> list[str]:
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Registra los modelos compartidos (app.Models) en Base.metadata.
     import_all_models()
+    # Descubre los patrones opt-in de cada módulo: Observers (los dispara Events.dispatch),
+    # Handlers (los resuelve Mediator.send) y Policies (las registra en el Gate, @policy).
+    # Importar != ejecutar: solo llena sus registros; nada corre hasta que el código actúa.
+    import_all_observers()
+    import_all_handlers()
+    import_all_policies()
     # Compartimos BD con esquema legacy: solo crea tablas si se activa explícito.
     if settings.auto_create_tables:
         Base.metadata.create_all(bind=engine)
@@ -73,6 +88,10 @@ def create_app() -> FastAPI:
     # Handlers globales: TODOS los errores (dominio, validación 422, HTTPException, 500)
     # salen en RFC 9457 (application/problem+json), una sola forma para el cliente.
     register_exception_handlers(app)
+
+    # Rate limiting (SlowAPI): expone el limiter en app.state y traduce el 429 a RFC 9457.
+    # Se registra DESPUÉS para que su handler (RateLimitExceeded) gane sobre el de HTTPException.
+    register_rate_limit(app)
 
     # Auto-montaje: cada APIRouter descubierto en Modules/<X>/Http/ se incluye.
     for router in iter_routers():

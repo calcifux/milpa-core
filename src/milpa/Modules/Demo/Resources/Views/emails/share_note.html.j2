@@ -1,0 +1,7 @@
+{# Nota compartida (manual). Extiende el layout firmado COMPARTIDO. #}
+{% extends "Emails/Trans/mastersigned.html.j2" %}
+{% block content %}
+    <h2 style="margin:0 0 12px;">{{ from_name }} te compartió una nota</h2>
+    <h3 style="margin:0 0 8px;">{{ title }}</h3>
+    <p style="white-space: pre-wrap;">{{ body }}</p>
+{% endblock %}

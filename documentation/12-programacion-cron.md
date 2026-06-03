@@ -11,7 +11,7 @@ Pon el job bajo `Modules/<X>/Jobs/` y decóralo:
 ```python
 # app/Modules/Example/Jobs/SendReminders.py
 from loguru import logger
-from app.Core.Cron import cron_task, every_five_minutes
+from milpa.Core.Cron import cron_task, every_five_minutes
 
 @cron_task(
     name="send_reminders",
@@ -61,7 +61,7 @@ def cron_task(
 
 ## Cadencia: helpers de `Schedule`
 
-En vez de escribir cron raw, usa los helpers (`app/Core/Cron`):
+En vez de escribir cron raw, usa los helpers (`milpa/Core/Cron`):
 
 | Helper | Cron | Laravel |
 |--------|------|---------|
@@ -80,7 +80,7 @@ En vez de escribir cron raw, usa los helpers (`app/Core/Cron`):
 | `cron("expr")` | escape hatch (raw) | `cron()` |
 
 ```python
-from app.Core.Cron import cron_task, daily_at, hourly_at, cron
+from milpa.Core.Cron import cron_task, daily_at, hourly_at, cron
 
 @cron_task(name="backup", schedule=daily_at("02:30"), environments=["production"])
 def backup() -> None: ...

@@ -14,6 +14,8 @@ de forma declarativa: generamos un mixin y listo.
 Los modelos heredan así:  class Invoice(SoftDeleteMixin, Base): ...
 """
 
+from __future__ import annotations
+
 from sqlalchemy_easy_softdelete.mixin import generate_soft_delete_mixin_class
 
 

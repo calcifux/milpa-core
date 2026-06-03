@@ -1,7 +1,7 @@
 # Consola (`jornal`)
 
 `jornal` es el "artisan" de milpa: el entrypoint de consola, en la raíz del proyecto.
-Es un launcher fino; el kernel real vive en `app/Core/Console`.
+Es un launcher fino; el kernel real vive en `milpa/Core/Console`.
 
 ```bash
 uv run python jornal list             # lista TODOS los comandos (= php artisan list)
@@ -29,9 +29,9 @@ Ver [Colas y tareas](11-colas-y-tareas.md) y [Cron](12-programacion-cron.md) par
 
 ## Cómo funciona el descubrimiento
 
-`jornal` solo hace `from app.Core.Console.Cli import app; app()`. Al importar `Cli.py`:
+`jornal` solo hace `from milpa.Core.Console.Cli import app; app()`. Al importar `Cli.py`:
 
-1. Se importan los comandos del framework (`app.Core.Console.Commands`) y los del
+1. Se importan los comandos del framework (`milpa.Core.Console.Commands`) y los del
    proyecto a nivel app (`app.Console.Commands`) con `import_submodules(...)`.
 2. Los decoradores `@console_command` se registran en un registro interno.
 3. `iter_cli_apps()` (del Registry) importa los comandos de cada módulo y arma un
@@ -49,7 +49,7 @@ Pon el archivo bajo `Modules/<X>/Console/Commands/`. El **grupo se deduce del m�
 ```python
 # app/Modules/Billing/Console/Commands/CloseCommand.py
 import typer
-from app.Core.Console import console_command
+from milpa.Core.Console import console_command
 
 @console_command(name="close", help="Cierra el periodo contable.")
 def close_period(period: str = typer.Option(..., "--period", help="YYYY-MM")) -> None:
@@ -69,7 +69,7 @@ que es obligatorio pasarlo:
 
 ```python
 # app/Console/Commands/DbSeedCommand.py
-from app.Core.Console import console_command
+from milpa.Core.Console import console_command
 
 @console_command(name="seed", group="db", help="Carga datos de ejemplo.")
 def db_seed() -> None:

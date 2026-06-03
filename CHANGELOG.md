@@ -7,6 +7,39 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-02
+
+Primer release **publicado a PyPI**. Consolida el paquete instalable (extraído en `0.3.0a0`) con el
+set completo de patrones estilo milpa, la API REST estilo DRF, el demo integral y el manual.
+
+### Added
+
+- **Patrones estilo milpa** (OPT-IN, auto-descubribles): `Events`/`Observers` (1:N, transporte
+  adaptativo worker/síncrono), `Mediator` (command bus 1:1, transport-neutral HTTP+CLI) y `Pipeline`
+  (modelo cebolla). No impuestos: patrones que un arquitecto puede sugerir.
+- **Background**: `@job` (on-demand, `.dispatch()`) separado a propósito de `@cron_task` (agendado).
+- **API REST (estilo DRF)**: versionado (`@Controller(version="v1")`), rate limiting (`@rate_limit`),
+  filtering DSL (`FilterQueryModel`) + paginación por cursor, negociación de contenido (una ruta
+  sirve JSON o HTML según `Accept`) y serializers Pydantic v2 (`computed_field`).
+- **Módulo `Demo`** integral (reemplaza a `Example`): users/notes ejercitando auth dual, RBAC+ABAC,
+  los tres patrones, correos por evento + mailables firmados, y UI HTMX + Alpine + Pico.css.
+- **Manual** ampliado (mkdocs): eventos/observers, mediator, pipeline, jobs, versionado, rate
+  limiting, filtrado/paginación, negociación de contenido, serializadores y errores RFC 9457.
+- **Skeleton del scaffolder**: `.env.example` con sección de correo (`MAIL_DRIVER=log` por default,
+  que imprime en la terminal de `jornal serve`; Mailpit para inbox web) y `docker-compose.yml`
+  (redis + mailpit) para la infra de dev.
+
+### Fixed
+
+- **`milpa new --demo` funciona out-of-the-box**: `faker` se incluye en el grupo dev del proyecto
+  generado y `Core/Database/Faker.py` da un error accionable si falta (las factories/seeders lo
+  necesitan; es dependencia de dev, no de producción).
+
+### Changed
+
+- Heredado de `0.3.0a0`: `DATABASE_URL` con default `sqlite`, `pymysql` movido al extra
+  `milpa[mysql]` (core agnóstico de dialecto), y el paquete importable `app` → `milpa`.
+
 ## [0.3.0a0] - 2026-06-01
 
 Primera versión **INSTALABLE**: milpa se extrae como paquete (`pip install milpa`) con un
@@ -107,6 +140,7 @@ Primera versión: el esqueleto del microframework + auth, demo y herramientas de
 ### Notas
 - Todo es **síncrono** (SQLAlchemy + Celery). Tests **sin base de datos** (fakes + monkeypatch).
 
-[Unreleased]: https://github.com/calcifux/milpa/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/calcifux/milpa/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/calcifux/milpa/compare/v0.2.0...v0.3.1
 [0.2.0]: https://github.com/calcifux/milpa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/calcifux/milpa/releases/tag/v0.1.0

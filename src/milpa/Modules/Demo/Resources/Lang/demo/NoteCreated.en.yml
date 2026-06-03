@@ -1,0 +1,4 @@
+en:
+  subject: "Your note “%{title}” was created"
+  greeting: "Hi!"
+  body: "Your note “%{title}” was saved successfully. Thanks for using %{app_name}."

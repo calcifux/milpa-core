@@ -55,7 +55,7 @@ def send_mail_task(
         self: la Task de Celery (bind=True) — da acceso a `self.request.retries` para
               loguear el intento actual y a la maquinaria de reintentos de `autoretry_for`.
         mailable_class_path: ruta dotted al Mailable concreto
-                             (ej. "milpa.Modules.Example.Mail.MailableCheck.MailableCheck").
+                             (ej. "milpa.Modules.Demo.Mail.ShareNoteMailable.ShareNoteMailable").
         mailable_kwargs: kwargs primitivos para el constructor del Mailable.
         to/cc/bcc: destinatarios.
         locale: locale CAPTURADO al encolar. Lo RESTAURAMOS en el contextvar antes de

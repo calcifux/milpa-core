@@ -3,7 +3,7 @@
 milpa es **monolingüe por default, i18n opt-in**. Una app habla un solo idioma (el
 `APP_FALLBACK_LOCALE`) salvo que decidas traducir. El locale es **ambiente**: se fija en
 la frontera (HTTP) y se lee donde haga falta. Detrás está `i18nice` (fork mantenido de
-`python-i18n`) envuelto en `app/Core/Translate`.
+`python-i18n`) envuelto en `milpa/Core/Translate`.
 
 ## Traducir: `t()`
 
@@ -12,7 +12,7 @@ def t(key: str, variables: dict[str, Any] | None = None, locale: str | None = No
 ```
 
 ```python
-from app.Core.Translate import t
+from milpa.Core.Translate import t
 
 t("Emails/master.welcome_message")                  # usa el locale ambiente
 t("emails.reminder.subject", {"dias": 15})          # con placeholders
@@ -31,7 +31,7 @@ En templates Jinja, `t` es un global: `{{ t("clave", {...}) | safe }}`.
 ## El locale ambiente
 
 ```python
-from app.Core.Translate import current_locale, set_request_locale
+from milpa.Core.Translate import current_locale, set_request_locale
 ```
 
 | Función | Qué hace |

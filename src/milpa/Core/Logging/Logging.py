@@ -2,6 +2,8 @@
 del logging estándar (uvicorn, httpx, celery) vía InterceptHandler.
 """
 
+from __future__ import annotations
+
 import logging
 import sys
 from types import FrameType
@@ -45,7 +47,16 @@ def setup_logging(level: str | None = None, json_file: bool | None = None) -> No
     json_log_file = f"{settings.log_dir}/app.jsonl"
 
     logger.remove()
-    logger.add(sys.stderr, level=level, format=_LOG_FORMAT, enqueue=True)
+    logger.add(
+        sys.stderr,
+        level=level,
+        format=_LOG_FORMAT,
+        enqueue=True,
+        backtrace=True,
+        # diagnose añade los VALORES de las variables al traceback (útil al depurar, pero FUGA
+        # datos —tokens, passwords— en consola). Solo en local; en qa/prod, off (el archivo igual).
+        diagnose=settings.app_env == "local",
+    )
     logger.add(
         text_log_file,
         level=level,

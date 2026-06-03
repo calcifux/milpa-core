@@ -1,0 +1,6 @@
+{# Confirmación al dueño (MULTILINGÜE). Usa t() + el `locale` del evento. Extiende el firmado. #}
+{% extends "Emails/Trans/mastersigned.html.j2" %}
+{% block content %}
+    <h2 style="margin:0 0 12px;">{{ t('demo/NoteCreated.greeting', {}, locale) }}</h2>
+    <p>{{ t('demo/NoteCreated.body', {'title': title}, locale) }}</p>
+{% endblock %}

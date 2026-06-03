@@ -4,7 +4,7 @@ Es lo que hace seguro el fallback cross-platform: sin red, sin sorpresas. Si el
 Mailer intentara conectar con estos drivers, el fake `_boom` rompería el test.
 
 Construimos un `MailContent` directo (sin depender de ningún Mailable concreto:
-los Mailables demo viven en Modules/Example, y este es un test de Core).
+los Mailables demo viven en Modules/Demo, y este es un test de Core).
 """
 
 from __future__ import annotations

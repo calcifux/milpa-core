@@ -2,6 +2,8 @@
 Espeja app/Core/Cron.py. Solo el gate por entorno (no usa lock → no toca Redis).
 """
 
+from __future__ import annotations
+
 import pytest
 
 from milpa.Core.Config import settings

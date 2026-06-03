@@ -1,7 +1,7 @@
 # Vistas
 
-milpa renderiza HTML con **Jinja2**. El motor (`app/Core/View/TemplateEngine.py`) y el
-helper `view()` (`app/Core/View/View.py`) son el equivalente a Blade: layouts con
+milpa renderiza HTML con **Jinja2**. El motor (`milpa/Core/View/TemplateEngine.py`) y el
+helper `view()` (`milpa/Core/View/View.py`) son el equivalente a Blade: layouts con
 herencia, namespacing por módulo y un par de globals útiles.
 
 ## El helper `view()`
@@ -15,7 +15,7 @@ Renderiza un template y devuelve un `HTMLResponse` (listo para FastAPI). El sufi
 
 ```python
 from fastapi.responses import HTMLResponse
-from app.Core.View import view
+from milpa.Core.View import view
 
 @router.get("/welcome", response_class=HTMLResponse)
 def welcome() -> HTMLResponse:

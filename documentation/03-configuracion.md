@@ -9,11 +9,11 @@ cp .env.example .env
 
 ## La clase `Settings`
 
-`app/Core/Config/Settings.py` define la clase `Settings` (pydantic `BaseSettings`) y
+`milpa/Core/Config/Settings.py` define la clase `Settings` (pydantic `BaseSettings`) y
 exporta una **instancia única**:
 
 ```python
-from app.Core.Config import settings
+from milpa.Core.Config import settings
 
 print(settings.app_name)
 print(settings.database_url)

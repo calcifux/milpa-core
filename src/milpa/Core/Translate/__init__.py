@@ -7,6 +7,8 @@ solo un wrapper liviano con la firma `t(key, vars, locale)` que ya usaban los
 templates Jinja2 y los Mailables.
 """
 
+from __future__ import annotations
+
 from milpa.Core.Translate.I18n import current_locale, resolve_accept_language, set_request_locale, t
 
 __all__ = ["current_locale", "resolve_accept_language", "set_request_locale", "t"]

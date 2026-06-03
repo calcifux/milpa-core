@@ -30,7 +30,7 @@ pyproject.toml     # deps, extras de drivers, config de ruff/mypy/pytest/import-
 
 ## Las tres capas
 
-### 1. El kernel — `app/Core`
+### 1. El kernel — `milpa/Core`
 
 Es **el framework**. Genérico, sin sabor de dominio, reutilizable entre proyectos.
 Cada subcarpeta es un subsistema (espejo de los "componentes" de Laravel):

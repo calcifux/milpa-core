@@ -2,7 +2,9 @@
 `view()` (render server-side a HTMLResponse). Lo consumen tanto los controllers
 (vistas web) como el `Mailer` (correos)."""
 
-from milpa.Core.View.TemplateEngine import TemplateEngine, template_engine
-from milpa.Core.View.View import view
+from __future__ import annotations
 
-__all__ = ["TemplateEngine", "template_engine", "view"]
+from milpa.Core.View.TemplateEngine import TemplateEngine, template_engine
+from milpa.Core.View.View import negotiate, prefers_html, view
+
+__all__ = ["TemplateEngine", "negotiate", "prefers_html", "template_engine", "view"]

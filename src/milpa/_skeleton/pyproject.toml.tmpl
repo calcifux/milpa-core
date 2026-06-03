@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Proyecto __PROJECT__ construido con milpa 🌽."
 requires-python = ">=3.14"
 dependencies = [
-    "milpa>=0.2.0",
+    "milpa>=0.3.0",
 ]
 
 # Driver de BD: por default sqlite (incluido en Python). Para MySQL/Postgres/etc.
@@ -13,6 +13,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.0",
+    "faker>=40",  # datos falsos para factories/seeders (DEV, como el require-dev de Laravel)
 ]
 
 # Este proyecto NO es una librería: se corre con `./jornal serve`, no se instala como

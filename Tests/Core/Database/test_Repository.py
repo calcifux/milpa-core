@@ -14,7 +14,7 @@ from pytest import MonkeyPatch
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import milpa.Core.Database.Transactional as tx
-from milpa.Core.Database.Repository import Repository
+from milpa.Core.Database.Repository import CursorPage, Repository, _decode_cursor, _encode_cursor
 from milpa.Core.Errors import ResourceNotFoundError
 
 
@@ -149,3 +149,31 @@ def test_paginate_last_page_has_no_more(monkeypatch: MonkeyPatch) -> None:
     assert len(page.items) == 2
     assert page.has_more is False
     assert page.next_offset == 6
+
+
+def test_cursor_encode_decode_roundtrip() -> None:
+    for value in (42, "abc", 0):
+        assert _decode_cursor(_encode_cursor(value)) == value
+
+
+def test_cursor_paginate_has_more_and_next_cursor(monkeypatch: MonkeyPatch) -> None:
+    rows = [_Widget(id=1), _Widget(id=2), _Widget(id=3)]  # limit+1 => hay más
+    _install(monkeypatch, _FakeSession(all_result=rows))
+
+    page = _WidgetRepository().cursor_paginate(limit=2)
+
+    assert isinstance(page, CursorPage)
+    assert len(page.items) == 2
+    assert page.has_more is True
+    assert page.next_cursor is not None
+    assert _decode_cursor(page.next_cursor) == 2  # id de la última fila mostrada
+
+
+def test_cursor_paginate_last_page_has_no_cursor(monkeypatch: MonkeyPatch) -> None:
+    rows = [_Widget(id=5), _Widget(id=6)]  # <= limit => última página
+    _install(monkeypatch, _FakeSession(all_result=rows))
+
+    page = _WidgetRepository().cursor_paginate(limit=2)
+
+    assert page.has_more is False
+    assert page.next_cursor is None

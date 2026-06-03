@@ -11,11 +11,23 @@ path = "src/milpa/__init__.py"
 [project]
 name = "milpa"
 dynamic = ["version"]                # versión single-source: se lee de src/milpa/__init__.py
-description = "Microframework Python modular en construcción (FastAPI · Celery · SQLAlchemy · Typer): núcleo instalable para monolitos modulares y migrar apps legacy. Inspirado en Laravel/Spring."
+description = "Microframework Python modular (FastAPI · Celery · SQLAlchemy · Typer): núcleo instalable para monolitos modulares y migrar apps legacy. Inspirado en Laravel/Spring."
+readme = "README.md"
 authors = [{ name = "@Calcifux (Carlos Guillermo Reyes Ramiro)" }]
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.14"
+keywords = ["framework", "fastapi", "celery", "sqlalchemy", "typer", "modular-monolith", "laravel", "spring", "web", "scaffolding"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Framework :: FastAPI",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Internet :: WWW/HTTP",
+]
 dependencies = [
     "alembic>=1.18.4",
     "celery[redis]>=5.6.3",
@@ -32,6 +44,7 @@ dependencies = [
     "python-multipart>=0.0.29",
     "redis>=6.4.0",
     "rich>=15.0.0",
+    "slowapi>=0.1.9",
     "sqlalchemy>=2.0.50",
     "sqlalchemy-easy-softdelete>=0.9.0",
     "typer>=0.26.2",
@@ -39,6 +52,15 @@ dependencies = [
     "tzlocal>=5.3.1",
     "uvicorn>=0.48.0",
 ]
+
+# Links que PyPI muestra en la barra lateral del paquete. Documentation apunta al sitio
+# canónico (gh-pages de calcifux/milpa, que es público); el repo del paquete es milpa-core.
+[project.urls]
+Homepage = "https://github.com/calcifux/milpa-core"
+Repository = "https://github.com/calcifux/milpa-core"
+Documentation = "https://calcifux.github.io/milpa/"
+Changelog = "https://github.com/calcifux/milpa-core/blob/main/CHANGELOG.md"
+Issues = "https://github.com/calcifux/milpa-core/issues"
 
 # Drivers de BD por motor (opcionales). El core es AGNÓSTICO del dialecto: instala solo el
 # driver que use tu proyecto. Para sqlite (dev) no necesitas nada (viene en Python).
@@ -53,7 +75,7 @@ mssql = ["pyodbc>=5.2"]              # SQL Server (requiere el ODBC Driver del S
 # `milpa` = el kernel Typer del framework (antes solo existía el archivo suelto ./jornal,
 # que NO viaja dentro del paquete).
 [project.scripts]
-milpa = "milpa.Core.Console.Cli:app"
+milpa = "milpa.Core.Console.Cli:run"
 
 # Qué empaquetar en el wheel: el paquete importable vive en src/milpa.
 [tool.hatch.build.targets.wheel]
@@ -97,6 +119,12 @@ select = ["E", "F", "I", "UP", "B"]  # pycodestyle, pyflakes, isort, pyupgrade, 
 # E501: el largo de línea lo maneja el formatter.
 # B008: Depends(...) en defaults es EL patrón idiomático de FastAPI, no un bug.
 ignore = ["E501", "B008"]
+
+# Guardrail: TODO archivo debe declarar `from __future__ import annotations` (anotaciones como
+# string, PEP 563). Antes era convención no forzada y unos archivos de fase 1 la omitían; ahora
+# Ruff (guardrail #1) lo marca y autofixea — fail-fast, acorde al tenet "nunca falla en silencio".
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
 
 # ---------------------------------------------------------------------------
 # MyPy estricto: sin type hints completos, el PR no pasa. Guardrail #2.

@@ -1,0 +1,25 @@
+# Docker SOLO levanta infraestructura de DESARROLLO. La app corre en el HOST con `jornal serve`.
+#
+#   docker compose up -d     # levanta redis + mailpit
+#   Mailpit (inbox web):  http://localhost:8025   <- aquí ves los correos del demo
+#   docker compose down      # apagar
+name: __PROJECT__
+
+services:
+  # Mailpit: un servidor SMTP de MENTIRA con inbox web. Pon MAIL_DRIVER=smtp en .env y los
+  # correos del demo llegan aquí en vez de a internet -> http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: __PROJECT__-mailpit
+    ports:
+      - "1025:1025"   # SMTP (la app envía aquí)
+      - "8025:8025"   # interfaz web (los ves aquí)
+    restart: unless-stopped
+
+  # Redis: broker para @job / @cron_task (solo si quieres correrlos en background async).
+  redis:
+    image: redis:7-alpine
+    container_name: __PROJECT__-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped

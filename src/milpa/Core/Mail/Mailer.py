@@ -245,6 +245,16 @@ class Mailer:
         )
 
     @staticmethod
+    def _check_refused(refused: dict[str, tuple[int, bytes]], recipients: list[str]) -> None:
+        """`smtp.send_message` SOLO lanza si TODOS los destinatarios son rechazados; ante un
+        rechazo PARCIAL en RCPT TO (unos aceptados, otros no) NO lanza — devuelve un dict de los
+        rechazados. Tenet "nunca falla en silencio": si hay rechazos, los logueamos y relanzamos
+        (el caller decide la política), en vez de perder el fallo remoto parcial sin rastro."""
+        if refused:
+            logger.error("Mailer | rechazo PARCIAL de destinatarios | refused:{r} | total:{t}", r=refused, t=recipients)
+            raise smtplib.SMTPRecipientsRefused(refused)
+
+    @staticmethod
     def _dispatch(message: EmailMessage, *, recipients: list[str]) -> None:
         """Abre la conexión SMTP, autentica si toca, y envía el mensaje."""
         host = settings.mail_host
@@ -259,7 +269,7 @@ class Mailer:
             with smtplib.SMTP_SSL(host=host, port=port, timeout=30) as smtp:
                 if username:
                     smtp.login(username, password)
-                smtp.send_message(message, to_addrs=recipients)
+                Mailer._check_refused(smtp.send_message(message, to_addrs=recipients), recipients)
         else:
             with smtplib.SMTP(host=host, port=port, timeout=30) as smtp:
                 smtp.ehlo()
@@ -268,7 +278,7 @@ class Mailer:
                     smtp.ehlo()
                 if username:
                     smtp.login(username, password)
-                smtp.send_message(message, to_addrs=recipients)
+                Mailer._check_refused(smtp.send_message(message, to_addrs=recipients), recipients)
 
 
 # Instancia compartida del proceso (el TemplateEngine ya viene por default).

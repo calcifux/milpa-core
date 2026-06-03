@@ -16,11 +16,13 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from fastapi import Depends
+from loguru import logger
 from starlette.requests import Request
 
 from milpa.Core.Auth.Auth import Auth, _resolve
 from milpa.Core.Auth.Contracts import Authenticatable
-from milpa.Core.Errors import ForbiddenError, UnauthorizedError
+from milpa.Core.Config import settings
+from milpa.Core.Errors import ForbiddenError, UnauthorizedError, UndefinedAbilityError
 
 # ---------------------------------------------------------------- RBAC (roles)
 
@@ -63,6 +65,25 @@ def reset_policies() -> None:
     _policies.clear()
 
 
+def policy(ability: str) -> Callable[[PolicyFn], PolicyFn]:
+    """Decorador que registra una función como la policy de `ability` y la auto-descubre.
+
+    Adiós a `register_policies()` manual (que se olvidaba y dejaba el Gate fallando en
+    silencio): crea el archivo en `Modules/<X>/Policies/` y `import_all_policies()` lo importa
+    al arranque → el decorador llama a `Gate.define`. Devuelve la función intacta (testeable directo).
+
+        @policy("note.update")
+        def can_update_note(user: Authenticatable | None, note: Note) -> bool:
+            return user is not None and note.author_id == user.get_auth_identifier()
+    """
+
+    def register(fn: PolicyFn) -> PolicyFn:
+        Gate.define(ability, fn)
+        return fn
+
+    return register
+
+
 class Gate:
     """Registro y evaluación de policies (≈ `Gate` de Laravel)."""
 
@@ -74,10 +95,22 @@ class Gate:
     @staticmethod
     def allows(ability: str, resource: Any = None, *, user: Authenticatable | None = None) -> bool:
         actor = user if user is not None else Auth.user()
-        policy = _policies.get(ability)
-        if policy is None:
-            return False  # sin policy registrada => denegado por seguridad
-        return bool(policy(actor, resource))
+        policy_fn = _policies.get(ability)
+        if policy_fn is None:
+            # Tenet "nunca falla en silencio": una ability sin registrar es un BUG (olvidaste
+            # @policy o el discovery). Por defecto DENIEGA (secure) pero SIEMPRE deja rastro
+            # (WARNING). Con AUTH_STRICT_ABILITIES (dev/test) TRUENA, para cazar el olvido ya.
+            if settings.auth_strict_abilities:
+                raise UndefinedAbilityError(ability=ability)
+            # Pista accionable (no verboso): qué falta + DÓNDE definirlo. Un log vago aquí = horas
+            # de debug en prod ("¿por qué deniega?"); esto apunta directo al fix.
+            logger.warning(
+                "Gate | ability {a!r} sin policy → DENIEGO. Defínela: @policy({a!r}) en Modules/<X>/Policies/ "
+                "(se auto-descubre al arranque).",
+                a=ability,
+            )
+            return False
+        return bool(policy_fn(actor, resource))
 
     @staticmethod
     def denies(ability: str, resource: Any = None, *, user: Authenticatable | None = None) -> bool:

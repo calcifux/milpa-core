@@ -1,0 +1,10 @@
+{# Aviso al admin (monolingüe ES). Extiende el layout firmado COMPARTIDO del framework. #}
+{% extends "Emails/Trans/mastersigned.html.j2" %}
+{% block content %}
+    <h2 style="margin:0 0 12px;">Nuevo usuario registrado</h2>
+    <p>Se registró un nuevo usuario en <strong>{{ app_name }}</strong>:</p>
+    <ul>
+        <li><strong>Nombre:</strong> {{ new_user_name }}</li>
+        <li><strong>Email:</strong> {{ new_user_email }}</li>
+    </ul>
+{% endblock %}

@@ -6,7 +6,7 @@ espagueti y los microservicios prematuros.
 
 ```
             ┌───────────────────────────────────────────────┐
-            │  app/Core   (el framework: HTTP, Console, DB,  │
+            │  milpa/Core   (el framework: HTTP, Console, DB,  │
             │             Mail, Cron, i18n, …)               │
             └───────────────────────────────────────────────┘
                     ▲                       ▲
@@ -23,7 +23,7 @@ espagueti y los microservicios prematuros.
 
 `import-linter` (guardrail de CI, `uv run lint-imports`) impone dos contratos:
 
-1. **El kernel no depende de los módulos.** `app.Core`, `app.Models`, `app.Dictionaries`
+1. **El kernel no depende de los módulos.** `milpa.Core`, `app.Models`, `app.Dictionaries`
    no pueden importar `app.Modules`.
 2. **Los módulos son independientes entre sí.** `app.Modules.A` no importa `app.Modules.B`.
 
@@ -31,12 +31,12 @@ espagueti y los microservicios prematuros.
 imports cruzados, y para que el kernel sea **reutilizable** tal cual en otro proyecto.
 
 Si dos módulos necesitan compartir algo, ese algo sube al kernel compartido
-(`app/Models`, `app/Dictionaries`, o un servicio en `app/Core`).
+(`app/Models`, `app/Dictionaries`, o un servicio en `milpa/Core`).
 
 ## Auto-discovery: cómo el framework te encuentra
 
 El kernel **no importa los módulos estáticamente** (eso violaría la frontera). En su
-lugar, el `Registry` (`app/Core/Registry/Registry.py`) los descubre escaneando el
+lugar, el `Registry` (`milpa/Core/Registry/Registry.py`) los descubre escaneando el
 filesystem con `pkgutil`. Por eso agregar un módulo es solo **crear su carpeta**: no se
 edita ningún archivo central.
 

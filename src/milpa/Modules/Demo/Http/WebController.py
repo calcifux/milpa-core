@@ -23,17 +23,20 @@ from milpa.Core.Auth import Auth, set_current_user
 from milpa.Core.Auth.Guards import SessionGuard
 from milpa.Core.Config import settings
 from milpa.Core.Errors import ConflictError
+from milpa.Core.Events import dispatch
 from milpa.Core.Http import Controller, Get, Post
+from milpa.Core.Translate import current_locale
 from milpa.Core.View import view
 from milpa.Models.Note import Note
 from milpa.Models.User import User
-from milpa.Modules.Demo.Policies import register_policies
+from milpa.Modules.Demo.Events import NoteCreated, UserRegistered
 from milpa.Modules.Demo.Repositories.NoteRepository import NoteRepository
 from milpa.Modules.Demo.Repositories.UserRepository import UserRepository
 from milpa.Modules.Demo.Services.NoteService import NoteService
 from milpa.Modules.Demo.Services.UserService import UserService
 
-register_policies()
+# Las policies ABAC se auto-registran con @policy (import_all_policies al arranque); sin
+# register_policies() manual aquí.
 
 NOTES_PER_PAGE = 6
 USERS_PER_PAGE = 12
@@ -126,6 +129,8 @@ class WebController:
             created = UserService().register(name, email, password)
         except ConflictError:
             return _page("demo/register", error="Ese email ya está registrado.")
+        # Evento de dominio → el Observer avisa al admin (igual que el carril API).
+        dispatch(UserRegistered(user_id=int(created["id"]), name=name, email=email))
         request.session["user_id"] = str(created["id"])  # login inmediato
         return RedirectResponse("/dashboard", status_code=303)
 
@@ -141,8 +146,8 @@ class WebController:
         if user is None:
             return RedirectResponse("/login", status_code=303)
         is_admin = "admin" in user.get_roles()
-        notes_count = len(NoteRepository().for_owner(user.get_auth_identifier()))
-        users_count = len(UserRepository().all()) if is_admin else None
+        notes_count = NoteRepository().count(where=Note.owner_id == user.get_auth_identifier())
+        users_count = UserRepository().count() if is_admin else None
         return _page("demo/dashboard", user=user, notes_count=notes_count, users_count=users_count)
 
     # ---------------------------------------------------------------- notas (search + scroll)
@@ -176,7 +181,17 @@ class WebController:
         user = _web_user(request)
         if user is None:
             return Response(status_code=401, headers={"HX-Redirect": "/login"})
-        NoteService().create(user.get_auth_identifier(), title, body)
+        created = NoteService().create(user.get_auth_identifier(), title, body)
+        # Evento de dominio → el Observer confirma al dueño por correo (auto, i18n).
+        dispatch(
+            NoteCreated(
+                note_id=int(created["id"]),
+                title=str(created["title"]),
+                owner_id=user.get_auth_identifier(),
+                owner_email=user.email,
+                locale=current_locale(),
+            )
+        )
         return _notes_results(user)  # primera página, lista completa
 
     @Post("/notes/{note_id}/delete")

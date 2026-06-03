@@ -12,7 +12,7 @@ Uso:
     ./jornal list                              # si el venv está activo
 """
 
-from milpa.Core.Console.Cli import app
+from milpa.Core.Console.Cli import run
 
 if __name__ == "__main__":
-    app()
+    run()

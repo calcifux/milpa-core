@@ -1,8 +1,8 @@
 """Tests del routing class-based (@Controller/@Get), sin red salvo TestClient.
 
 Cubre la maquinaria en aislamiento (montando el router que arma @Controller) y la integración
-real (que create_app auto-monta el CatsController del módulo Example, conviviendo con los
-controllers función-style).
+real (que create_app auto-monta los @Controller class-based del módulo Demo, conviviendo con
+cualquier router función-style).
 """
 
 from __future__ import annotations
@@ -10,8 +10,9 @@ from __future__ import annotations
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
+from starlette.requests import Request
 
-from milpa.Core.Http import Controller, Get, Post
+from milpa.Core.Http import Controller, Get, Post, api_version
 from milpa.Core.Http.Http import create_app
 from milpa.Core.Http.Routing import ROUTER_ATTR
 
@@ -71,11 +72,46 @@ def test_route_level_dependency_resolves() -> None:
     assert _client().get("/things/with-dep/x").json() == {"flag": "dep-ok"}
 
 
+@Controller("/notes", tags=["notes"], version="v1")
+class _NotesV1Controller:
+    @Get("/")
+    def index(self, request: Request) -> dict[str, str | None]:
+        return {"version": api_version(request)}
+
+
+def _versioned_client() -> TestClient:
+    app = FastAPI()
+    app.include_router(getattr(_NotesV1Controller, ROUTER_ATTR))
+    return TestClient(app)
+
+
+def test_version_prepends_url_prefix() -> None:
+    # La ruta vive bajo /v1/notes (URL-path versioning); sin /v1 da 404.
+    assert _versioned_client().get("/v1/notes/").status_code == 200
+    assert _versioned_client().get("/notes/").status_code == 404
+
+
+def test_version_is_added_to_router_tags() -> None:
+    router = getattr(_NotesV1Controller, ROUTER_ATTR)
+    assert "v1" in router.tags
+    assert "notes" in router.tags
+
+
+def test_api_version_helper_reads_current_version_in_handler() -> None:
+    assert _versioned_client().get("/v1/notes/").json() == {"version": "v1"}
+
+
+def test_unversioned_controller_has_no_version() -> None:
+    # En un controller sin version=, api_version(request) es None (no rompe).
+    assert _client().get("/things/with-dep/x").status_code == 200
+
+
 def test_class_based_controller_is_auto_mounted_by_registry() -> None:
-    # Integración: el CatsController del módulo Example se auto-monta vía create_app,
-    # conviviendo con los routers función-style del mismo módulo.
-    client = TestClient(create_app())
-    assert client.get("/example/cats/").json() == ["Michi", "Pelusa"]
-    assert client.get("/example/cats/0").json() == {"index": 0, "name": "Michi"}
-    # Y el función-style sigue montado:
-    assert client.get("/example/ping").json()["status"] == "ok"
+    # Integración: los @Controller class-based del módulo Demo se auto-montan vía create_app
+    # (sin listarlos en ningún lado), descubiertos por el Registry.
+    paths = TestClient(create_app()).get("/openapi.json").json()["paths"]
+    assert "/api/login" in paths  # ApiController  -> @Controller("/api")
+    assert "/login" in paths  # WebController -> @Controller("")
+    # API versioning (Fase 3) en acción: el MISMO recurso en dos versiones que conviven.
+    assert "/v1/reports/notes" in paths  # ReportsV1Controller -> @Controller("/reports", version="v1")
+    assert "/v2/reports/notes" in paths  # ReportsV2Controller -> @Controller("/reports", version="v2")

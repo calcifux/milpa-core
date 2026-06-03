@@ -4,6 +4,8 @@ Verifica firma + claims con la llave PÚBLICA del legacy. La revocación contra
 oauth_access_tokens queda como hook (_is_revoked) para cuando migremos eso.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any

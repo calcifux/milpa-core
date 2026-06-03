@@ -11,6 +11,8 @@ test, que son los que importan la app). `logs/` ya está en `.gitignore`, así q
 `logs/tests/` también queda ignorado.
 """
 
+from __future__ import annotations
+
 import os
 
 os.environ.setdefault("LOG_DIR", "logs/tests")

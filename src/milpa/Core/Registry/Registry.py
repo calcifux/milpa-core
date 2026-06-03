@@ -29,7 +29,7 @@ from fastapi import APIRouter
 
 from milpa.Core.Config import settings
 from milpa.Core.Console import build_cli_apps, import_submodules
-from milpa.Core.Discovery import package_dir
+from milpa.Core.Discovery import _module_absent, package_dir
 
 
 def module_packages() -> list[str]:
@@ -55,8 +55,12 @@ def module_packages() -> list[str]:
 def _try_import(dotted_path: str) -> ModuleType | None:
     try:
         return importlib.import_module(dotted_path)
-    except ModuleNotFoundError:
-        return None
+    except ModuleNotFoundError as error:
+        # Faro: None solo si el módulo objetivo no existe (ausencia esperada); si el import
+        # falla por un bug DENTRO del módulo del usuario, se re-lanza (nunca se traga en silencio).
+        if _module_absent(error, dotted_path):
+            return None
+        raise
 
 
 def import_all_models() -> None:
@@ -67,8 +71,10 @@ def import_all_models() -> None:
 
 
 def import_all_tasks() -> None:
-    """Importa Jobs/ y Console/Commands/ de cada módulo para que sus decoradores
-    @celery_app.task queden registrados (los vuelve ejecutables; NO los dispara).
+    """Importa Jobs/, Crons/ y Console/Commands/ de cada módulo para que sus decoradores
+    (@job / @cron_task / @celery_app.task) queden registrados (los vuelve ejecutables; NO
+    los dispara). `Crons/` va aparte de `Jobs/` a propósito: refuerza la separación mental
+    job (on-demand) ≠ cron (agendado), igual que `Core/Jobs` vive separado de `Core/Cron`.
 
     El discovery usa `import_submodules` (pkgutil): escanea uno a uno los
     archivos de cada carpeta en vez de importar solo su `__init__`. Así un solo
@@ -78,6 +84,7 @@ def import_all_tasks() -> None:
     """
     for package in module_packages():
         import_submodules(f"{package}.Jobs")
+        import_submodules(f"{package}.Crons")
         import_submodules(f"{package}.Console.Commands")
 
 
@@ -86,6 +93,27 @@ def import_all_seeders() -> None:
     (las descubre `db:seed`). Mismo discovery por convención que tasks/commands."""
     for package in module_packages():
         import_submodules(f"{package}.Seeders")
+
+
+def import_all_observers() -> None:
+    """Importa Observers/ de cada módulo para que sus subclases de `Observer` se registren
+    (las dispara `Events.dispatch`). Mismo discovery por convención que seeders."""
+    for package in module_packages():
+        import_submodules(f"{package}.Observers")
+
+
+def import_all_handlers() -> None:
+    """Importa Handlers/ de cada módulo para que sus `@handles(Cmd)` se registren
+    (los resuelve `Mediator.send`). Mismo discovery por convención que seeders."""
+    for package in module_packages():
+        import_submodules(f"{package}.Handlers")
+
+
+def import_all_policies() -> None:
+    """Importa Policies/ de cada módulo para que sus `@policy(ability)` se registren en el Gate
+    (adiós a `register_policies()` manual). Mismo discovery por convención que seeders."""
+    for package in module_packages():
+        import_submodules(f"{package}.Policies")
 
 
 def collect_beat_schedule() -> dict[str, object]:
