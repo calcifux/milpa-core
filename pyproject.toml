@@ -9,7 +9,10 @@ build-backend = "hatchling.build"
 path = "src/milpa/__init__.py"
 
 [project]
-name = "milpa"
+# Nombre de DISTRIBUCIÓN en PyPI (lo que tecleas en `pip install`). NO es `milpa` porque PyPI lo
+# bloquea por ser "demasiado parecido" al proyecto existente `milap`. El paquete IMPORTABLE y el
+# comando de consola SIGUEN siendo `milpa` (import milpa / `milpa new`); solo cambia el install name.
+name = "milpa-core"
 dynamic = ["version"]                # versión single-source: se lee de src/milpa/__init__.py
 description = "Microframework Python modular (FastAPI · Celery · SQLAlchemy · Typer): núcleo instalable para monolitos modulares y migrar apps legacy. Inspirado en Laravel/Spring."
 readme = "README.md"
@@ -64,16 +67,16 @@ Issues = "https://github.com/calcifux/milpa-core/issues"
 
 # Drivers de BD por motor (opcionales). El core es AGNÓSTICO del dialecto: instala solo el
 # driver que use tu proyecto. Para sqlite (dev) no necesitas nada (viene en Python).
-#   uv add "milpa[postgres]"   /   pip install "milpa[mysql]"
+#   uv add "milpa-core[postgres]"   /   pip install "milpa-core[mysql]"
 [project.optional-dependencies]
 mysql = ["pymysql>=1.2.0"]           # MySQL / MariaDB
 postgres = ["psycopg[binary]>=3.2"]  # PostgreSQL (psycopg v3, binario: sin libpq-dev)
 oracle = ["oracledb>=2.5"]           # Oracle (reemplaza al viejo cx_Oracle)
 mssql = ["pyodbc>=5.2"]              # SQL Server (requiere el ODBC Driver del SO)
 
-# Comando de consola que se instala en el PATH al hacer `pip install milpa`.
-# `milpa` = el kernel Typer del framework (antes solo existía el archivo suelto ./jornal,
-# que NO viaja dentro del paquete).
+# Comando de consola que se instala en el PATH al hacer `pip install milpa-core`.
+# El comando es `milpa` (el kernel Typer del framework); antes solo existía el archivo suelto
+# ./jornal, que NO viaja dentro del paquete.
 [project.scripts]
 milpa = "milpa.Core.Console.Cli:run"
 

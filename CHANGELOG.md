@@ -38,16 +38,16 @@ set completo de patrones estilo milpa, la API REST estilo DRF, el demo integral 
 ### Changed
 
 - Heredado de `0.3.0a0`: `DATABASE_URL` con default `sqlite`, `pymysql` movido al extra
-  `milpa[mysql]` (core agnóstico de dialecto), y el paquete importable `app` → `milpa`.
+  `milpa-core[mysql]` (core agnóstico de dialecto), y el paquete importable `app` → `milpa`.
 
 ## [0.3.0a0] - 2026-06-01
 
-Primera versión **INSTALABLE**: milpa se extrae como paquete (`pip install milpa`) con un
+Primera versión **INSTALABLE**: milpa se extrae como paquete (`pip install milpa-core`) con un
 scaffolder de proyectos. Alpha — la API puede cambiar entre versiones.
 
 ### Added
 
-- **Paquete instalable** (`pip install milpa` / `uv add milpa`): src-layout (`src/milpa`),
+- **Paquete instalable** (`pip install milpa-core` / `uv add milpa-core`): src-layout (`src/milpa`),
   `[build-system]` hatchling, comando de consola `milpa`, versión single-source en `__init__`.
 - **`milpa new <app>`** — scaffolder que genera un proyecto listo para correr (estilo
   `laravel new` / `django-admin startproject`) desde un skeleton embebido en el paquete.
@@ -61,7 +61,7 @@ scaffolder de proyectos. Alpha — la API puede cambiar entre versiones.
 
 - **`DATABASE_URL`** ahora tiene default `sqlite:///./milpa.db` (zero-config: milpa arranca sin
   configurar nada, como Django en dev). En QA/prod se pone el motor real en `.env`.
-- **`pymysql`** sale del core → extra opcional `milpa[mysql]` (el core queda agnóstico de dialecto).
+- **`pymysql`** sale del core → extra opcional `milpa-core[mysql]` (el core queda agnóstico de dialecto).
 - El paquete importable se renombró `app` → `milpa`.
 
 ## [0.2.0] - 2026-05-30

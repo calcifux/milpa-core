@@ -30,7 +30,9 @@ listo para correr (estilo `laravel new` / `django-admin startproject`):
 
 ```bash
 # 1) instala el paquete (de forma aislada con uv, o como dependencia con pip)
-uv tool install milpa          # o:  pipx install milpa  ·  pip install milpa
+uv tool install milpa-core     # o:  pipx install milpa-core  ·  pip install milpa-core
+# El paquete se llama `milpa-core` en PyPI (porque `milpa` choca con otro proyecto), pero el
+# comando de consola y el import SIGUEN siendo `milpa`: `milpa new …` / `import milpa`.
 
 # 2) crea un proyecto CON el demo de notas (auth, RBAC/ABAC, correos, patrones estilo milpa)
 milpa new miapp --demo
@@ -158,7 +160,7 @@ uv run lint-imports    # fronteras entre módulos
 ```
 
 > `faker` es dependencia de **dev** (la usan factories/seeders para `jornal db seed`): viene en el
-> grupo dev del proyecto, así que `uv sync` la trae; un `pip install milpa` "pelón" no la incluye.
+> grupo dev del proyecto, así que `uv sync` la trae; un `pip install milpa-core` "pelón" no la incluye.
 
 ---
 
@@ -168,10 +170,10 @@ El engine es **agnóstico del motor**; se elige con `DATABASE_URL`. Por default 
 viene en Python). Para otro motor instala su extra:
 
 ```bash
-uv add "milpa[postgres]"   # PostgreSQL (psycopg v3)
-uv add "milpa[mysql]"      # MySQL / MariaDB (pymysql)
-uv add "milpa[oracle]"     # Oracle (oracledb)
-uv add "milpa[mssql]"      # SQL Server (pyodbc)
+uv add "milpa-core[postgres]"   # PostgreSQL (psycopg v3)
+uv add "milpa-core[mysql]"      # MySQL / MariaDB (pymysql)
+uv add "milpa-core[oracle]"     # Oracle (oracledb)
+uv add "milpa-core[mssql]"      # SQL Server (pyodbc)
 ```
 
 ---

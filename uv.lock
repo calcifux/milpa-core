@@ -850,7 +850,7 @@ wheels = [
 ]
 
 [[package]]
-name = "milpa"
+name = "milpa-core"
 source = { editable = "." }
 dependencies = [
     { name = "alembic" },

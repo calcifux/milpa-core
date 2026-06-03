@@ -4,11 +4,12 @@ version = "0.1.0"
 description = "Proyecto __PROJECT__ construido con milpa 🌽."
 requires-python = ">=3.14"
 dependencies = [
-    "milpa>=0.3.0",
+    # El paquete se llama `milpa-core` en PyPI (el import y el comando siguen siendo `milpa`).
+    "milpa-core>=0.3.1",
 ]
 
 # Driver de BD: por default sqlite (incluido en Python). Para MySQL/Postgres/etc.
-# instala el extra del motor que uses, p. ej.:  uv add "milpa[postgres]"
+# instala el extra del motor que uses, p. ej.:  uv add "milpa-core[postgres]"
 
 [dependency-groups]
 dev = [
