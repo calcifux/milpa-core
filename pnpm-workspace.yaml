@@ -1,0 +1,27 @@
+# Workspaces pnpm (sustituye a npm workspaces):
+# node_modules POR PAQUETE vía symlinks al store global → cada surco solo importa
+# lo que DECLARA (la phantom dep truena en dev, no al extraer el surco a su repo).
+#
+# Comandos por surco:  pnpm --filter <surco> {dev,build,add <pkg>}
+# Todo el workspace:   pnpm install (raíz) · pnpm -r build
+packages:
+  - "surcos/*"
+
+# pnpm 11 NO ejecuta los postinstall de las deps por default (anti supply-chain);
+# cada uno se aprueba explícitamente aquí. esbuild (dep de Vite) usa el suyo para
+# dejar listo su binario nativo — es de confianza y Vite lo necesita.
+allowBuilds:
+  esbuild: true
+
+# pnpm exige una edad mínima de publicación antes de instalar (anti supply-chain);
+# nuestro propio plugin se exime al salir del horno. Borrable cuando la versión madure.
+minimumReleaseAgeExclude:
+  - vite-plugin-milpa@0.1.2
+
+# ¿Necesitas desarrollar/parchar vite-plugin-milpa contra este repo SIN esperar
+# release? Clónalo al lado (github.com/calcifux/vite-plugin-milpa) y descomenta:
+# los surcos usarán tu copia local en vez de la versión publicada en npm.
+# (Al togglear esto pnpm puede decir "Already up to date": fuerza con
+#  `rm -rf node_modules surcos/*/node_modules pnpm-lock.yaml && pnpm install`.)
+# overrides:
+#   vite-plugin-milpa: link:../vite-plugin-milpa

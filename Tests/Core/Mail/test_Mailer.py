@@ -1,8 +1,7 @@
 """Tests del Mailer (sin abrir conexión SMTP real).
 
 Monkeypatcheamos `smtplib.SMTP` para capturar el mensaje y los destinatarios,
-sin enviar nada por la red. Equivalente al patrón [[testing-approach]]:
-fakes y monkeypatch, cero BD/red.
+sin enviar nada por la red. Fakes y monkeypatch, cero BD/red.
 """
 
 from __future__ import annotations

@@ -15,8 +15,8 @@ Patrón porteado 1:1:
             )
 
 El `Mailer` toma este `MailContent` y se encarga de renderizar el template y
-construir el MIME — el `Mailable` NO toca SMTP ni Jinja directamente (sigue
-[[architecture-modular-monolith]]: responsabilidades separadas).
+construir el MIME — el `Mailable` NO toca SMTP ni Jinja directamente
+(responsabilidades separadas, como en todo el monolito modular).
 """
 
 from __future__ import annotations

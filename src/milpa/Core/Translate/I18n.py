@@ -13,7 +13,7 @@ Configuración global (la fija este módulo al importarse):
   - skip_locale_root_data: False (los YAML llevan el locale como raíz).
   - fallback:            settings.app_fallback_locale (= "es" por defecto).
 
-Convención de archivos (folders en PascalCase, ver memoria del proyecto):
+Convención de archivos (folders en PascalCase):
     app/Resources/Lang/
       ├── Emails/
       │   ├── master.es.yml          # contiene `es: {...}` al inicio
@@ -126,8 +126,7 @@ def _configure() -> None:
     _i18nice.set("filename_format", "{namespace}.{locale}.{format}")
     _i18nice.set("fallback", settings.app_fallback_locale)
     # placeholder_delimiter='%' → la sintaxis en YAML es `%{name}` (default de
-    # i18nice; el usuario aceptó no calcar 1:1 el `:name` de Laravel, ver memoria
-    # [[mailables-stack-decision]]).
+    # i18nice; decisión deliberada: no calcar 1:1 el `:name` de Laravel).
     # Por defecto i18nice deja `on_missing_*` en None: si la traducción falta,
     # arroja `KeyError`. NO queremos eso en correos a usuarios (un faltante no
     # debe tirar el envío). El wrapper captura la excepción y devuelve la key

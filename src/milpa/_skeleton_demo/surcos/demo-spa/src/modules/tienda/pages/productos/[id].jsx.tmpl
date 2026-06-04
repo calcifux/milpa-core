@@ -1,0 +1,15 @@
+// src/modules/tienda/pages/productos/[id].jsx → /tienda/productos/:id
+// El [id] del nombre de archivo se vuelve segmento dinámico (estilo App Router).
+import {useParams, Link} from 'react-router';
+
+export default function ProductoDetalle() {
+    const {id} = useParams();
+    return (
+        <article>
+            <h2>Producto: {id}</h2>
+            <p>Segmento dinámico vía <code>[id].jsx</code> + <code>useParams()</code>.
+               El deep-link recarga bien: el catch-all de milpa siempre responde el shell.</p>
+            <Link to="/tienda/productos">← volver</Link>
+        </article>
+    );
+}

@@ -118,6 +118,28 @@ def create_app() -> FastAPI:
     if shared_static.is_dir():
         app.mount("/static", StaticFiles(directory=str(shared_static)), name="static")
 
+    # Builds de Vite del FRONTEND (asset-pipeline estilo laravel-vite; OPT-IN, ver
+    # Core/View/Vite.py). El public/ del proyecto (donde cada surco deja su build
+    # en "public/<app>") se monta COMPLETO en VITE_ASSETS_URL — UN mount para todas
+    # las apps, como el public/ de Laravel. Con VITE_DIST_DIR explicito se monta ese
+    # dist directo. Sin nada detectado no se monta (la feature muere en paz). Los
+    # <link>/<script> hasheados los emite el helper vite() en el template Jinja.
+    assets_root = settings.vite_assets_url.rstrip("/")
+    # VITE_ASSETS_URL="/" (o vacío) dejaría assets_root="" — y mount("") en Starlette
+    # es un CATCH-ALL en la raíz: taparía /status y degradaría los errores RFC 9457
+    # a 404 planos de estático. Los assets siempre viven bajo su propio prefijo.
+    if assets_root and settings.vite_dist_dir:
+        explicit_dist = Path(settings.vite_dist_dir)
+        if explicit_dist.is_dir():
+            app.mount(assets_root, StaticFiles(directory=str(explicit_dist)), name="vite")
+    elif assets_root:
+        # El guard de vacío importa: Path("") es Path(".") y SIEMPRE is_dir() — sin él,
+        # VITE_PUBLIC_DIR= montaría la RAÍZ del proyecto (.env, secrets/, .git/) en
+        # /vite. Vacío = apagado, el mismo idioma que VITE_DIST_DIR/VITE_HOT_FILE.
+        public_root = Path(settings.vite_public_dir)
+        if settings.vite_public_dir and public_root.is_dir():
+            app.mount(assets_root, StaticFiles(directory=str(public_root)), name="vite")
+
     @app.get("/status")
     async def root() -> dict[str, object]:
         return {"servicio": settings.app_name, "modulos": _module_names(), "status": "ok"}

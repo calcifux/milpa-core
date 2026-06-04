@@ -1,0 +1,16 @@
+// Layout del módulo `tienda` (opcional, convención _layout.jsx): envuelve TODAS
+// las rutas de /tienda/** con su propio marco — el equipo del módulo lo controla.
+import {Link, Outlet} from 'react-router';
+
+export default function TiendaLayout() {
+    return (
+        <div className="module-frame">
+            <p className="module-tag">📦 módulo <strong>tienda</strong> — layout propio (_layout.jsx)</p>
+            <nav className="module-nav">
+                <Link to="/tienda">Resumen</Link>
+                <Link to="/tienda/productos">Productos</Link>
+            </nav>
+            <Outlet/>
+        </div>
+    );
+}

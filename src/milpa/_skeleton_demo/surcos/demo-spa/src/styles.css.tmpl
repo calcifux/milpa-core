@@ -1,0 +1,65 @@
+/* Tema del demo: Carbon dark-first con acentos Forge y tipografía mono de
+   terminal para la marca. */
+:root {
+    --forge: #FF6B1A;
+    --ember: #CC5614;
+    --spark: #FF8A4D;
+    --carbon: #0A0A0A;
+    --iron: #1A1A1A;
+    --steel: #4A4A4A;
+    --cloud: #FAFAFA;
+    --mist: #E6E6E6;
+    --mono: 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+    color-scheme: dark light;
+    --bg: var(--carbon);
+    --surface: var(--iron);
+    --text: var(--mist);
+    --text-2: #9a9a9a;
+    --border: #262626;
+    --accent-hover: var(--spark);
+    --error: #f87171;
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: var(--cloud);
+        --surface: #ffffff;
+        --text: var(--carbon);
+        --text-2: var(--steel);
+        --border: var(--mist);
+        --accent-hover: var(--ember);
+        --error: #b91c1c;
+    }
+}
+
+body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+.shell { max-width: 720px; margin: 0 auto; padding: 2rem 1rem; }
+
+/* ── Marca: isotipo "stacked bars" (la barra central en Forge = el craft) ── */
+.brand { display: flex; align-items: center; gap: .9rem; }
+.brand-mark { display: grid; gap: 4px; }
+.brand-mark i { display: block; width: 38px; height: 7px; border-radius: 2px; background: var(--steel); }
+.brand-mark i:nth-child(2) { background: var(--forge); }
+
+.wordmark { margin: 0; font-family: var(--mono); font-size: 1.5rem; letter-spacing: -.02em; }
+.wordmark > span { color: var(--forge); }
+.tagline { margin: .15rem 0 0; font-family: var(--mono); font-size: .75rem; color: var(--text-2); letter-spacing: .08em; }
+
+.badge { font-family: var(--mono); font-size: .55em; background: var(--forge); color: var(--mist); border-radius: 999px; padding: .25em .9em; vertical-align: middle; letter-spacing: 0; }
+
+nav { display: flex; gap: 1rem; margin: 1.5rem 0 2rem; font-family: var(--mono); }
+nav a { color: var(--forge); text-decoration: none; font-weight: 600; font-size: .9rem; }
+nav a:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: .3em; }
+
+pre { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--forge); padding: 1rem; border-radius: 8px; overflow-x: auto; font-family: var(--mono); }
+.error { color: var(--error); }
+
+/* Marco del módulo (lo dibuja su _layout.jsx): surface propia, tag mono. */
+.module-frame { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; }
+.module-tag { margin-top: 0; font-family: var(--mono); font-size: .8em; color: var(--text-2); }
+.module-nav { display: flex; gap: 1rem; margin-bottom: 1rem; font-family: var(--mono); }
+.module-nav a { color: var(--forge); font-weight: 600; text-decoration: none; font-size: .9rem; }
+.module-nav a:hover { color: var(--accent-hover); }
+
+.powered { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: .75rem; color: var(--text-2); }
+.powered span > span { color: var(--forge); }

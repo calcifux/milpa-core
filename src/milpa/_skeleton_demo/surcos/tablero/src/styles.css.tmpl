@@ -1,0 +1,38 @@
+/* Identidad StackCraft (paleta oficial, espejo de la del surco demo-spa):
+   Carbon dark-first, acento Forge, mono de terminal para los datos. */
+:root {
+    --forge: #FF6B1A;
+    --carbon: #0A0A0A;
+    --iron: #1A1A1A;
+    --steel: #4A4A4A;
+    --cloud: #FAFAFA;
+    --mist: #E6E6E6;
+    --mono: 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+    color-scheme: dark light;
+    --bg: var(--carbon);
+    --surface: var(--iron);
+    --text: var(--mist);
+    --text-2: #9a9a9a;
+    --border: #262626;
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: var(--cloud);
+        --surface: #ffffff;
+        --text: var(--carbon);
+        --text-2: var(--steel);
+        --border: var(--mist);
+    }
+}
+
+body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; background: var(--bg); color: var(--text); }
+h2 { font-family: var(--mono); }
+h2 .craft { color: var(--forge); }
+h2 small { font-weight: 400; color: var(--text-2); font-size: .55em; }
+dl { display: grid; grid-template-columns: auto 1fr; gap: .4rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--forge); padding: 1rem; border-radius: 8px; font-family: var(--mono); }
+dt { font-weight: 700; color: var(--forge); }
+dd { margin: 0; }
+.powered { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: .75rem; color: var(--text-2); }
+.powered b { font-weight: 600; color: var(--text); }
+.powered b .craft { color: var(--forge); }

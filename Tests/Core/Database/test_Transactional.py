@@ -1,4 +1,4 @@
-"""Tests de la sesión ambiente + session_scope/@transactional (ADR 13), SIN BD.
+"""Tests de la sesión ambiente + session_scope/@transactional, SIN BD.
 
 Usamos un fake de Session que cuenta commit/rollback/close: validamos la LÓGICA
 (join-or-create, commit on success, rollback on exception) sin tocar un motor.

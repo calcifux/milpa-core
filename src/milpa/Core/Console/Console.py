@@ -7,8 +7,7 @@ deduce del módulo (`app.Modules.<X>...` → `"<x>"`); los commands GENERALES
 
 El command es un ADAPTER DELGADO y MODE-AGNOSTIC: corre síncrono en el proceso
 del CLI. El modo async NO es propiedad del command — se expresa despachando un
-Job explícitamente (`Job.dispatch()` / `.dispatch_sync()`). Ver
-`docs/11_framework_vision.md`.
+Job explícitamente (`Job.dispatch()` / `.dispatch_sync()`).
 
 `build_cli_apps()` arma un `typer.Typer()` por grupo desde el registro;
 `import_submodules()` es el discovery (pkgutil) que importa los archivos para

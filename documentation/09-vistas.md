@@ -82,6 +82,13 @@ los compartidos (`app/Resources/Static/`) en `/static`. Refiérelos con `asset()
 <link rel="stylesheet" href="{{ asset('welcome.css') }}">
 ```
 
+## Frontend con Vite (opt-in)
+
+Para un frontend con bundling (HMR en dev, chunks hasheados en prod) o microfrontends,
+milpa trae un asset-pipeline opt-in estilo `laravel-vite`, con los globals `vite()`,
+`vite_asset()` y `vite_react_refresh()`. Ver [Vite y assets](29-vite-y-assets.md) y
+[Microfrontends (surcos)](30-microfrontends-surcos.md).
+
 ## Vistas y correo
 
 El mismo motor renderiza los correos. Los Mailables apuntan a un `template` con la misma

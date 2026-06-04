@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     # pon tu motor real en .env: DATABASE_URL=postgresql+psycopg://... (o mysql+pymysql://...).
     database_url: str = "sqlite:///./milpa.db"
 
-    # --- Colas / broker-agnostic (ver docs/research/broker_agnostic_plan.md) ---
+    # --- Colas / broker-agnostic ---
     # BROKER de Celery: CUALQUIER transporte (redis://, amqp:// RabbitMQ, sqs://, ...).
     # Vacío => redis local por default. Solo se usa para lo ENCOLADO (los flujos
     # síncronos no lo tocan). ActiveMQ NO es compatible (AMQP 1.0).
@@ -225,6 +225,36 @@ class Settings(BaseSettings):
     user_static_dir: str = ""  # p. ej. "app/Resources/Static" (se sirve en "/static")
     # Carpeta de migraciones Alembic, relativa al cwd del proyecto. Default "migrations".
     migrations_dir: str = "migrations"
+
+    # Prefijo PÚBLICO de los assets (= ASSET_URL de Laravel): se antepone a las URLs
+    # que EMITEN asset() y vite()/vite_asset() — para deploy detrás de un reverse
+    # proxy bajo sub-ruta (ASSET_URL=/nombre-reverse) o un CDN (https://cdn.x.com).
+    # NO cambia los mounts (el proxy stripea el prefijo antes de llegar a la app) y
+    # en DEV vite() lo ignora (los módulos salen del dev server, vía hot-file).
+    # DEBE coincidir con el ASSET_URL con el que se buildea el frontend
+    # (vite-plugin-milpa lee la MISMA env var en build).
+    asset_url: str = ""
+
+    # --- Vite (asset-pipeline del frontend, estilo laravel-vite; OPT-IN) ---
+    # Carpeta convencional de APPS frontend (microfrontends por vertical: cada equipo
+    # su app, con su tecnología — React/Vue/Svelte; Vite las cubre). AUTO-DETECCIÓN:
+    # es app toda carpeta con `hot` (dev corriendo) o `dist/.vite/manifest.json`
+    # (build hecho). Sin apps detectadas la feature muere en paz (no se monta nada).
+    vite_apps_dir: str = "surcos"
+    # Carpeta public/ del PROYECTO (estilo Laravel): el build de cada surco cae en
+    # "<public>/<app>" (lo hace vite-plugin-milpa) y milpa la monta COMPLETA en
+    # VITE_ASSETS_URL. Las fuentes viven en VITE_APPS_DIR; aquí solo artefactos.
+    vite_public_dir: str = "public"
+    # Override EXPLÍCITO para una sola app (estilo Laravel con el frontend en la raíz
+    # del proyecto): apunta directo al dist/ y se ignora la auto-detección.
+    vite_dist_dir: str = ""  # p. ej. "public/vite"
+    # Hot-file del modo una-sola-app (con VITE_DIST_DIR). Vacío => "<dist>/../hot".
+    # En multi-app el hot-file SIEMPRE es "<app>/hot" (uno por equipo).
+    vite_hot_file: str = ""
+    # Raíz pública de los assets: cada app se sirve en "<assets_url>/<app>" (multi-app)
+    # o directo en "<assets_url>" (modo explícito). DEBE coincidir con el `base` del
+    # vite.config del frontend (los chunks se referencian entre sí con esa base).
+    vite_assets_url: str = "/vite"
     # Raíz del código del USUARIO donde escribe `make:*` (modelos/controllers/módulos),
     # relativa al cwd. Default "app" (el layout que genera `milpa new`). En el repo del
     # PROPIO framework, donde el código vive en src/milpa, pon APP_DIR=src/milpa en .env.

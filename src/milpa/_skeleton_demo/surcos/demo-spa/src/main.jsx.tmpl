@@ -1,0 +1,56 @@
+// Entry del SPA. El basename se ARMA en runtime: BASE_PATH (prefijo del deploy
+// tras reverse proxy, inyectado por milpa en window.__ENV — "" sirviendo en raíz)
+// + '/spa' (donde milpa sirve el shell). Esto es lo que mix nunca pudo: mover la
+// app de /spa a /nombre-reverse/spa SIN tocar este archivo.
+// Las rutas NO se declaran a mano: las descubre router.jsx por convención de
+// archivos (import.meta.glob) — el "App Router" de la milpa (ver router.jsx).
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {createBrowserRouter, RouterProvider} from 'react-router';
+import Layout from './Layout.jsx';
+import {buildRoutes} from './router.jsx';
+import './styles.css';
+
+const BASE = `${window.__ENV?.BASE_PATH ?? ''}/spa`;
+
+// Trampa clásica: abrir el dev server (:5173) DIRECTO en el navegador. Vite solo
+// sirve módulos y HMR — el shell (con window.__ENV) lo sirve milpa. Sin __ENV,
+// aviso claro en vez de una página en blanco con un warning críptico del router.
+if (!window.__ENV) {
+    document.getElementById('root').innerHTML =
+        '<main style="font-family:monospace;padding:2rem;line-height:1.6">'
+        + '<h1>🌽 Este es el dev server de Vite (solo assets/HMR)</h1>'
+        + '<p>La app se abre por el shell de milpa: '
+        + '<a href="http://127.0.0.1:8000/spa">http://127.0.0.1:8000/spa</a> '
+        + '(o el APP_PORT de tu .env).</p></main>';
+} else {
+    const router = createBrowserRouter(
+        [
+            {
+                path: '/',
+                element: <Layout/>,
+                children: buildRoutes(),
+            },
+        ],
+        {basename: BASE},
+    );
+
+    createRoot(document.getElementById('root')).render(
+        <React.StrictMode>
+            <RouterProvider router={router}/>
+        </React.StrictMode>,
+    );
+}
+
+// PWA: registro MANUAL del Service Worker (no virtual:serwist — bajo subpath el
+// scope no se auto-deriva). Solo en PROD: en dev el SW serviría assets stale y
+// pelearía con HMR. milpa sirve dist/sw.js en <BASE>/sw.js con no-cache; el scope
+// <BASE>/ limita el CONTROL a la PWA (no toca /docs ni el carril web de milpa) —
+// cachear assets de /vite/* sí puede, el scope no restringe qué se cachea.
+// URL y scope EXPLÍCITOS desde BASE (no relativos: './sw.js' contra '/spa' SIN
+// barra final resolvería a '/sw.js' — trampa clásica del scope de los SW).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register(`${BASE}/sw.js`, {scope: `${BASE}/`});
+    });
+}

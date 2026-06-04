@@ -19,6 +19,8 @@ app/
   Modules/
     Example/       # módulo de ejemplo (plantilla de cómo construir uno)
   Resources/       # vistas/lang/estáticos COMPARTIDOS del proyecto
+surcos/            # (opt-in) microfrontends Vite, uno por vertical (workspace pnpm)
+public/            # (opt-in) builds de los surcos (public/<app>); milpa lo sirve en /vite
 Tests/             # tests unitarios (espeja app/ 1:1, sin BD)
 documentation/     # esta documentación (pública)
 secrets/           # llaves locales (contenido ignorado por git)

@@ -1,0 +1,21 @@
+{
+    "name": "__PROJECT__-frontends",
+    "private": true,
+    "description": "Frontends de __PROJECT__ (surcos/*, ver pnpm-workspace.yaml): cada surco es una app Vite independiente que milpa sirve vía su helper vite(). Workspace pnpm: un solo `pnpm install` en la raíz instala todos los surcos y cada uno SOLO ve lo que declara (sin phantom deps).",
+    "scripts": {
+        "dev": "pnpm --filter demo-spa dev",
+        "build": "pnpm -r build"
+    },
+    "engines": {
+        "node": ">=22.13.0"
+    },
+    "packageManager": "pnpm@11.5.1",
+    "volta": {
+        "node": "22.22.2",
+        "pnpm": "11.5.1"
+    },
+    "//": "¿Probar un vite-plugin-milpa SIN release (o parcharlo)? Clónalo al lado del proyecto, renombra la clave de abajo a 'dependencies' y descomenta el override en pnpm-workspace.yaml (las claves con '//' son comentarios: npm/pnpm las ignoran).",
+    "// dependencies": {
+        "vite-plugin-milpa": "link:../vite-plugin-milpa"
+    }
+}

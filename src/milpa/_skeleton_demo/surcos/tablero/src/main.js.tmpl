@@ -1,0 +1,29 @@
+// Tablero en vanilla JS — el equipo de este surco decidió que no necesita framework.
+import './styles.css';
+
+const root = document.querySelector('#tablero');
+
+async function render() {
+    const env = window.__ENV ?? {};
+    let status = {status: 'cargando…'};
+    try {
+        // Same-origin contra milpa: la página la sirve el backend → sin CORS.
+        // BASE_PATH (runtime-config) cubre el deploy tras reverse proxy con sub-ruta.
+        status = await (await fetch(`${env.BASE_PATH ?? ''}/status`)).json();
+    } catch {
+        status = {status: 'sin red'};
+    }
+    root.innerHTML = `
+        <h2>Stack<span class="craft">Craft</span> <small>tablero · vanilla JS, sin framework</small></h2>
+        <dl>
+            <dt>App</dt><dd>${env.APP_NAME ?? '—'}</dd>
+            <dt>Backend</dt><dd>${status.status ?? '—'}</dd>
+            <dt>Módulos</dt><dd>${(status.modulos ?? []).join(', ') || '—'}</dd>
+        </dl>
+        <p>Este surco se montó con SU propio template Jinja y SU ruta declarada
+           en el controller — conviviendo con el surco React en /spa.</p>
+        <footer class="powered">Powered by <b>Stack<span class="craft">Craft</span></b></footer>
+    `;
+}
+
+render();

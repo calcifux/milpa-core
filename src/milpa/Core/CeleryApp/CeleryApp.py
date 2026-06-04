@@ -17,7 +17,7 @@ setup_logging()
 celery_app = Celery(
     "app",  # nombre genérico (Core reutilizable); las tasks llevan su nombre explícito
     # Broker-agnostic: redis://, amqp:// (RabbitMQ), sqs://, ... Result backend OPCIONAL
-    # (None por default; crons fire-and-forget). Ver docs/research/broker_agnostic_plan.md.
+    # (None por default; crons fire-and-forget).
     broker=settings.effective_broker_url,
     backend=settings.effective_result_backend,
 )

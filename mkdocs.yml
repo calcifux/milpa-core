@@ -76,6 +76,10 @@ nav:
       - Negociación de contenido: 26-negociacion-de-contenido.md
       - Serializadores: 27-serializadores.md
       - Autenticación y autorización: 15-autenticacion.md
+  - Frontend:
+      - Vite y assets: 29-vite-y-assets.md
+      - Microfrontends (surcos): 30-microfrontends-surcos.md
+      - PWA: 31-pwa.md
   - Consola:
       - jornal: 08-consola-jornal.md
   - Datos:

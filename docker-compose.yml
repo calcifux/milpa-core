@@ -18,7 +18,7 @@ services:
 
   # Broker MQ alternativo (broker-agnostic): para probar BROKER_URL=amqp://...
   # Es el broker de referencia de Celery. ActiveMQ NO es compatible (AMQP 1.0);
-  # por eso el "MQ local" es RabbitMQ. Ver docs/research/broker_agnostic_plan.md.
+  # por eso el "MQ local" es RabbitMQ.
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: milpa-rabbitmq

@@ -7,7 +7,7 @@ instancia (si hubiera varias, cada cron se dispararía varias veces).
 ⚠️ Arrancar esto SÍ dispara los crons, según el guard `@cron_task(environments=
 [...])` de cada uno. En dev normalmente NO lo corres: pruebas a mano con el
 command directo (p. ej. el command de un módulo). En prod corre como su propio servicio,
-separado de los workers (best practice de Celery; ver docs/11).
+separado de los workers (best practice de Celery).
 """
 
 from __future__ import annotations

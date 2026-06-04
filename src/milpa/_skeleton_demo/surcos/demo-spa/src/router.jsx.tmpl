@@ -1,0 +1,28 @@
+// Router FILE-BASED (lo que te gusta del App Router de Next) — la LÓGICA vive
+// en vite-plugin-milpa/router (subpath runtime del paquete); aquí solo van LOS
+// GLOBS, porque import.meta.glob es compile-time de Vite y resuelve relativo al
+// archivo que lo contiene: tiene que vivir en TU código, no en node_modules.
+//
+// Convención (ESPEJO del backend milpa, que auto-monta Modules/<X>/Http):
+//
+//   src/pages/**/*.jsx               → rutas "core" del shell      /acerca
+//   src/modules/<m>/pages/**/*.jsx   → rutas del módulo <m>        /<m>/...
+//
+//   index.jsx    → la raíz de su carpeta ('' como segmento)
+//   [id].jsx     → segmento dinámico  :id  (useParams() en la página)
+//   _layout.jsx  → layout del módulo (envuelve sus rutas; opcional)
+//
+// 10 devs = 10 carpetas en src/modules/: cada quien dropea páginas en SU
+// módulo y la ruta existe — nadie toca un router central ni pisa al vecino.
+//
+// import.meta.glob SIN eager devuelve () => import(...): cada página es un
+// chunk propio en el build (code-splitting por ruta GRATIS, como App Router).
+
+import {buildRoutes as fileRoutes} from 'vite-plugin-milpa/router';
+
+export function buildRoutes() {
+    return fileRoutes({
+        pages: import.meta.glob('./pages/**/*.jsx'),
+        modules: import.meta.glob('./modules/*/pages/**/*.jsx'), // incluye los _layout.jsx
+    });
+}

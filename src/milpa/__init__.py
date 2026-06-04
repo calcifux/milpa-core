@@ -5,4 +5,4 @@ La versión vive aquí como única fuente de verdad (la lee hatch en pyproject.t
 
 from __future__ import annotations
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"

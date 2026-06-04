@@ -1,0 +1,23 @@
+// src/modules/tienda/pages/productos/index.jsx → /tienda/productos
+import {Link} from 'react-router';
+
+const PRODUCTOS = [
+    {id: 'maiz-azul', nombre: 'Maíz azul'},
+    {id: 'frijol-negro', nombre: 'Frijol negro'},
+    {id: 'calabaza', nombre: 'Calabaza'},
+];
+
+export default function Productos() {
+    return (
+        <article>
+            <h2>Productos</h2>
+            <ul>
+                {PRODUCTOS.map((producto) => (
+                    <li key={producto.id}>
+                        <Link to={`/tienda/productos/${producto.id}`}>{producto.nombre}</Link>
+                    </li>
+                ))}
+            </ul>
+        </article>
+    );
+}

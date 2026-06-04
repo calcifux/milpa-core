@@ -51,6 +51,46 @@ def test_renders_simple_template_with_context(tmp_path: Path) -> None:
     assert result == "Hola Calcifux"
 
 
+def test_asset_emite_url_bajo_static(tmp_path: Path) -> None:
+    _write_template(tmp_path, "page.html.j2", "{{ asset('welcome.css') }}")
+    engine = TemplateEngine(templates_dir=tmp_path)
+
+    assert engine.render("page.html.j2", {}) == "/static/welcome.css"
+
+
+def test_asset_antepone_asset_url(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """ASSET_URL (deploy bajo sub-ruta de proxy o CDN) prefija asset(), igual que
+    en Laravel. Default "" => comportamiento de siempre (test de arriba)."""
+    from milpa.Core.Config import settings
+
+    monkeypatch.setattr(settings, "asset_url", "/nombre-reverse")
+    _write_template(tmp_path, "page.html.j2", "{{ asset('welcome.css') }}")
+    engine = TemplateEngine(templates_dir=tmp_path)
+
+    assert engine.render("page.html.j2", {}) == "/nombre-reverse/static/welcome.css"
+
+
+def test_env_script_emite_el_tag_completo_sin_escapar(tmp_path: Path) -> None:
+    """`{{ env_script() }}` = el <script> de window.__ENV sin tag a mano ni `| safe`:
+    toma env_json del contexto (shell_context) y el autoescape no lo toca (Markup)."""
+    _write_template(tmp_path, "shell.html.j2", "<body>{{ env_script() }}</body>")
+    engine = TemplateEngine(templates_dir=tmp_path)
+
+    html = engine.render("shell.html.j2", {"env_json": '{"APP_NAME": "milpa", "BASE_PATH": ""}'})
+
+    assert '<script>window.__ENV = {"APP_NAME": "milpa", "BASE_PATH": ""};</script>' in html
+    assert "&lt;" not in html
+
+
+def test_env_script_sin_contexto_truena_con_instruccion(tmp_path: Path) -> None:
+    """Sin env_json en el contexto no falla en silencio: instruye usar shell_context."""
+    _write_template(tmp_path, "shell.html.j2", "{{ env_script() }}")
+    engine = TemplateEngine(templates_dir=tmp_path)
+
+    with pytest.raises(RuntimeError, match="shell_context"):
+        engine.render("shell.html.j2", {})
+
+
 def test_inheritance_extends_and_block_work(tmp_path: Path) -> None:
     """Equivalente al `@extends` + `@section` del Blade legacy."""
     _write_template(

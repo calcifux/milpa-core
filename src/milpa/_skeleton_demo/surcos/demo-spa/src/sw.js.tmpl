@@ -1,0 +1,53 @@
+// 🔵 WORKER — Service Worker compilado por @serwist/vite a `dist/sw.js` en build.
+// (Patrón offline-first clásico, aquí en su forma mínima para la demo milpa.)
+//
+// Qué hace:
+//   1. PRECACHE del SPA: los assets que Vite genera (chunks JS/CSS) según el
+//      manifest que Serwist inyecta en `self.__SW_MANIFEST` + el shell `/spa`
+//      (additionalPrecacheEntries en vite.config) → revisitas instantáneas y
+//      cold-start offline.
+//   2. RUNTIME CACHING (defaultCache de Serwist): navegación NetworkFirst,
+//      chunks lazy StaleWhileRevalidate, imágenes/fuentes con expiración.
+//   3. FALLBACK offline: navegar sin red a algo no cacheado → sirve `/spa`
+//      (el shell precacheado; el router del cliente resuelve la vista).
+//
+// Qué NO hace (decisiones deliberadas):
+//   - La API de milpa (`/api/*`, `/status`) NUNCA pasa por caché: NetworkOnly
+//     explícito ANTES del catch-all — en prod el defaultCache metería esas
+//     respuestas a NetworkFirst con caché y serviría datos stale.
+//   - El match es por PATHNAME (no por origen): el SW se bundlea sin env vars
+//     confiables, y el pathname funciona igual same-origin que cross-origin.
+//
+// REVERSE PROXY bajo sub-ruta: el worker NO ve window.__ENV (otro contexto), pero
+// su PROPIA URL ya trae el prefijo (…/<prefijo>/spa/sw.js) — se deriva de ahí.
+// Debe coincidir con el BASE_PATH del build (pwa.shell en vite.config): el
+// fallback apunta a una entrada PRECACHEADA, y esa se fija en build-time.
+
+import {defaultCache} from '@serwist/vite/worker';
+import {NetworkOnly, Serwist} from 'serwist';
+
+// '/nombre-reverse/spa/sw.js' → '/nombre-reverse' · '/spa/sw.js' → ''
+const BASE = self.location.pathname.replace(/\/spa\/sw\.js$/, '');
+
+const apiNetworkOnly = {
+    matcher: ({url}) => url.pathname.startsWith(`${BASE}/api/`) || url.pathname === `${BASE}/status`,
+    handler: new NetworkOnly(),
+};
+
+const serwist = new Serwist({
+    precacheEntries: self.__SW_MANIFEST,
+    skipWaiting: true,
+    clientsClaim: true,
+    navigationPreload: true,
+    runtimeCaching: [apiNetworkOnly, ...defaultCache],
+    fallbacks: {
+        entries: [
+            {
+                url: `${BASE}/spa`,
+                matcher: ({request}) => request.destination === 'document',
+            },
+        ],
+    },
+});
+
+serwist.addEventListeners();

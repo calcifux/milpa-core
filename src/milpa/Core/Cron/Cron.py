@@ -77,7 +77,7 @@ def _get_redis() -> redis.Redis:
     global _redis_client
     if _redis_client is None:
         # El lock vive en el LOCK store (redis), independiente del broker (que puede ser
-        # RabbitMQ/SQS y no tener primitiva de lock). Ver broker_agnostic_plan.md.
+        # RabbitMQ/SQS y no tener primitiva de lock).
         _redis_client = redis.Redis.from_url(settings.effective_lock_url)
     return _redis_client
 

@@ -37,7 +37,7 @@ def module_packages() -> list[str]:
     pkgutil). No hay concepto de "activo/inactivo": un módulo existe si su
     carpeta existe, igual que Laravel descubre los packages instalados. El
     control de qué corre solo NO está aquí, sino en `@cron_task` (environments)
-    + en si arrancas `celery beat`. Ver docs/11_framework_vision.md."""
+    + en si arrancas `celery beat`."""
     package = settings.modules_package
     try:
         modules_root = importlib.import_module(package)

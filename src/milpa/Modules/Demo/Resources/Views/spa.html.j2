@@ -1,0 +1,29 @@
+{#- Shell del SPA (estilo milpa): milpa es dueño del HTML; Vite, de los assets.
+    `vite_react_refresh()` SOLO emite en dev (preámbulo HMR de React) y va ANTES
+    de `vite()` — mismo contrato que @viteReactRefresh/@vite de Laravel. -#}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }} · SPA demo</title>
+    {#- PWA: el manifest lo sirve el BACKEND (start_url/scope dependen del prefijo
+        del deploy → runtime-config, ver SpaController.webmanifest); el icono sale
+        del public/ de la app → vite_asset() lo namespacea (y antepone ASSET_URL). -#}
+    {#- `app='demo-spa'` explícito: con VARIOS surcos el default ambiguo truena
+        a propósito — cada template nombra el suyo. -#}
+    <link rel="manifest" href="{{ base_path }}/spa/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="{{ vite_asset('icons/apple-touch-icon.png', app='demo-spa') }}">
+    {#- theme-color Forge (#FF6B1A) = identidad StackCraft, igual que el manifest. -#}
+    <meta name="theme-color" content="#FF6B1A">
+    {{ vite_react_refresh(app='demo-spa') }}
+    {{ vite('src/main.jsx', app='demo-spa') }}
+</head>
+<body>
+{#- Runtime-config inyectada por el BACKEND (lo que NEXT_PUBLIC_*/VITE_* no pueden
+    hacer sin rebuild): env_script() emite el <script> de window.__ENV completo —
+    sin tag a mano ni `| safe` (el JSON ya viene escapado desde el Core). -#}
+{{ env_script() }}
+<div id="root"></div>
+</body>
+</html>

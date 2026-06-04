@@ -14,6 +14,15 @@ __pycache__/
 logs/*
 !logs/.gitkeep
 
+# Frontend (si el proyecto trae surcos/ — apps Vite servidas por milpa):
+# deps y artefactos NO se versionan; las FUENTES de surcos/ SÍ (son tu código).
+# /public/ va ANCLADO a la raíz: el public/ de los builds. Sin la barra inicial
+# también taparía surcos/<app>/public/ (iconos PWA, fuentes ESTÁTICAS del surco).
+node_modules/
+/public/
+surcos/*/hot
+surcos/*/dist/
+
 # Editor / SO
 .idea/
 .vscode/

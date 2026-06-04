@@ -2,7 +2,7 @@ name: Release (PyPI)
 
 # Publica a PyPI cuando empujas un tag de versión (p. ej. `git tag v0.3.0a0 && git push --tags`).
 # Usa Trusted Publishing (OIDC): NO hay tokens ni secretos — PyPI confía en este workflow.
-# Requisito una sola vez: configurar el "pending publisher" en PyPI (ver docs/prerelease/07).
+# Requisito una sola vez: configurar el "pending publisher" en PyPI.
 on:
   push:
     tags: ["v*"]

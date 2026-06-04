@@ -1,4 +1,4 @@
-"""Sesión AMBIENTE (contextvar) + dos primitivos hermanos (ADR 13).
+"""Sesión AMBIENTE (contextvar) + dos primitivos hermanos.
 
 El modelo es el de Spring/JPA: una sesión "context-bound" que los repos toman con
 `current_session()` (sin recibirla por constructor). Dos formas de abrir el scope:

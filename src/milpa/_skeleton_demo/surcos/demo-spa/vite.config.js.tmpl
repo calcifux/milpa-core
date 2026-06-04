@@ -1,0 +1,23 @@
+// Config Vite de ESTE surco — todo el pegamento milpa vive en vite-plugin-milpa
+// (el "mix.js"): base derivada de la carpeta (surcos/demo-spa → /vite/demo-spa/),
+// manifest para el helper Jinja, hot-file para HMR, y PWA opcional.
+//
+// Un surco SIN PWA es simplemente: milpa() a secas (pwa: false es el default).
+// Este demo la activa para mostrar el camino SPA → PWA.
+import {defineConfig} from 'vite';
+import react from '@vitejs/plugin-react';
+import {milpa} from 'vite-plugin-milpa';
+
+export default defineConfig({
+    plugins: [
+        react(),
+        milpa({
+            entry: 'src/main.jsx',
+            // Precachea el shell Jinja para offline/fallback. BASE_PATH (env de
+            // build) = prefijo del deploy tras reverse proxy — el precache es
+            // build-time, así que bajo sub-ruta el build es por-entorno (igual
+            // que el `base` de los chunks vía ASSET_URL).
+            pwa: {shell: `${process.env.BASE_PATH ?? ''}/spa`},
+        }),
+    ],
+});

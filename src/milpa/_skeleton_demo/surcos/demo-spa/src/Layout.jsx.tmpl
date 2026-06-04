@@ -1,0 +1,38 @@
+// Shell visual con la identidad StackCraft (la marca paraguas): isotipo de
+// barras apiladas (la central en Forge = el craft), wordmark mono y tagline.
+import {Suspense} from 'react';
+import {Link, Outlet} from 'react-router';
+
+export default function Layout() {
+    return (
+        <main className="shell">
+            <header>
+                <div className="brand">
+                    <div className="brand-mark" aria-hidden="true"><i/><i/><i/></div>
+                    <div>
+                        <h1 className="wordmark">
+                            Stack<span>Craft</span> <span className="badge">demo-spa · Vite + milpa</span>
+                        </h1>
+                        <p className="tagline">Build · Ship · Iterate</p>
+                    </div>
+                </div>
+                <nav>
+                    <Link to="/">Inicio</Link>
+                    <Link to="/acerca">Acerca</Link>
+                    <Link to="/estado">Estado</Link>
+                    <Link to="/tienda">Tienda</Link>
+                    <Link to="/reportes">Reportes</Link>
+                </nav>
+            </header>
+            <section className="content">
+                {/* Las páginas son React.lazy (un chunk por ruta): Suspense cubre la carga. */}
+                <Suspense fallback={<p>Cargando…</p>}>
+                    <Outlet/>
+                </Suspense>
+            </section>
+            <footer className="powered">
+                Powered by <span>Stack<span>Craft</span></span>
+            </footer>
+        </main>
+    );
+}

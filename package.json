@@ -1,0 +1,21 @@
+{
+    "name": "milpa-workspaces",
+    "private": true,
+    "description": "Raíz del workspace pnpm de los frontends (surcos/*, ver pnpm-workspace.yaml). Cada surco mantiene su package.json y SOLO ve lo que declara (sin phantom deps). engines = el piso del TOOLCHAIN: pnpm 11 requiere node >=22.13 (usa node:sqlite). Vite 7 por sí solo corre desde 20.19, pero el workspace se opera con pnpm.",
+    "scripts": {
+        "dev": "pnpm --filter demo-spa dev",
+        "build": "pnpm -r build"
+    },
+    "engines": {
+        "node": ">=22.13.0"
+    },
+    "packageManager": "pnpm@11.5.1",
+    "volta": {
+        "node": "22.22.2",
+        "pnpm": "11.5.1"
+    },
+    "//": "Modo contributor (plugin SIN release): clona vite-plugin-milpa al lado del repo, renombra la clave de abajo a 'dependencies' y descomenta el override en pnpm-workspace.yaml (las claves con '//' son comentarios: npm/pnpm las ignoran).",
+    "// dependencies": {
+        "vite-plugin-milpa": "link:../vite-plugin-milpa"
+    }
+}

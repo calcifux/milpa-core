@@ -75,6 +75,10 @@ Todo es **OPT-IN** y auto-descubrible (no estorba si no lo usas):
   Pydantic v2 (`computed_field`), soft-delete y timestamps automáticos; engine agnóstico del motor.
 - **HTTP** — controllers class-based (`@Controller`/`@Get`/`@Post`), Jinja2 + HTMX/Alpine (sin
   Inertia) · **i18n** (YAML) · **mail** (`Mailable` + drivers smtp/log/null + plantillas firmadas).
+- **Frontend con Vite (estilo laravel-vite)** — helpers `vite()`/`vite_asset()` (HMR en dev,
+  chunks hasheados en prod), **microfrontends por vertical** (`surcos/`: cada equipo su app
+  Vite — React/Vue/Svelte/vanilla — servida **same-origin**, cero CORS), runtime-config
+  `window.__ENV` sin rebuild y **PWA sin boilerplate** (manifest en runtime + Service Worker).
 
 ---
 
@@ -90,6 +94,10 @@ levantar infraestructura.
   (HTMX), entra a **Usuarios** (solo rol `admin` → RBAC); editas/borras solo tus notas (ABAC).
 - **API (JWT):** `POST /api/login` → `{access_token}`; luego `Authorization: Bearer <token>` en
   `/api/me`, `/api/notes` (CRUD), `/v1/reports/notes` vs `/v2/...` (versionado). OpenAPI en `/docs`.
+- **Microfrontends (Vite, OPT-IN):** el demo trae dos surcos — `demo-spa` (React + PWA con
+  file-router) en `/spa` y `tablero` (vanilla) en `/tablero`. Requieren Node ≥22.13 y pnpm 11:
+  `pnpm install && pnpm -r build` en la raíz del proyecto, recarga y listo (en dev:
+  `pnpm --filter demo-spa dev` en paralelo a `jornal serve`).
 - **Correos:** el `.env` trae `MAIL_DRIVER=log` (los correos se imprimen en la terminal de
   `jornal serve`). Para verlos en un **inbox web**, `docker compose up -d` levanta **Mailpit**
   (http://localhost:8025) y pones `MAIL_DRIVER=smtp`.

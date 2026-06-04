@@ -1,0 +1,16 @@
+{#- Template PROPIO del surco `tablero` (cada equipo el suyo, como cada Blade en
+    Laravel). Es vanilla JS: nota que NO llama vite_react_refresh() — eso es solo
+    para surcos React. El `app='tablero'` desambigua en multi-app. -#}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }} · Tablero</title>
+    {{ vite('src/main.js', app='tablero') }}
+</head>
+<body>
+{{ env_script() }}
+<div id="tablero"></div>
+</body>
+</html>

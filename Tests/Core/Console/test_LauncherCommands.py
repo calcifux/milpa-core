@@ -2,7 +2,7 @@
 
 DB-free y SIN arrancar Celery de verdad: monkeypatcheamos `worker_main`/`start`
 del celery_app para capturar con qué argumentos se invocaría, sin levantar ningún
-proceso. Equivalente al patrón [[testing-approach]]: fakes y monkeypatch.
+proceso. Fakes y monkeypatch, cero BD/red.
 """
 
 from __future__ import annotations

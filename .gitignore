@@ -40,6 +40,20 @@ docs/
 # Sitio generado por MkDocs (se construye en CI; no se versiona)
 site/
 
-# Artefactos de build/empaquetado (uv build)
-/dist/
-*.egg-info/
+# Frontend (workspace pnpm en surcos/, ver pnpm-workspace.yaml): deps y artefactos
+# de build NO se versionan. public/ es 100% generado (vite build de cada surco →
+# public/<app>); el hot-file es runtime del dev server (modelo Laravel).
+node_modules/
+# Anclado a la raíz: sin la barra inicial taparía también surcos/<app>/public/
+# (las fuentes estáticas de un surco, p. ej. los iconos de la PWA).
+/public/
+
+# surcos/ NO se versiona en ESTE repo (solo la carpeta-convención con su .gitkeep):
+# los surcos de demo viven en el skeleton del scaffolder (`milpa new --demo`);
+# aquí son área de trabajo local. Por lo mismo, el pnpm-lock.yaml TAMPOCO se
+# versiona aquí: sus importers (surcos/*) no existen en un clone fresco y pnpm
+# lo reescribiría — en los proyectos GENERADOS el lock SÍ se versiona (ahí los
+# surcos son código del usuario).
+surcos/*
+!surcos/.gitkeep
+pnpm-lock.yaml

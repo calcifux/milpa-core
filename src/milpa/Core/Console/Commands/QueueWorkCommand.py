@@ -34,7 +34,7 @@ def queue_work(
     """Lanza el worker (proceso de larga duración). Bloquea hasta Ctrl-C.
 
     NO embebe el scheduler (`-B`) de forma deliberada: el despertador se arranca
-    aparte con `schedule work`, así dev no auto-dispara crons. Ver docs/11.
+    aparte con `schedule work`, así dev no auto-dispara crons.
     """
     argv = ["worker", "--loglevel", loglevel]
     if queue is not None:

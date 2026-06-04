@@ -7,6 +7,10 @@
 - Una **base de datos** alcanzable. El engine es agnóstico del motor (MySQL/MariaDB,
   PostgreSQL, Oracle, SQL Server, SQLite); se elige con `DATABASE_URL`.
 - (Recomendado) [**uv**](https://docs.astral.sh/uv/) como gestor de entorno y deps.
+- **(Opt-in) Frontend Vite** — solo si usas el asset-pipeline o los microfrontends
+  (surcos): **Node** `>=22.13` (el `.nvmrc` fija `22`: pnpm 11 usa `node:sqlite`) y **pnpm 11**. Un
+  proyecto que solo renderiza HTML con Jinja **no** los necesita. Ver
+  [Vite y assets](29-vite-y-assets.md).
 
 ## Opción A — con `uv` (recomendada)
 
@@ -79,6 +83,19 @@ en el host.
 ```bash
 docker compose up -d        # Redis (6379) + Mailpit (SMTP 1025, UI http://localhost:8025)
 ```
+
+## (Opt-in) Frontend Vite
+
+Solo si tu proyecto trae surcos (microfrontends). Instala las dependencias del workspace
+pnpm desde la raíz y, si quieres HMR, levanta el dev server de un surco:
+
+```bash
+pnpm install                     # instala TODO el workspace (surcos/*)
+pnpm --filter demo-spa dev       # dev server con HMR de un surco
+pnpm -r build                    # buildea todos los surcos (modo prod)
+```
+
+Ver [Vite y assets](29-vite-y-assets.md) y [Microfrontends (surcos)](30-microfrontends-surcos.md).
 
 ## Verificar la instalación
 

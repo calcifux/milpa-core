@@ -53,12 +53,16 @@ def new_project(name: str, *, parent: Path | None = None, demo: bool = False) ->
 
 def _add_demo(dest: Path) -> None:
     """Materializa los módulos/modelos de ejemplo del paquete milpa en `dest/app`,
-    reescribiendo imports del framework (`milpa.Modules`/`milpa.Models`) a los del proyecto."""
+    reescribiendo imports del framework (`milpa.Modules`/`milpa.Models`) a los del proyecto.
+    Además renderiza el FRONTEND del demo (`milpa/_skeleton_demo`): los surcos Vite
+    (demo-spa React+PWA y tablero vanilla) + el package.json raíz npm — la contraparte
+    de los SpaController/TableroController que ya viajan con Modules/Demo."""
     package = files("milpa")
     with as_file(package) as package_dir:
         package_root = Path(package_dir)
         for relative in (*_DEMO_MODULES, *_DEMO_MODELS):
             _copy_rewritten(package_root / relative, dest / "app" / relative)
+        _render_tree(package_root / "_skeleton_demo", dest, dest.name)
 
 
 def _copy_rewritten(src: Path, out: Path) -> None:
@@ -80,14 +84,23 @@ def _copy_rewritten(src: Path, out: Path) -> None:
 
 
 def _render_tree(skeleton_dir: Path, dest: Path, name: str) -> None:
-    """Copia recursivamente el skeleton a `dest`: quita el sufijo `.tmpl` del nombre y
-    sustituye el placeholder por `name` en el contenido de cada archivo."""
+    """Copia recursivamente el skeleton a `dest`. Regla por sufijo: los `.tmpl` son
+    PLANTILLAS de texto (se sustituye el placeholder por `name` y se quita el sufijo);
+    todo lo demás se copia BYTE a byte tal cual — así el skeleton puede traer binarios
+    (los iconos PNG de la PWA del demo) sin que un read_text los corrompa."""
+    # rglob sobre una ruta inexistente produce CERO items sin error: un skeleton
+    # ausente (wheel mal empaquetado) sería un no-op silencioso. Nunca falla en silencio.
+    if not skeleton_dir.is_dir():
+        raise FileNotFoundError(f"Skeleton no encontrado en el paquete milpa: '{skeleton_dir}'.")
     for src in sorted(skeleton_dir.rglob("*")):
         if src.is_dir() or "__pycache__" in src.parts:
             continue
         rel = src.relative_to(skeleton_dir)
-        out_name = rel.name[: -len(_TMPL_SUFFIX)] if rel.name.endswith(_TMPL_SUFFIX) else rel.name
-        out_path = dest / rel.parent / out_name
+        out_path = dest / rel
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        content = src.read_text(encoding="utf-8").replace(_PLACEHOLDER, name)
-        out_path.write_text(content, encoding="utf-8")
+        if rel.name.endswith(_TMPL_SUFFIX):
+            out_path = dest / rel.parent / rel.name[: -len(_TMPL_SUFFIX)]
+            content = src.read_text(encoding="utf-8").replace(_PLACEHOLDER, name)
+            out_path.write_text(content, encoding="utf-8")
+        else:
+            out_path.write_bytes(src.read_bytes())

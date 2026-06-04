@@ -33,12 +33,16 @@ from jinja2 import (
     FileSystemLoader,
     PrefixLoader,
     StrictUndefined,
+    pass_context,
     select_autoescape,
 )
+from jinja2.runtime import Context
+from markupsafe import Markup
 
 from milpa.Core.Config import settings
 from milpa.Core.Discovery import package_dir
 from milpa.Core.Translate import t as default_translate
+from milpa.Core.View.Vite import vite, vite_asset, vite_react_refresh
 
 # Raíz del PAQUETE milpa (…/src/milpa/Core/View/TemplateEngine.py -> parents[2]).
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -65,8 +69,29 @@ def _module_views_dirs() -> dict[str, Path]:
 
 def _asset(path: str) -> str:
     """URL de un estatico bajo /static (= asset() de Laravel). No hardcodear /static
-    en los templates: `{{ asset('welcome.css') }}` -> "/static/welcome.css"."""
-    return f"/static/{path.lstrip('/')}"
+    en los templates: `{{ asset('welcome.css') }}` -> "/static/welcome.css". ASSET_URL
+    (si esta configurado) se antepone — deploy bajo sub-ruta de proxy o CDN."""
+    return f"{settings.asset_url.rstrip('/')}/static/{path.lstrip('/')}"
+
+
+@pass_context
+def _env_script(context: Context) -> Markup:
+    """`{{ env_script() }}` — el `<script>window.__ENV = {...}</script>` del shell,
+    SIN boilerplate ni `| safe` a mano: toma `env_json` del contexto (lo pone
+    `shell_context(request)` de Core/Http/Shell) y emite el tag completo. Es seguro
+    como Markup porque el JSON ya viene con `<` escapado desde el Core (un valor
+    malicioso no puede cerrar el tag). Ponlo en el <body> ANTES de `vite()`: corre
+    primero que los modulos (los <script type="module"> son deferred por spec), asi
+    window.__ENV ya existe cuando el frontend monta."""
+    env_json = context.get("env_json")
+    # `not` (no `is None`): un env_json="" pasaría el guard y emitiría
+    # `window.__ENV = ;` — SyntaxError en el navegador en vez de instrucción clara.
+    if not env_json:
+        raise RuntimeError(
+            "env_script() necesita `env_json` en el contexto del template: renderiza el shell con "
+            "view('tu/shell', shell_context(request)) — Core/Http/Shell."
+        )
+    return Markup(f"<script>window.__ENV = {env_json};</script>")
 
 
 def _build_loader(templates_dir: Path | None) -> BaseLoader:
@@ -130,6 +155,17 @@ class TemplateEngine:
         # asset("welcome.css") -> /static/welcome.css. Por modulo: asset("example/x.css")
         # -> /static/example/x.css (lo sirve el mount namespaced del modulo).
         self._env.globals["asset"] = _asset
+        # `vite()` / `vite_asset()` / `vite_react_refresh()` (= @vite / Vite::asset /
+        # @viteReactRefresh de Laravel): inyectan los assets del frontend Vite — dev
+        # server con HMR (hot-file por app) o manifest hasheado de dist/ segun el modo
+        # (ver Core/View/Vite.py). Multi-app: `vite('src/main.jsx', app='tienda')`.
+        # OPT-IN: solo truenan (con instruccion clara) si se usan sin apps detectadas.
+        self._env.globals["vite"] = vite
+        self._env.globals["vite_asset"] = vite_asset
+        self._env.globals["vite_react_refresh"] = vite_react_refresh
+        # `env_script()`: el <script> de window.__ENV (runtime-config del shell) sin
+        # copiar el tag ni el `| safe` en cada template — lee env_json del contexto.
+        self._env.globals["env_script"] = _env_script
 
     def render(self, template_name: str, context: dict[str, object]) -> str:
         """Renderiza el template `template_name` con el `context` dado."""

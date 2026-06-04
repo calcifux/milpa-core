@@ -4,7 +4,8 @@
 
 from __future__ import annotations
 
+from milpa.Core.View import Pwa
 from milpa.Core.View.TemplateEngine import TemplateEngine, template_engine
 from milpa.Core.View.View import negotiate, prefers_html, view
 
-__all__ = ["TemplateEngine", "negotiate", "prefers_html", "template_engine", "view"]
+__all__ = ["Pwa", "TemplateEngine", "negotiate", "prefers_html", "template_engine", "view"]

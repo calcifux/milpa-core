@@ -110,6 +110,22 @@ Ver [Autenticación](15-autenticacion.md).
 
 Ver [Logging](14-logging.md).
 
+### Vite / frontend (opt-in)
+
+Solo aplica si usas el asset-pipeline o los microfrontends (surcos). Los defaults son los
+del layout que genera `milpa new`; en un proyecto recién creado no tocas nada.
+
+| Variable | Default | Para qué |
+|----------|---------|----------|
+| `VITE_APPS_DIR` | `surcos` | Carpeta de las **fuentes** de los surcos (uno por vertical). |
+| `VITE_PUBLIC_DIR` | `public` | Carpeta `public/`: el build de cada surco cae en `public/<app>`. |
+| `VITE_ASSETS_URL` | `/vite` | Raíz pública donde milpa monta el `public/` (cada app en `<assets_url>/<app>`). |
+| `VITE_DIST_DIR` | `""` | Override **explícito** para una-sola-app (ignora la auto-detección). |
+| `VITE_HOT_FILE` | `""` | Hot-file del modo una-sola-app. Vacío ⇒ `<dist>/../hot`. |
+| `ASSET_URL` | `""` | Prefijo público de `asset()`/`vite()`/`vite_asset()` (CDN o sub-ruta de proxy). DEBE coincidir con el del build. |
+
+Ver [Vite y assets](29-vite-y-assets.md).
+
 ## Propiedades calculadas útiles
 
 `Settings` expone helpers para no repetir lógica de fallback:

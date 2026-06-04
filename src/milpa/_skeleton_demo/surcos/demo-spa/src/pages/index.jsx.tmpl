@@ -1,0 +1,11 @@
+export default function Home() {
+    const env = window.__ENV ?? {};
+    return (
+        <article>
+            <h2>Inicio</h2>
+            <p>SPA servida por <strong>{env.APP_NAME ?? '¿milpa?'}</strong> estilo laravel-mix.</p>
+            <p>Config runtime inyectada por el shell Jinja (sin rebuild):</p>
+            <pre>{JSON.stringify(env, null, 2)}</pre>
+        </article>
+    );
+}

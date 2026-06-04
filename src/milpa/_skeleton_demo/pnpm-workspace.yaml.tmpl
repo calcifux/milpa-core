@@ -1,0 +1,20 @@
+# Workspace pnpm de los frontends (surcos/*): node_modules POR PAQUETE vía
+# symlinks al store global → cada surco solo importa lo que DECLARA (la phantom
+# dep truena en dev, no cuando extraes el surco a su propio repo).
+#
+# Comandos por surco:  pnpm --filter <surco> {dev,build,add <pkg>}
+# Todo el workspace:   pnpm install (raíz) · pnpm -r build
+packages:
+  - "surcos/*"
+
+# pnpm 11 NO ejecuta los postinstall de las deps por default (anti supply-chain);
+# cada uno se aprueba explícitamente aquí. esbuild (dep de Vite) usa el suyo para
+# dejar listo su binario nativo — es de confianza y Vite lo necesita.
+allowBuilds:
+  esbuild: true
+
+# ¿Quieres probar un vite-plugin-milpa aún no publicado (o parcharlo)? Clona
+# github.com/calcifux/vite-plugin-milpa al lado de tu proyecto y descomenta:
+# los surcos usarán tu copia local en vez de la versión publicada en npm.
+# overrides:
+#   vite-plugin-milpa: link:../vite-plugin-milpa

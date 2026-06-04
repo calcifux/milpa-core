@@ -1,0 +1,11 @@
+// Surco `tablero`: VANILLA JS — ni React ni framework. Demuestra que cada equipo
+// elige su tecnología: Vite y el plugin de milpa no asumen nada del stack.
+// SPA simple, sin PWA (pwa: false es el default — evoluciona cuando haga falta).
+import {defineConfig} from 'vite';
+import {milpa} from 'vite-plugin-milpa';
+
+export default defineConfig({
+    plugins: [
+        milpa({entry: 'src/main.js'}),
+    ],
+});
