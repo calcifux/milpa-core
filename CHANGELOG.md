@@ -184,38 +184,29 @@ Arreglo para que `milpa new --demo` corra **de fábrica** (OOTB) + ajustes de do
 - README actualizado a **v0.3.0** (características, estructura `src/milpa`, módulo Demo) y aclaración
   de la **instalación local** (todavía no en PyPI).
 
-## [0.3.0] - 2026-06-02
+## [0.3.0a0] - 2026-06-01
 
-milpa pasa de *repo que se clona* a **paquete instalable** + un scaffolder `milpa new` que genera
-tu proyecto. Fases A–C del *packaging*: extraer el framework a `src/milpa`, que el Core resuelva el
-código del USUARIO desde Settings, y embeber un skeleton que `milpa new` materializa.
+Primera versión **INSTALABLE**: milpa se extrae como paquete (`pip install milpa-core`) con un
+scaffolder de proyectos. Alpha — la API puede cambiar entre versiones.
 
 ### Added
 
-#### Packaging + scaffolder
+- **Paquete instalable** (`pip install milpa-core` / `uv add milpa-core`): src-layout (`src/milpa`),
+  `[build-system]` hatchling, comando de consola `milpa`, versión single-source en `__init__`.
+- **`milpa new <app>`** — scaffolder que genera un proyecto listo para correr (estilo
+  `laravel new` / `django-admin startproject`) desde un skeleton embebido en el paquete.
+- **Config-seam**: el Core resuelve módulos/modelos/recursos/migraciones del proyecto desde
+  `Settings`/`.env` (`MODULES_PACKAGE`, `MODELS_PACKAGE`, `USER_VIEWS_DIR`, …) en vez de rutas
+  hardcodeadas — un proyecto externo apunta milpa a su propio código. Nuevo `milpa.Core.Discovery`.
+- Pipeline de release a PyPI (Trusted Publishing OIDC) + gates de empaquetado en CI
+  (`uv build` + smoke de instalación).
 
-- **Framework extraído a paquete instalable** — el código del Core/Modules vive en `src/milpa` y se
-  instala como paquete; ya no se asume el layout de un repo clonado.
-- **El Core resuelve el código del USUARIO desde `Settings`** (Fase B) — módulos, modelos, recursos
-  y migraciones del proyecto se leen de config (`MODULES_PACKAGE`, `MODELS_PACKAGE`,
-  `USER_VIEWS_DIR`, `MIGRATIONS_DIR`, …), no contando carpetas desde el propio paquete (eso, en
-  *site-packages*, apuntaba a otro lado).
-- **Scaffolder `milpa new` + skeleton embebido** (Fase C) — genera un proyecto nuevo a partir de un
-  skeleton que viaja DENTRO del paquete (archivos `.tmpl` que se renderizan sustituyendo el nombre
-  del proyecto).
+### Changed
 
-#### Consola
-
-- **`make:*` escribe en el `app/` del USUARIO** (`settings.app_dir`), no en el paquete instalado —
-  tus controllers/modelos/módulos generados aterrizan en tu proyecto, donde el Registry los
-  auto-monta.
-- **El módulo `Hello` generado usa `@Controller` class-based** — el stub de bienvenida estrena el
-  routing estilo Spring (`@Controller` + `@Get`) en vez del `APIRouter`.
-
-### Tests
-
-- Guardrail que **ejecuta el launcher `jornal`** (regresión del rename del entrypoint) tras
-  corregir que importaba el símbolo equivocado (`milpa` en vez de `app`).
+- **`DATABASE_URL`** ahora tiene default `sqlite:///./milpa.db` (zero-config: milpa arranca sin
+  configurar nada, como Django en dev). En QA/prod se pone el motor real en `.env`.
+- **`pymysql`** sale del core → extra opcional `milpa-core[mysql]` (el core queda agnóstico de dialecto).
+- El paquete importable se renombró `app` → `milpa`.
 
 ## [0.2.0] - 2026-05-30
 
@@ -295,7 +286,6 @@ Primera versión: el esqueleto del microframework + auth, demo y herramientas de
 
 [Unreleased]: https://github.com/calcifux/milpa/compare/v0.4.0...HEAD
 [0.4.0]: https://github.com/calcifux/milpa/compare/v0.3.1...v0.4.0
-[0.3.1]: https://github.com/calcifux/milpa/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/calcifux/milpa/compare/v0.2.0...v0.3.0
+[0.3.1]: https://github.com/calcifux/milpa/compare/v0.2.0...v0.3.1
 [0.2.0]: https://github.com/calcifux/milpa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/calcifux/milpa/releases/tag/v0.1.0
