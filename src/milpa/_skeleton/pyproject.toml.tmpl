@@ -22,4 +22,5 @@ dev = [
 # (instala las dependencias, no el proyecto en sí).
 [tool.pytest.ini_options]
 testpaths = ["Tests"]
+pythonpath = ["."]  # para que los tests importen `app.*` desde la raíz del proyecto
 addopts = "-q --import-mode=importlib"

@@ -78,6 +78,33 @@ uv run lint-imports        # fronteras entre módulos
 uv run pytest              # tests (sin BD)
 ```
 
+## API pública
+
+La superficie estable vive en la **fachada raíz** — un import plano con lo que el demo y
+esta guía enseñan:
+
+```python
+from milpa import (
+    Controller, Get, Post, view, negotiate,      # web: rutas, controllers y render
+    Auth, CurrentUser, guarded, Gate, policy,     # auth: RBAC/ABAC y guards
+    job, cron_task, daily, hourly,                # background: jobs on-demand y crons
+    celery_app, broker_guard, retry_policy,       # Celery: la app, guarda de broker y reintentos
+    Mail, Mailable, MailContent,                  # correo
+    Observer, dispatch, handles, send,            # eventos (1:N) y mediator (1:1)
+    Pipeline, Pipe,                               # modelo cebolla
+    Repository, Factory, Seeder, faker,           # datos estilo Spring Data
+    Base, current_session, transactional, auto_session,
+    t, current_locale,                            # i18n de la UI
+    console_command, settings,                    # consola y config tipada
+)
+```
+
+La fachada es **perezosa** (PEP 562): `import milpa` a secas no instancia Celery, no
+arrastra el kernel web ni lee tu `.env` — cada símbolo se resuelve al primer acceso. Las
+rutas profundas (`from milpa.Core.Http.Routing import Get`) siguen siendo válidas; la
+fachada solo re-exporta. El paquete publica `py.typed` (PEP 561), así que mypy/tu IDE
+reciben los tipos completos en cualquiera de las dos formas.
+
 ## Siguiente paso
 
 [Instalación](02-instalacion.md).

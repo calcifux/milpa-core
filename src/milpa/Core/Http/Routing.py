@@ -35,9 +35,15 @@ from typing import Any, TypeVar
 from fastapi import APIRouter, Depends
 from starlette.requests import Request
 
-# Atributos donde se cuelga la metadata: en la FUNCIÓN (la ruta) y en la CLASE (el router armado).
+# Atributos donde se cuelga la metadata: en la FUNCIÓN (la ruta) y en la CLASE (el router armado
+# + las rutas @Fallback acumuladas, que NO van al router del controller sino al final de create_app).
 ROUTE_ATTR = "__milpa_route__"
 ROUTER_ATTR = "__milpa_router__"
+FALLBACKS_ATTR = "__milpa_fallbacks__"
+
+# Una ruta @Fallback ya resuelta (endpoint ligado + lo que necesita `app.add_api_route`): el
+# Registry la recolecta (`iter_fallback_routes`) y create_app la monta DESPUÉS de los mounts.
+FallbackRoute = tuple[Callable[..., Any], str, list[str], dict[str, Any]]
 
 F = TypeVar("F", bound=Callable[..., Any])
 C = TypeVar("C", bound=type)
@@ -48,7 +54,7 @@ def _route_meta(func: Callable[..., Any]) -> dict[str, Any]:
     `dependencies` lo rellenan también los decoradores de auth."""
     meta: dict[str, Any] | None = func.__dict__.get(ROUTE_ATTR)
     if meta is None:
-        meta = {"methods": [], "path": "/", "kwargs": {}, "dependencies": [], "wrappers": []}
+        meta = {"methods": [], "path": "/", "kwargs": {}, "dependencies": [], "wrappers": [], "fallback": False}
         func.__dict__[ROUTE_ATTR] = meta
     return meta
 
@@ -74,6 +80,35 @@ Post = _verb("POST")
 Put = _verb("PUT")
 Patch = _verb("PATCH")
 Delete = _verb("DELETE")
+
+
+def Fallback[FuncT: Callable[..., Any]](func: FuncT) -> FuncT:
+    """Marca una ruta para registrarla DESPUÉS de los mounts del kernel (/static, /vite,
+    /status), NO dentro del router del controller. Es el mecanismo opt-in para un CATCH-ALL
+    en la RAÍZ (un `@Get("/{path:path}")` con prefijo "") que sirve el shell de una SPA sin
+    comerse los estáticos.
+
+    EL PROBLEMA DEL ORDEN: `create_app` (Core/Http/Http.py) incluye los routers de los
+    controllers ANTES de montar /static, /vite y /status; y en Starlette gana el PRIMER match
+    de `app.routes`. Así que un catch-all raíz registrado como ruta normal se tragaría esos
+    mounts (404 planos en lugar de los assets y el health check). Por eso, hasta ahora, una SPA
+    debía usar un prefijo propio (`/app`) + un redirect de `/` para no chocar con los mounts.
+
+    `@Fallback` invierte el orden SOLO para esa ruta: el `@Controller` NO la agrega a su router
+    (la acumula en `cls.__milpa_fallbacks__`) y `create_app` la monta AL FINAL, tras los mounts
+    — así /api, /static, /vite y /status ya ganaron su match y el catch-all solo recoge lo que
+    nadie reclamó. Se combina con un verbo (el verbo da el path/methods; `@Fallback` solo marca
+    el momento de registro). Estilo milpa: el opt-in vive en un decorador descubrible, no en
+    plomería que cada app reescribe.
+
+        @Controller("", tags=["spa"])
+        class SpaController:
+            @Fallback
+            @Get("/{path:path}")
+            def shell(self, request: Request, path: str) -> HTMLResponse: ...
+    """
+    _route_meta(func)["fallback"] = True
+    return func
 
 
 def add_route_dependency(func: Callable[..., Any], dependency: Any) -> None:
@@ -139,6 +174,10 @@ def Controller(
             tags=router_tags or None,
             dependencies=router_dependencies or None,
         )
+        # Las rutas @Fallback NO entran al router del controller: se acumulan aquí y el Registry
+        # las recolecta para que create_app las monte AL FINAL (ver Fallback). Path versionado por
+        # el prefijo igual que las normales (un fallback bajo un controller versionado lo respeta).
+        fallbacks: list[FallbackRoute] = []
         # Recorre los métodos en orden de definición; registra los marcados con un verbo.
         for name, attribute in list(vars(cls).items()):
             meta: dict[str, Any] | None = getattr(attribute, ROUTE_ATTR, None)
@@ -153,13 +192,14 @@ def Controller(
             extra_dependencies = meta["dependencies"]
             if extra_dependencies:
                 route_kwargs["dependencies"] = [*route_kwargs.get("dependencies", []), *extra_dependencies]
-            router.add_api_route(
-                meta["path"],
-                endpoint,
-                methods=meta["methods"] or ["GET"],
-                **route_kwargs,
-            )
+            methods = meta["methods"] or ["GET"]
+            if meta["fallback"]:
+                # Misma resolución de path que una ruta normal, pero diferida al final de create_app.
+                fallbacks.append((endpoint, f"{effective_prefix}{meta['path']}", methods, route_kwargs))
+                continue
+            router.add_api_route(meta["path"], endpoint, methods=methods, **route_kwargs)
         setattr(cls, ROUTER_ATTR, router)
+        setattr(cls, FALLBACKS_ATTR, fallbacks)
         return cls
 
     return decorator

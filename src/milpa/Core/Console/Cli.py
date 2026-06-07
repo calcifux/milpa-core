@@ -59,10 +59,22 @@ def serve(
     reload: bool = typer.Option(True, "--reload/--no-reload", help="Auto-recarga en cambios (dev)."),
 ) -> None:
     """Arranca FastAPI con uvicorn usando la app factory del kernel web (Core).
-    En modo `--factory` uvicorn llama a `create_app()`; el string permite `--reload`."""
+    En modo `--factory` uvicorn llama a `create_app()`; el string permite `--reload`.
+    Si ASSET_URL es una RUTA (deploy bajo sub-ruta de reverse proxy), viaja
+    también como root_path ASGI: el MISMO `jornal serve` funciona con y sin
+    proxy, sin flags — una sola variable configurada (un CDN https:// no es
+    prefijo del deploy: root raíz, como siempre)."""
     import uvicorn
 
-    uvicorn.run("milpa.Core.Http.Http:create_app", factory=True, host=host, port=port, reload=reload)
+    prefix = settings.asset_url if settings.asset_url.startswith("/") else ""
+    uvicorn.run(
+        "milpa.Core.Http.Http:create_app",
+        factory=True,
+        host=host,
+        port=port,
+        reload=reload,
+        root_path=prefix.rstrip("/"),
+    )
 
 
 @app.command(name="new", help="Crea un proyecto nuevo de milpa desde una plantilla. (≈ laravel new).")

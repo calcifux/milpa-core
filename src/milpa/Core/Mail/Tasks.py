@@ -16,6 +16,7 @@ mismos kwargs en `enqueue_mail(...)`.
 from __future__ import annotations
 
 import importlib
+import inspect
 import smtplib
 from typing import Any
 
@@ -101,12 +102,30 @@ def enqueue_mail(
     El llamador es responsable de pasar `init_kwargs` que coincida con los args
     que reciba el `__init__` del Mailable cuando se reinstancie en el worker
     (mismo trato que `dispatch(new Mailable(...))` en Laravel: los args
-    serializables son responsabilidad del llamador). Si `init_kwargs` no se da,
-    asumimos que el Mailable se construyó sin args (raro pero válido).
+    serializables son responsabilidad del llamador). Si `init_kwargs` no se da y el
+    `__init__` exige argumentos, reventamos AQUÍ con instrucción clara: en el worker el
+    "missing argument" sería invisible para el remitente (para él, encolar fue exitoso).
 
     `queue`: cola de Celery a la que se enruta (= `->onQueue('emails')`). None = cola
     por defecto; el worker la consume con `queue work --queue=<cola>`.
     """
+    # Faro (bug real cazado 2026-06-06): el digest del demo encolaba sin init_kwargs y el
+    # worker tronaba con TypeError al reinstanciar — fallo asíncrono que el remitente nunca
+    # ve. Validamos la firma EN EL PROCESO QUE ENCOLA, donde el error sí es accionable.
+    if not init_kwargs:
+        empty = inspect.Parameter.empty
+        variadic = (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+        required = [
+            parameter.name
+            for parameter in inspect.signature(type(mailable).__init__).parameters.values()
+            if parameter.name != "self" and parameter.default is empty and parameter.kind not in variadic
+        ]
+        if required:
+            raise ValueError(
+                f"{type(mailable).__name__}.__init__ requiere {required} pero Mail.queue no recibió "
+                "init_kwargs: el worker reinstancia el Mailable desde primitivas y fallaría allá "
+                "(invisible para quien encola). Pasa init_kwargs= con EXACTAMENTE esos argumentos."
+            )
     mailable_class_path = f"{type(mailable).__module__}.{type(mailable).__qualname__}"
     # Capturamos el locale AMBIENTE aqui (request/CLI) y lo mandamos al worker, que lo
     # restaura antes de build() (= Laravel captura el locale al encolar el Mailable).

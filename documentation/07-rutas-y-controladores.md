@@ -178,6 +178,50 @@ Respuesta (status según el error; aquí `404`), `Content-Type: application/prob
   `500` genérico (`code: "internal_error"`) con el **traceback completo al log** y **sin
   filtrar internals** en la respuesta.
 
+## `@Fallback` — catch-all raíz que respeta los estáticos
+
+¿Sirves una SPA cuyo router del cliente vive en la **raíz** (`/`, `/perfil`, `/ajustes`…)?
+Querrías un único controller que devuelva el shell para **cualquier** ruta:
+`@Get("/{path:path}")` con prefijo `""`. Pero registrado como ruta normal **se comería los
+estáticos**.
+
+**El problema del orden.** `create_app` incluye los routers de los controllers **antes** de
+montar `/static`, `/vite` y `/status`. Y en Starlette **gana el primer match** de
+`app.routes`. Un catch-all raíz registrado como ruta normal queda **antes** de esos mounts y
+se traga `/static/...`, `/vite/...` y el health check (404 planos en lugar de los assets).
+Por eso, hasta ahora, una SPA debía usar un **prefijo propio** (`/app`) + un **redirect** de
+`/` para no chocar con nadie.
+
+**La solución estilo milpa.** El decorador `@Fallback` marca esa ruta para registrarla **al
+final**, después de los mounts. El `@Controller` no la mete en su router (la aparta), y
+`create_app` la monta tras `/static`, `/vite` y `/status`. Como esos ya ganaron su match, el
+catch-all solo recoge **lo que nadie reclamó**:
+
+```python
+from fastapi import Request
+from fastapi.responses import HTMLResponse
+from milpa.Core.Http import Controller, Fallback, Get
+from milpa.Core.View import view
+
+@Controller("", tags=["spa"])
+class SpaController:
+    @Fallback
+    @Get("/{path:path}")
+    def shell(self, request: Request, path: str) -> HTMLResponse:
+        del path  # solo participa en el routing; el shell es idéntico
+        return view("mi/shell")
+```
+
+| | Forma tradicional | Estilo milpa |
+|---|---|---|
+| **Cómo** | prefijo propio `/app` + `@Get("/")` con `RedirectResponse("/app")` | un `@Fallback @Get("/{path:path}")` en la raíz |
+| **Coste** | el cliente vive bajo `/app`; `/` redirige | el cliente vive en `/`; cero plomería |
+
+`@Fallback` se **combina con un verbo** (el verbo da el path y el método; `@Fallback` solo
+decide *cuándo* se registra). `/api`, `/static`, `/vite` y `/status` siguen **ganando** porque
+se montaron antes — el catch-all nunca los pisa. El discovery es el mismo del Registry
+(dinámico, no importa Modules estático).
+
 ## El endpoint `/status`
 
 El único endpoint que registra el kernel directamente: devuelve el nombre del servicio,

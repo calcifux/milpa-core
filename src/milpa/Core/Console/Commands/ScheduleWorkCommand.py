@@ -28,6 +28,7 @@ def schedule_work(
     loglevel: str = typer.Option(settings.log_level, help="Nivel de log del scheduler."),
 ) -> None:
     """Lanza beat (proceso de larga duración). Bloquea hasta Ctrl-C. El
-    beat_schedule lo arma el Registry al configurarse Celery (crons de todos los
-    módulos presentes)."""
+    beat_schedule lo arma el Registry al configurarse Celery, fusionando DOS
+    fuentes: los `@cron_task` descubiertos (convertidos a crontab) MÁS los
+    `beat_schedule` declarados en cada `Console/Kernel.py` (estos con precedencia)."""
     celery_app.start(argv=["beat", "--loglevel", loglevel])

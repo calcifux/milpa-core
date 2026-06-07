@@ -11,13 +11,13 @@ from __future__ import annotations
 import smtplib
 from typing import Any
 
-from pytest import MonkeyPatch
+from pytest import MonkeyPatch, raises
 
 from milpa.Core.CeleryApp import celery_app
 from milpa.Core.Config import settings
 from milpa.Core.Mail import Tasks
-from milpa.Core.Mail.Mailable import MailContent
-from milpa.Core.Mail.Tasks import send_mail_task
+from milpa.Core.Mail.Mailable import Mailable, MailContent
+from milpa.Core.Mail.Tasks import enqueue_mail, send_mail_task
 
 
 class _FakeMailable:
@@ -118,3 +118,46 @@ def test_mail_send_task_recovers_within_budget(monkeypatch: MonkeyPatch) -> None
 
     assert len(mailer.calls) == 3
     assert result.successful()
+
+
+# ---------------------------------------------------------------- guard de init_kwargs
+
+
+class _NecesitaArgs(Mailable):
+    """Mailable cuyo __init__ EXIGE un argumento (como el DailyDigestMailable real)."""
+
+    def __init__(self, total: int) -> None:
+        self._total = total
+
+    def build(self) -> MailContent:
+        return MailContent(subject=f"{self._total}", template="t.j2")
+
+
+class _SinArgs(Mailable):
+    """Mailable sin argumentos: el único caso donde omitir init_kwargs es válido."""
+
+    def build(self) -> MailContent:
+        return MailContent(subject="hola", template="t.j2")
+
+
+def test_enqueue_without_init_kwargs_fails_fast_when_init_requires_args() -> None:
+    """Regresión (bug real 2026-06-06): el digest encolaba sin init_kwargs y el worker
+    tronaba con TypeError al reinstanciar — fallo asíncrono invisible para el remitente.
+    El guard revienta AL ENCOLAR, con instrucción accionable, ANTES de tocar el broker."""
+    with raises(ValueError, match="init_kwargs"):
+        enqueue_mail(_NecesitaArgs(total=7), to=["a@example.com"])
+
+
+def test_enqueue_without_init_kwargs_passes_for_no_arg_mailables(monkeypatch: MonkeyPatch) -> None:
+    """Un Mailable sin args sí puede encolarse sin init_kwargs (el worker lo reinstancia
+    con kwargs vacíos). Capturamos apply_async para no tocar redis."""
+    captured: dict[str, Any] = {}
+
+    def _capture(*args: Any, **kwargs: Any) -> None:
+        captured.update(kwargs)
+
+    monkeypatch.setattr(Tasks.send_mail_task, "apply_async", _capture)
+
+    enqueue_mail(_SinArgs(), to=["a@example.com"])
+
+    assert captured["kwargs"]["mailable_kwargs"] == {}

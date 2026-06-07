@@ -139,10 +139,27 @@ def pipe_stub(name: str) -> str:
     )
 
 
-def mailable_stub(name: str) -> str:
-    """Stub de un Mailable (build() -> MailContent)."""
+def mailable_stub(module: str, name: str) -> str:
+    """Stub de un Mailable (build() -> MailContent), estilo milpa, que ASUME la cola "emails".
+
+    El docstring del stub narra el despacho idiomático ENCOLADO con la convención de cola de
+    correos ("emails", = `->onQueue('emails')` de Laravel) y apunta su plantilla a la
+    convención `Resources/Views/emails/` del módulo (con la nota del catálogo Lang para el
+    subject).
+    """
+    ns = module.lower()
     return (
-        f'"""Mailable {name}: arma un correo (build() -> MailContent)."""\n\n'
+        f'"""Mailable {name}: arma un correo (build() -> MailContent).\n\n'
+        "Despáchalo ENCOLADO (idiomático worker-side) a la cola de correos `emails`\n"
+        "(= `->onQueue('emails')` de Laravel); el worker la consume con `queue work --queue emails`\n"
+        "(o `--queue emails,celery` para drenar también la cola por defecto):\n\n"
+        "    from milpa.Core.Mail import Mail\n\n"
+        f'    Mail.queue({name}Mailable(name), to=[...], queue="emails", init_kwargs={{"name": name}})\n\n'
+        "`init_kwargs` debe COINCIDIR con el __init__ (el Mailable se reinstancia en el worker, solo\n"
+        "primitivas serializables — sin sesiones de BD; si lo omites y el __init__ exige args, Mail.queue\n"
+        "revienta de inmediato con un ValueError accionable). Si no hay broker, manda en el acto con\n"
+        "`Mail.send(...)` (síncrono, sin redis).\n"
+        '"""\n\n'
         "from __future__ import annotations\n\n"
         "from milpa.Core.Mail import Mailable, MailContent\n\n\n"
         f"class {name}Mailable(Mailable):\n"
@@ -150,9 +167,11 @@ def mailable_stub(name: str) -> str:
         "        self._name = name\n\n"
         "    def build(self) -> MailContent:\n"
         "        # TODO: subject / template (vista Jinja) / context de tu correo.\n"
+        f'        # La plantilla vive en Resources/Views/emails/ del módulo (namespace "{ns}/emails/...").\n'
+        '        # Para un subject multilingüe usa el catálogo Lang: t("' + ns + '/<archivo>.<clave>").\n'
         "        return MailContent(\n"
         '            subject=f"Hola {self._name}",\n'
-        '            template="TODO/mi_correo.html.j2",\n'
+        f'            template="{ns}/emails/mi_correo.html.j2",\n'
         '            context={"name": self._name},\n'
         "        )\n"
     )
@@ -333,11 +352,11 @@ def make_pipe(module: str, name: str) -> None:
     _write(target, pipe_stub(name))
 
 
-@console_command(name="mailable", group="make", help="Crea un Mailable en un módulo. (≈ php artisan make:mail)")
+@console_command(name="mailable", group="make", help="Crea un Mailable (cola 'emails') en un módulo. (≈ make:mail)")
 def make_mailable(module: str, name: str) -> None:
     target = _app_dir() / "Modules" / module / "Mail" / f"{name}Mailable.py"
     _ensure_pkg(target.parent)
-    _write(target, mailable_stub(name))
+    _write(target, mailable_stub(module, name))
 
 
 @console_command(name="job", group="make", help="Crea un Job de Celery en un módulo. (≈ php artisan make:job)")

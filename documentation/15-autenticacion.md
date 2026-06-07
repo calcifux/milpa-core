@@ -140,11 +140,17 @@ el guard `passport` (resuelve el user por el claim `sub` vía tu provider) o las
 clásicas de scopes:
 
 ```python
-from milpa.Core.Auth import get_current_token, require_scopes, TokenPrincipal
+from milpa.Core.Auth import get_current_token, require_scopes, require_any_scope, TokenPrincipal
 
 def profile(principal: TokenPrincipal = Depends(get_current_token)): ...
 def admin(principal: TokenPrincipal = Depends(require_scopes("admin"))): ...
+# require_scopes = TODOS los scopes (all-of, el `scopes:a,b` / CheckScopes de Passport)
+# require_any_scope = ALGUNO (any-of, el `scope:a,b` / CheckForAnyScope de Passport):
+def facturas(principal: TokenPrincipal = Depends(require_any_scope("op_site", "invoice_read"))): ...
 ```
+
+Para `@Controller`, el azúcar de ruta `@Scope("op_site", "invoice_read")` aplica el any-of
+sobre el método (en paralelo a `@Roles`/`@Can`).
 
 | Situación | Código |
 |-----------|--------|
@@ -152,7 +158,19 @@ def admin(principal: TokenPrincipal = Depends(require_scopes("admin"))): ...
 | Token inválido / expirado / firma mala | `401` |
 | Faltan scopes | `403` |
 
-La revocación queda como punto de extensión (hoy valida firma/expiración/audiencia).
+La revocación es un punto de extensión: por default solo se valida firma/expiración/audiencia.
+Para conectar tu verificación contra `oauth_access_tokens` (estilo strangler), registra una
+función con `set_revocation_check(fn)` — `fn(token_id) -> True` significa REVOCADO y el token
+recibe `401`:
+
+```python
+from milpa.Core.Auth import set_revocation_check
+
+set_revocation_check(lambda jti: jti is None or not mi_servicio.is_active(jti))
+```
+
+Llámalo una vez en el boot de la app (p. ej. un service provider / `__init__` del shared kernel)
+para que aplique antes del primer request.
 
 ## Variables de entorno
 

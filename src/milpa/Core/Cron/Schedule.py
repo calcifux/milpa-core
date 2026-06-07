@@ -5,6 +5,10 @@ día-semana") que se pasa a `@cron_task(schedule=...)`. `schedule run` la evalú
 croniter cada minuto. Son el equivalente en snake_case de los métodos del scheduler
 de Laravel, para que portar un `->everyFiveMinutes()` sea 1:1.
 
+`to_crontab(...)` traduce ese mismo string de 5 campos a la primitiva de agenda de
+celery beat (`celery.schedules.crontab`): es el puente que deja que el beat AGENDE
+los `@cron_task` descubiertos (ver Registry.collect_beat_schedule).
+
 Ejemplos:
     @cron_task(name="x", schedule=every_five_minutes())   # ->everyFiveMinutes()
     @cron_task(name="y", schedule=daily_at("02:30"))      # ->dailyAt('02:30')
@@ -12,6 +16,40 @@ Ejemplos:
 """
 
 from __future__ import annotations
+
+from celery.schedules import crontab
+
+
+def to_crontab(expression: str) -> crontab:
+    """Traduce una expresión cron de 5 campos al `crontab` de celery beat.
+
+    Estilo milpa: el MISMO string que producen los helpers de cadencia
+    (`every_minute()`, `daily_at(...)`, `cron(...)`) se reusa para agendar el cron
+    en el beat. Esto cierra el círculo: `schedule run` evalúa el string con croniter
+    y el beat lo agenda con esta primitiva, ambos desde una sola fuente de cadencia.
+
+    Los 5 campos posicionales son "minuto hora día-mes mes día-semana" (el cron
+    estándar). `split()` (sin argumento) colapsa espacios múltiples y tabs.
+
+    FARO (no agendar mal en silencio): si la expresión NO tiene exactamente 5
+    campos —p. ej. una de 6 campos (con segundos) que croniter sí toleraría en
+    `schedule run`— se lanza ValueError. El beat exige 5 campos; usa `schedule run`
+    o corrige la expresión. NO se validan los rangos de cada campo aquí: eso lo
+    hacen croniter/crontab al EJECUTAR.
+    """
+    fields = expression.split()
+    if len(fields) != 5:
+        raise ValueError(
+            f"expresión cron inválida '{expression}': se esperan 5 campos "
+            f"'minuto hora día-mes mes día-semana', se recibieron {len(fields)}."
+        )
+    return crontab(
+        minute=fields[0],
+        hour=fields[1],
+        day_of_month=fields[2],
+        month_of_year=fields[3],
+        day_of_week=fields[4],
+    )
 
 
 def cron(expression: str) -> str:

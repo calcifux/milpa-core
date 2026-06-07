@@ -7,12 +7,13 @@ from __future__ import annotations
 
 from milpa.Core.Http.Http import create_app
 from milpa.Core.Http.RateLimit import rate_limit
-from milpa.Core.Http.Routing import Controller, Delete, Get, Patch, Post, Put, api_version
+from milpa.Core.Http.Routing import Controller, Delete, Fallback, Get, Patch, Post, Put, api_version
 from milpa.Core.Http.Shell import base_path, runtime_env_json, shell_context
 
 __all__ = [
     "Controller",
     "Delete",
+    "Fallback",
     "Get",
     "Patch",
     "Post",

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,18 @@ import pytest
 from milpa.Core.Config import settings
 from milpa.Core.View import Vite
 from milpa.Core.View.TemplateEngine import TemplateEngine
+
+
+@pytest.fixture(autouse=True)
+def _clear_apps_cache() -> Iterator[None]:
+    """resolve_apps() cachea la ESTRUCTURA de apps keyada por los settings de paths. Casi
+    todos estos tests monkeypatchean esos paths apuntando a `tmp_path` (una key NUEVA por
+    test, así que no se contaminan entre sí), pero limpiamos antes y después por higiene —
+    y porque un test puede cambiar paths SIN tmp_path y compartir key con otro."""
+    Vite.clear_apps_cache()
+    yield
+    Vite.clear_apps_cache()
+
 
 # Manifest realista (shape de vite.dev/guide/backend-integration): un entry con su
 # CSS propio + un chunk compartido importado que trae su propio CSS.
@@ -324,3 +337,128 @@ def test_resolve_apps_con_dirs_vacios_no_escanea_el_cwd(tmp_path: Path, monkeypa
     monkeypatch.setattr(settings, "vite_apps_dir", "")
 
     assert Vite.resolve_apps() == {}
+
+
+# ─── Cache de la ESTRUCTURA de apps (resolve_apps) — sin congelar el estado dev/build ───────
+
+
+def test_resolve_apps_cachea_la_estructura(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Dos llamadas seguidas con los MISMOS settings escanean el disco una sola vez: el
+    segundo resolve_apps() sale del cache (no vuelve a llamar _scan_apps)."""
+    apps_root = _use_apps_dir(tmp_path, monkeypatch)
+    _setup_app(apps_root, "tienda")
+
+    llamadas = {"n": 0}
+    real_scan = Vite._scan_apps
+
+    def _spy() -> dict[str, Path]:
+        llamadas["n"] += 1
+        return real_scan()
+
+    monkeypatch.setattr(Vite, "_scan_apps", _spy)
+
+    primera = Vite.resolve_apps()
+    segunda = Vite.resolve_apps()
+
+    assert primera == segunda
+    assert llamadas["n"] == 1  # el segundo resolve_apps salió del cache
+
+
+def test_resolve_apps_no_congela_el_estado_dev_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """El cache es de ESTRUCTURA, no de estado: con una app construida ya cacheada, crear el
+    hot-file DESPUÉS hace que vite() emita tags de DEV — porque _dev_server_url no pasa por el
+    cache. Prender el dev server cambia el modo sin invalidar nada."""
+    _setup_build(tmp_path, monkeypatch)
+    Vite.resolve_apps()  # cachea la estructura (modo build, sin hot)
+    assert "<link" in str(Vite.vite("src/main.jsx"))  # build: emite los <link> hasheados
+
+    (tmp_path / "hot").write_text("http://localhost:5173", encoding="utf-8")  # nace el dev server
+
+    html = str(Vite.vite("src/main.jsx"))
+    assert "http://localhost:5173/@vite/client" in html  # ahora DEV, aunque la estructura esté cacheada
+
+
+def test_cache_se_invalida_al_cambiar_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Cambiar VITE_APPS_DIR/VITE_PUBLIC_DIR da otra key → reescanea (no sirve la estructura
+    de los paths viejos)."""
+    apps_root = _use_apps_dir(tmp_path, monkeypatch)
+    _setup_app(apps_root, "tienda")
+    assert set(Vite.resolve_apps()) == {"tienda"}
+
+    otro_public = tmp_path / "otro-public"
+    otro_apps = tmp_path / "otro-surcos"
+    otro_public.mkdir()
+    otro_apps.mkdir()
+    _setup_app(otro_public, "reportes")
+    monkeypatch.setattr(settings, "vite_public_dir", str(otro_public))
+    monkeypatch.setattr(settings, "vite_apps_dir", str(otro_apps))
+
+    assert set(Vite.resolve_apps()) == {"reportes"}  # otra key → reescaneo, no la cacheada
+
+
+def test_clear_apps_cache_fuerza_reescaneo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """El escape para tooling/dev en caliente: una app que aparece con la MISMA key tras el
+    primer escaneo queda oculta hasta clear_apps_cache()."""
+    apps_root = _use_apps_dir(tmp_path, monkeypatch)
+    _setup_app(apps_root, "tienda")
+    assert set(Vite.resolve_apps()) == {"tienda"}
+
+    _setup_app(apps_root, "nueva")  # carpeta nueva con la misma key
+    assert set(Vite.resolve_apps()) == {"tienda"}  # cacheada: no la ve aún
+
+    Vite.clear_apps_cache()
+    assert set(Vite.resolve_apps()) == {"nueva", "tienda"}  # tras el escape, reescanea
+
+
+# ─── assets_dev(): publica al template la decisión dev/build ────────────────────────────────
+
+
+def test_assets_dev_true_con_hot_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _setup_build(tmp_path, monkeypatch)
+    (tmp_path / "hot").write_text("http://localhost:5173", encoding="utf-8")
+
+    assert Vite.assets_dev() is True
+
+
+def test_assets_dev_false_en_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _setup_build(tmp_path, monkeypatch)  # build sin hot-file
+
+    assert Vite.assets_dev() is False
+
+
+def test_assets_dev_false_sin_apps_no_truena(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A DIFERENCIA de vite() (que truena), assets_dev es TOLERANTE: sin apps detectadas
+    devuelve False — un gate de speculation no debe reventar el render."""
+    monkeypatch.setattr(settings, "vite_dist_dir", "")
+    monkeypatch.setattr(settings, "vite_apps_dir", str(tmp_path / "no-existe"))
+    monkeypatch.setattr(settings, "vite_public_dir", str(tmp_path / "tampoco"))
+
+    assert Vite.assets_dev() is False  # no levanta RuntimeError
+
+
+def test_assets_dev_multiapp_por_nombre(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Multi-app: una construida (build) y otra en dev (hot). assets_dev(app=...) refleja el
+    estado de CADA una."""
+    public_root = _use_apps_dir(tmp_path, monkeypatch)
+    _setup_app(public_root, "tienda")  # construida
+    source_dir = tmp_path / "surcos" / "reportes"
+    source_dir.mkdir()
+    (source_dir / "hot").write_text("http://localhost:5173", encoding="utf-8")  # en dev
+
+    assert Vite.assets_dev(app="reportes") is True
+    assert Vite.assets_dev(app="tienda") is False
+
+
+def test_template_gatea_con_assets_dev(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Integración con Jinja: el global assets_dev() gatea el bloque del template (el caso de
+    uso real: emitir speculation rules SOLO en build)."""
+    _setup_build(tmp_path, monkeypatch)
+    templates = tmp_path / "views"
+    templates.mkdir()
+    (templates / "shell.html.j2").write_text("{% if assets_dev() %}DEV{% else %}BUILD{% endif %}", encoding="utf-8")
+    engine = TemplateEngine(templates_dir=templates)
+
+    assert engine.render("shell.html.j2", {}) == "BUILD"  # sin hot-file
+
+    (tmp_path / "hot").write_text("http://localhost:5173", encoding="utf-8")
+    assert engine.render("shell.html.j2", {}) == "DEV"  # con hot-file

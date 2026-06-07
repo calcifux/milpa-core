@@ -67,7 +67,10 @@ Encola el envío en Celery (no bloquea). Parámetros:
 
 - `queue`: cola de Celery (ej. `"emails"`); `None` = cola por defecto.
 - `init_kwargs`: los argumentos primitivos para **reinstanciar** el Mailable en el
-  worker. Deben coincidir con el `__init__`.
+  worker. Deben coincidir con el `__init__`. Desde 0.4.1, si el `__init__` del Mailable
+  **exige** argumentos y omites `init_kwargs`, `Mail.queue` revienta de inmediato con un
+  `ValueError` accionable (en el proceso que encola), en vez de fallar en silencio en el
+  worker al reinstanciar.
 
 ```python
 mailable = WelcomeMailable(name="Calcifux")

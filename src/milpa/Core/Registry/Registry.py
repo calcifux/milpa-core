@@ -23,6 +23,7 @@ import importlib
 import pkgutil
 from collections.abc import Iterator
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 import typer
 from fastapi import APIRouter
@@ -30,6 +31,12 @@ from fastapi import APIRouter
 from milpa.Core.Config import settings
 from milpa.Core.Console import build_cli_apps, import_submodules
 from milpa.Core.Discovery import _module_absent, package_dir
+
+if TYPE_CHECKING:
+    # Solo para tipos: importar Core/Http/Routing a nivel de módulo cerraría el ciclo
+    # Registry → Http/__init__ → Http → Registry. El runtime usa un import DIFERIDO dentro
+    # de iter_fallback_routes (mismo patrón que collect_beat_schedule con Cron).
+    from milpa.Core.Http.Routing import FallbackRoute
 
 
 def module_packages() -> list[str]:
@@ -117,14 +124,40 @@ def import_all_policies() -> None:
 
 
 def collect_beat_schedule() -> dict[str, object]:
-    """Fusiona los beat_schedule declarados en cada Console/Kernel.py.
+    """Arma el beat_schedule que `celery beat` programa, fusionando DOS fuentes:
 
-    Esto es lo que `celery beat` programa. Que un cron entre al schedule NO
-    significa que corra en cualquier lado: al ejecutarse, su `@cron_task`
-    verifica `environments` y se omite si el entorno no aplica. Y nada de esto
-    corre si no arrancas el proceso `beat`.
+    1. Los `@cron_task(schedule=...)` descubiertos (`registered_crons()`): cada uno
+       se vuelve una entrada del beat, con su expresión cron de 5 campos convertida
+       a `crontab` (vía `to_crontab`). La clave del dict es el nombre del cron (=
+       nombre de la task de Celery); si declara `queue`, se enruta con
+       `options={"queue": ...}` (el equivalente beat del `apply_async(queue=...)`
+       que hace `schedule run`).
+    2. Los `beat_schedule` declarados en cada `Console/Kernel.py` (la vía
+       DECLARATIVA). Se aplican AL FINAL, así un nombre declarado en Kernel.py
+       PRECEDE (sobrescribe) al cron auto-derivado con el mismo nombre.
+
+    Que un cron entre al schedule NO equivale a EJECUTARLO: el beat solo AGENDA.
+    Los gates (`environments`, anti-overlap por lock de redis) siguen viviendo en
+    `@cron_task` y corren AL EJECUTAR dentro de su wrapper, no aquí. Y nada de esto
+    corre si no arrancas el proceso `beat`. El discovery (`import_all_tasks()`) debe
+    haber corrido antes para que `registered_crons()` esté poblado (lo garantiza
+    CeleryApp en `on_after_configure`).
     """
+    # Import DIFERIDO (no a nivel de módulo): Cron importa CeleryApp y CeleryApp
+    # importa este Registry, así que importar Cron arriba cerraría el ciclo. Igual
+    # que el discovery, esto se resuelve cuando la función corre (Celery ya
+    # configurado), con todo el árbol cargado.
+    from milpa.Core.Cron import registered_crons, to_crontab
+
     schedule: dict[str, object] = {}
+    # (1) Auto-derivados de @cron_task. registered_crons() solo trae los que tienen
+    # schedule (los sin cadencia ya quedan fuera, ver Cron.py).
+    for rc in registered_crons():
+        entry: dict[str, object] = {"task": rc.name, "schedule": to_crontab(rc.schedule)}
+        if rc.queue is not None:
+            entry["options"] = {"queue": rc.queue}
+        schedule[rc.name] = entry
+    # (2) Kernel.py por módulo, AL FINAL: precedencia en colisión de nombre.
     for package in module_packages():
         kernel = _try_import(f"{package}.Console.Kernel")
         if kernel and hasattr(kernel, "beat_schedule"):
@@ -172,6 +205,36 @@ def iter_routers() -> Iterator[APIRouter]:
                     if isinstance(controller_router, APIRouter) and id(controller_router) not in seen:
                         seen.add(id(controller_router))
                         yield controller_router
+
+
+def iter_fallback_routes() -> Iterator[FallbackRoute]:
+    """Recolecta las rutas marcadas con `@Fallback` en los `@Controller` de los módulos, para
+    que `create_app` las monte AL FINAL (después de los mounts /static, /vite, /status). Mismo
+    escaneo que `iter_routers` (los `Modules/<X>/Http/` recursivo), pero en vez de leer el router
+    armado lee `cls.__milpa_fallbacks__` — la lista de rutas que `@Controller` apartó a propósito.
+
+    Una ruta @Fallback es un catch-all RAÍZ (`@Get("/{path:path}")` con prefijo ""): montarla al
+    final es lo que evita que se coma los estáticos. En Starlette gana el primer match, así que
+    /api, /static, /vite y /status ya ganaron el suyo cuando esta ruta entra. Ver `Fallback`.
+
+    El acoplamiento a Modules es por import DINÁMICO (Core no importa Modules estático), igual que
+    `iter_routers`, así import-linter no marca Core↛Modules. Dedup por identidad del controller.
+    """
+    # Import DIFERIDO del nombre del atributo: a nivel de módulo, importar Core/Http/Routing
+    # dispara Http/__init__ y cierra el ciclo con Registry (ver el bloque TYPE_CHECKING arriba).
+    from milpa.Core.Http.Routing import FALLBACKS_ATTR
+
+    seen: set[int] = set()
+    for package in module_packages():
+        for module in _iter_http_modules(f"{package}.Http"):
+            for value in vars(module).values():
+                if not isinstance(value, type) or id(value) in seen:
+                    continue
+                fallbacks = value.__dict__.get(FALLBACKS_ATTR)
+                if not isinstance(fallbacks, list):
+                    continue
+                seen.add(id(value))
+                yield from fallbacks
 
 
 def iter_static_mounts() -> Iterator[tuple[str, str]]:

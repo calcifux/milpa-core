@@ -15,11 +15,17 @@ from milpa.Core.Auth.Auth import (
     optional_user,
     set_current_user,
 )
-from milpa.Core.Auth.Authorization import Can, Gate, Roles, policy, require_roles
+from milpa.Core.Auth.Authorization import Can, Gate, Roles, Scope, policy, require_roles
 from milpa.Core.Auth.Contracts import Authenticatable, AuthenticatableMixin, UserProvider
 from milpa.Core.Auth.Guards import JwtGuard, PassportGuard, SessionGuard, get_guard
 from milpa.Core.Auth.Hash import Hash
-from milpa.Core.Auth.Passport import TokenPrincipal, get_current_token, require_scopes
+from milpa.Core.Auth.Passport import (
+    TokenPrincipal,
+    get_current_token,
+    require_any_scope,
+    require_scopes,
+    set_revocation_check,
+)
 from milpa.Core.Auth.Providers import SqlAlchemyUserProvider, get_user_provider, set_user_provider
 
 __all__ = [
@@ -34,6 +40,7 @@ __all__ = [
     "OptionalUser",
     "PassportGuard",
     "Roles",
+    "Scope",
     "SessionGuard",
     "SqlAlchemyUserProvider",
     "TokenPrincipal",
@@ -45,8 +52,10 @@ __all__ = [
     "guarded",
     "optional_user",
     "policy",
+    "require_any_scope",
     "require_roles",
     "require_scopes",
     "set_current_user",
+    "set_revocation_check",
     "set_user_provider",
 ]

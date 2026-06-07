@@ -84,6 +84,12 @@ milpa = "milpa.Core.Console.Cli:run"
 [tool.hatch.build.targets.wheel]
 packages = ["src/milpa"]
 
+# Qué empaquetar en el sdist: allowlist EXPLÍCITA (cinturón y tirantes). Sin esta sección
+# hatchling mete todo lo no-gitignoreado: en 0.4.0 se colaron uv.lock, Tests/, docs… Un sdist
+# publicable solo necesita lo que hace falta para CONSTRUIR el wheel. (Lección de tequio 0.1.2.)
+[tool.hatch.build.targets.sdist]
+only-include = ["src/milpa", "README.md", "LICENSE", "CHANGELOG.md"]
+
 [dependency-groups]
 dev = [
     "faker>=40.19.1",

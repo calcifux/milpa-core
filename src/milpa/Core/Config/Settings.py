@@ -233,6 +233,10 @@ class Settings(BaseSettings):
     # en DEV vite() lo ignora (los módulos salen del dev server, vía hot-file).
     # DEBE coincidir con el ASSET_URL con el que se buildea el frontend
     # (vite-plugin-milpa lee la MISMA env var en build).
+    # Si es RUTA (/prefijo, no URL de CDN), TAMBIÉN viaja como root_path ASGI en
+    # `jornal serve`: una sola variable y la app entera sabe que vive bajo el
+    # prefijo (BASE_PATH del window.__ENV, redirects vía base_path()) — agnóstica
+    # del reverse proxy, cero flags.
     asset_url: str = ""
 
     # --- Vite (asset-pipeline del frontend, estilo laravel-vite; OPT-IN) ---

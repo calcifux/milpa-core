@@ -46,10 +46,14 @@ def _discover_modules(sender: Celery, **_: Any) -> None:
     inicializar). Se ejecuta cuando Celery finaliza su configuración (arranque de
     worker/beat), con `app.Core.Cron` ya completamente cargado.
 
-    Registra las tareas (Jobs + Console/Commands) y arma el `beat_schedule` (crons)
-    de TODOS los módulos presentes. Registrar tareas NO las dispara; el único
-    disparo automático es `celery beat`, y cada cron respeta su guard
-    `@cron_task(environments=[...])`.
+    Registra las tareas (Jobs + Console/Commands) y arma el `beat_schedule`. Ese
+    schedule fusiona DOS fuentes (ver Registry.collect_beat_schedule): los
+    `@cron_task` descubiertos (convertidos a crontab) MÁS los `beat_schedule`
+    declarados en cada `Console/Kernel.py` (estos con precedencia). El orden importa:
+    `import_all_tasks()` corre ANTES, así `registered_crons()` ya está poblado cuando
+    se colecciona el schedule. Registrar tareas NO las dispara; el único disparo
+    automático es `celery beat`, y cada cron respeta su guard
+    `@cron_task(environments=[...])` AL EJECUTAR.
     """
     import_all_tasks()
     import_submodules("milpa.Core.Mail")  # tasks de correo del framework (mail.send) para el worker

@@ -107,6 +107,32 @@ levantar infraestructura.
 
 ---
 
+## 📦 API pública
+
+La superficie estable vive en la **fachada raíz** — un import plano con lo que el demo y la
+guía enseñan (87 símbolos, web incluida):
+
+```python
+from milpa import (
+    Controller, Get, Post, Put, Patch, Delete,   # HTTP estilo Laravel
+    Fallback, api_version, rate_limit, view,     # rutas, versionado, vistas
+    authenticated, Can, Roles, Scope,            # auth: RBAC/ABAC y scopes Passport
+    job, cron_task, daily_at, hourly,            # background: jobs y crons
+    Mail, Mailable, MailContent,                 # correo
+    Observer, dispatch, handles, send,           # eventos (1:N) y mediator (1:1)
+    Pipeline, Pipe,                              # modelo cebolla
+    Repository, Factory, Seeder, transactional,  # datos estilo Spring Data
+    console_command, settings,                   # consola y config tipada
+)
+```
+
+La fachada es **perezosa** (PEP 562): `import milpa` a secas no instancia Celery, ni Settings,
+ni el kernel web — cada símbolo se resuelve en su primer acceso. Las rutas profundas
+(`from milpa.Core.Http import Controller`) siguen siendo válidas, y el paquete publica
+`py.typed` (PEP 561): mypy y tu IDE reciben los tipos completos.
+
+---
+
 ## 📖 Documentación
 
 La guía completa estilo Laravel se publica en **<https://calcifux.github.io/milpa/>**:

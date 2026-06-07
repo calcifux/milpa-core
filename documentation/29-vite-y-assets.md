@@ -68,6 +68,48 @@ No tocas nada para cambiar de uno a otro: levantas `pnpm --filter <surco> dev` (
 el hot-file → dev) o corres `pnpm -r build` y apagas el dev server (desaparece el
 hot-file → prod).
 
+!!! note "Qué se cachea y qué no"
+    La **estructura** de apps (`resolve_apps()`: qué surcos existen y su ruta de build) se
+    **cachea** para no reescanear el filesystem en cada `vite()`/`vite_asset()` de una página
+    (una página con varios entries escaneaba el disco una vez por llamada). Pero el **estado
+    dev/build** —la presencia VIVA del hot-file— se lee **siempre** por render: por eso
+    levantar o apagar el dev server cambia el modo **sin reiniciar** el proceso. Es
+    independiente del cache del manifest (ese se invalida por `mtime`). Si creas un surco
+    nuevo **en caliente** (con el proceso ya arrancado), no aparecerá hasta reiniciar o llamar
+    `clear_apps_cache()` (el escape para tooling); el dev típico reinicia al tocar un `.py`.
+
+## Dev vs build desde el template
+
+A veces el template necesita saber **en qué modo está** para emitir algo solo en uno de los
+dos. El caso canónico —el que motivó este helper— son las **speculation rules** y las
+**view transitions cross-document**: en **dev** los módulos vienen del dev server (otro
+origen), y un documento **prerendereado** bloquea subrecursos cross-site → se ve un flashazo.
+Esas etiquetas deben emitirse **solo en build**.
+
+El global `assets_dev()` publica esa decisión (la misma que `vite()` toma por dentro):
+
+| Llamada | Devuelve |
+|---------|----------|
+| `assets_dev()` | `True` si los assets salen del dev server (hot-file vivo), `False` en build. |
+| `assets_dev(app='tienda')` | Lo mismo, para una app concreta en multi-app. |
+
+```jinja2
+{% if not assets_dev() %}
+    <script type="speculationrules">{ "prerender": [{ "where": { "href_matches": "/*" } }] }</script>
+{% endif %}
+```
+
+A diferencia de `vite()` (que **truena** si no hay apps), `assets_dev()` es **tolerante**: sin
+nada detectado devuelve `False` —"no hay dev server" es, correctamente, "no es dev"— para no
+tumbar el render de una página que ni usa Vite. La parte dev/build se lee **en vivo** (no pasa
+por el cache de la estructura), así prender/apagar el dev server cambia el resultado al toque.
+
+!!! tip "Reemplaza la convención manual del hot-file"
+    Antes, una app que quería este gate replicaba a mano la convención
+    (`any(surcos/*/hot)`). Ahora la detección la **publica el Core** y el surco solo llama
+    `assets_dev()`. Si lo necesitas también en el **cliente** (JS gateando speculation rules),
+    pásalo a `window.__ENV` por el `extra` de `shell_context(request, {"ASSETS_DEV": assets_dev()})`.
+
 ## El helper `asset()` y `ASSET_URL`
 
 `asset('welcome.css')` construye la URL de un estático servido bajo `/static`

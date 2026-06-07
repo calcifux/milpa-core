@@ -12,9 +12,9 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel
 from starlette.requests import Request
 
-from milpa.Core.Http import Controller, Get, Post, api_version
+from milpa.Core.Http import Controller, Fallback, Get, Post, api_version
 from milpa.Core.Http.Http import create_app
-from milpa.Core.Http.Routing import ROUTER_ATTR
+from milpa.Core.Http.Routing import FALLBACKS_ATTR, ROUTER_ATTR
 
 
 class _Item(BaseModel):
@@ -115,3 +115,44 @@ def test_class_based_controller_is_auto_mounted_by_registry() -> None:
     # API versioning (Fase 3) en acción: el MISMO recurso en dos versiones que conviven.
     assert "/v1/reports/notes" in paths  # ReportsV1Controller -> @Controller("/reports", version="v1")
     assert "/v2/reports/notes" in paths  # ReportsV2Controller -> @Controller("/reports", version="v2")
+
+
+# ─── @Fallback: rutas que NO van al router del controller, sino al final de create_app ──────
+
+
+@Controller("", tags=["spa"])
+class _ShellController:
+    @Get("/normal")
+    def normal(self) -> dict[str, str]:
+        return {"ruta": "normal"}
+
+    @Fallback
+    @Get("/{path:path}")
+    def shell(self, path: str) -> dict[str, str]:
+        return {"shell": path}
+
+
+def test_fallback_no_se_monta_en_el_router_del_controller() -> None:
+    # El router del controller expone SOLO la ruta normal; la @Fallback queda apartada.
+    router = getattr(_ShellController, ROUTER_ATTR)
+    router_paths = {route.path for route in router.routes}
+    assert "/normal" in router_paths
+    assert "/{path:path}" not in router_paths  # el catch-all NO está en el router normal
+
+
+def test_fallback_conserva_path_methods_kwargs() -> None:
+    # La metadata acumulada en cls.__milpa_fallbacks__ trae lo que create_app necesita para
+    # montar la ruta idéntica al FINAL: (endpoint, path, methods, kwargs).
+    fallbacks = getattr(_ShellController, FALLBACKS_ATTR)
+    assert len(fallbacks) == 1
+    _endpoint, path, methods, kwargs = fallbacks[0]
+    assert path == "/{path:path}"  # prefijo "" + el path del @Get
+    assert methods == ["GET"]
+    assert isinstance(kwargs, dict)
+
+
+def test_importar_fallback_no_truena() -> None:
+    # Re-export de Core/Http: las apps hacen `from milpa.Core.Http import Fallback`.
+    from milpa.Core.Http import Fallback as _imported
+
+    assert _imported is Fallback

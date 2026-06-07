@@ -7,6 +7,7 @@ sus argumentos. Sin BD ni Redis.
 from __future__ import annotations
 
 import pytest
+from celery.schedules import crontab
 
 from milpa.Core.Cron import (
     cron,
@@ -21,6 +22,7 @@ from milpa.Core.Cron import (
     hourly,
     hourly_at,
     monthly,
+    to_crontab,
     weekly,
 )
 
@@ -64,3 +66,34 @@ def test_daily_at_rejects_bad_format() -> None:
 
 def test_cron_escape_hatch_passes_through() -> None:
     assert cron("15 9 * * 1-5") == "15 9 * * 1-5"
+
+
+# --------------------------------------------------------- conversor a crontab de celery beat
+def test_to_crontab_maps_five_fields_positionally() -> None:
+    # El mapeo posicional "minuto hora día-mes mes día-semana" -> crontab; dos crontab
+    # construidos idénticos comparan == (lo verifica celery), así que assertamos igualdad exacta.
+    assert to_crontab("30 8 * * 1-5") == crontab(
+        minute="30", hour="8", day_of_month="*", month_of_year="*", day_of_week="1-5"
+    )
+
+
+def test_to_crontab_from_daily_at_helper() -> None:
+    # El helper de cadencia encadena con el conversor: daily_at('08:00') -> minuto 0, hora 8.
+    result = to_crontab(daily_at("08:00"))
+    assert result.minute == {0}
+    assert result.hour == {8}
+
+
+def test_to_crontab_collapses_multiple_spaces() -> None:
+    # split() (sin argumento) colapsa espacios múltiples y tabs: no da falsos >5 campos.
+    assert to_crontab("*/5  *  *  *  *") == crontab(
+        minute="*/5", hour="*", day_of_month="*", month_of_year="*", day_of_week="*"
+    )
+
+
+def test_to_crontab_rejects_non_five_field_expression() -> None:
+    # Faro: no agendar mal en silencio. Ni 4 ni 6 campos: el beat exige exactamente 5.
+    with pytest.raises(ValueError, match="5 campos"):
+        to_crontab("* * * *")
+    with pytest.raises(ValueError, match="5 campos"):
+        to_crontab("* * * * * *")

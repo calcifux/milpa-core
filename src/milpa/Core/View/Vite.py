@@ -49,18 +49,19 @@ _EXPLICIT = ""
 # resolución gruesa, dos builds dentro del mismo segundo serían invisibles.
 _manifest_cache: dict[str, tuple[tuple[int, int], dict[str, Any]]] = {}
 
+# Cache de la ESTRUCTURA de apps (qué surcos existen y su ruta de build), keyado por los
+# tres settings de PATHS que dirigen el escaneo. Una página con varios vite()/vite_asset()
+# llamaba resolve_apps() N veces y escaneaba el disco en cada una (iterdir + is_file por
+# carpeta); esto lo hace una sola vez. Se cachea SOLO la estructura — el ESTADO dev/build
+# (presencia VIVA del hot-file) NO pasa por aquí, lo lee `_dev_server_url` por llamada, así
+# levantar/apagar el dev server cambia el modo sin reiniciar el proceso. Es INDEPENDIENTE
+# del cache del manifest (ese se invalida por mtime). Escape para tooling: clear_apps_cache().
+_apps_cache: dict[tuple[str, str, str], dict[str, Path]] = {}
 
-def resolve_apps() -> dict[str, Path]:
-    """Apps frontend disponibles: {nombre: ruta_del_build}.
 
-    Prioridad: `VITE_DIST_DIR` explícito (modo una-sola-app, estilo Laravel con el
-    frontend en la raíz del proyecto) → {"": dist}. Si no, AUTO-DETECCIÓN doble
-    (modelo Laravel: fuentes en `VITE_APPS_DIR`, builds en `VITE_PUBLIC_DIR`):
-      • CONSTRUIDA — `public/<app>/.vite/manifest.json` existe (vite build ya corrió).
-      • EN DEV     — `<apps_dir>/<app>/hot` existe (su dev server está corriendo),
-        aunque nunca se haya buildeado (primer `npm run dev` recién clonado).
-    Sin nada detectado → {} y la feature muere en paz (sin mounts; vite() instruye).
-    """
+def _scan_apps() -> dict[str, Path]:
+    """Escaneo REAL del filesystem: las apps frontend disponibles {nombre: ruta_del_build}.
+    Lo envuelve `resolve_apps` con cache; sepáralo permite cachear sin tocar la lógica."""
     if settings.vite_dist_dir:
         return {_EXPLICIT: Path(settings.vite_dist_dir)}
     apps: dict[str, Path] = {}
@@ -78,6 +79,42 @@ def resolve_apps() -> dict[str, Path]:
             if candidate.name not in apps and (candidate / "hot").is_file():
                 apps[candidate.name] = public_root / candidate.name
     return apps
+
+
+def resolve_apps() -> dict[str, Path]:
+    """Apps frontend disponibles: {nombre: ruta_del_build}. Cachea la ESTRUCTURA.
+
+    Prioridad: `VITE_DIST_DIR` explícito (modo una-sola-app, estilo Laravel con el
+    frontend en la raíz del proyecto) → {"": dist}. Si no, AUTO-DETECCIÓN doble
+    (modelo Laravel: fuentes en `VITE_APPS_DIR`, builds en `VITE_PUBLIC_DIR`):
+      • CONSTRUIDA — `public/<app>/.vite/manifest.json` existe (vite build ya corrió).
+      • EN DEV     — `<apps_dir>/<app>/hot` existe (su dev server está corriendo),
+        aunque nunca se haya buildeado (primer `npm run dev` recién clonado).
+    Sin nada detectado → {} y la feature muere en paz (sin mounts; vite() instruye).
+
+    El resultado se CACHEA keyado por los tres settings de paths (VITE_DIST_DIR /
+    VITE_PUBLIC_DIR / VITE_APPS_DIR): una página con varios vite()/vite_asset() ya no
+    reescanea el disco por cada llamada. Lo que se congela es solo la ESTRUCTURA de apps;
+    el ESTADO dev/build se decide aparte en cada render (`_dev_server_url` lee el hot-file
+    vivo), así prender/apagar el dev server NO requiere invalidar nada. LIMITACIÓN aceptada:
+    una carpeta de surco creada EN CALIENTE (con el proceso ya arrancado y la misma key) no
+    aparece hasta `clear_apps_cache()` o un reinicio — el dev típico reinicia al tocar un
+    .py y un surco nuevo es raro en caliente; ese es el escape.
+    """
+    key = (settings.vite_dist_dir, settings.vite_public_dir, settings.vite_apps_dir)
+    cached = _apps_cache.get(key)
+    if cached is not None:
+        return cached
+    apps = _scan_apps()
+    _apps_cache[key] = apps
+    return apps
+
+
+def clear_apps_cache() -> None:
+    """Vacía el cache de estructura de apps de `resolve_apps()`. Para tooling o tests que
+    cambian los settings de paths (o crean surcos en caliente) y necesitan un reescaneo. NO
+    afecta el cache del manifest (ese ya se invalida por mtime)."""
+    _apps_cache.clear()
 
 
 def _app_dist(app: str | None) -> tuple[str, Path]:
@@ -240,3 +277,26 @@ def vite_react_refresh(app: str | None = None) -> Markup:
     window.__vite_plugin_react_preamble_installed__ = true
 </script>"""
     )
+
+
+def assets_dev(app: str | None = None) -> bool:
+    """¿Los assets de la app salen del DEV server (hay hot-file vivo) o de un BUILD?
+
+    Publica al template la decisión dev/build que `vite()` ya toma por dentro, para gatear
+    lo que SOLO debe emitirse en build — speculation rules / `@view-transition` cross-document
+    (en dev los módulos vienen del dev server, otro origen: un documento prerendereado bloquea
+    subrecursos cross-site y se ve un flashazo) — o, al revés, lo que solo aplica en dev. Es la
+    versión del Core de la convención que las apps replicaban a mano (`any(surcos/*/hot)`).
+
+        {% if not assets_dev() %}{# speculation rules, solo en build #}{% endif %}
+
+    TOLERANTE a propósito (a diferencia de `vite()`): si no hay apps detectadas devuelve False
+    en vez de reventar. Un gate de speculation no debe tumbar el render de una página que ni
+    siquiera usa Vite; "no hay dev server" es, correctamente, "no es dev". La parte dev/build
+    se lee EN VIVO (no pasa por el cache de `resolve_apps`): el hot-file puede aparecer o morir
+    entre requests."""
+    try:
+        app_name, dist_dir = _app_dist(app)
+    except RuntimeError:
+        return False
+    return _dev_server_url(app_name, dist_dir) is not None

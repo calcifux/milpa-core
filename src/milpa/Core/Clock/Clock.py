@@ -1,9 +1,11 @@
 """Reloj de la app, INYECTABLE (estilo `java.time.Clock` de Spring), para los
 cálculos de fechas de NEGOCIO en la zona configurada (TIMEZONE del .env).
 
-No se importa suelto en el código de negocio (eso acopla y no se puede congelar
-en tests): se recibe inyectado vía el Unit of Work (`self._database.clock.now()`).
-En tests se inyecta un `FixedClock` (equivalente a `Carbon::setTestNow()`).
+Es un `Protocol`: se inyecta A MANO donde se necesita instanciándolo en el call-site
+(hoy el único consumidor es `ScheduleRunCommand`, que hace `SystemClock().now()`).
+`SystemClock` da la hora real (naive local); `FixedClock` la CONGELA en tests
+(equivalente a `Carbon::setTestNow()`), p. ej. con `monkeypatch.setattr(SystemClock,
+"now", ...)` o inyectando un `FixedClock(datetime(...))` en el código que lo reciba.
 
 Para los timestamps de BD NO se usa esto: los pone la BD con func.now() y la
 conexión ya corre en la zona de la app (ver Database/Session.py y Timestamp.py).

@@ -7,6 +7,77 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-07
+
+Los backports de lo aprendido en los proyectos hermanos — tequio-core (la extracción worker-side,
+PyPI `tequio-core`) y aklara-dispersa (la primera app real) — más la **fachada pública** del
+framework. Plan y evidencia: `docs/prerelease/34-backports-tequio-aklara.md`.
+
+### Added
+
+- **Fachada pública perezosa** (`from milpa import job, Controller, view, Mail, Repository, …`):
+  la API estable en un import plano (PEP 562), incluida la superficie web. `import milpa` a secas
+  queda SIN efectos colaterales (no instancia Celery, ni Settings, ni el engine) y las rutas
+  profundas (`from milpa.Core.Http import Controller`) siguen siendo válidas. *(Patrón estrenado
+  en tequio 0.1.2.)*
+- **`py.typed`** (PEP 561): milpa es mypy-strict pero no publicaba sus tipos; los consumidores de
+  `milpa-core` ahora reciben los type hints completos.
+
+- **`jornal serve` detrás de reverse proxy sin flags**: si `ASSET_URL` es una RUTA (`/prefijo`),
+  viaja también como `root_path` ASGI — una sola variable y la app entera sabe que vive bajo el
+  prefijo (`BASE_PATH` del `window.__ENV`, redirects vía `base_path()`). Un CDN (`https://`) no es
+  prefijo: root raíz, como siempre. **Validado con reverse proxy en docker** (aklara-dispersa, donde
+  vivió como command del proyecto hasta hoy).
+- **Scopes any-of de Passport**: `require_any_scope(...)` + el decorador `@Scope(...)` — el
+  `scope:a,b` (CheckForAnyScope, ALGUNO) de Laravel Passport; milpa solo cubría `scopes:a,b`
+  (CheckScopes, TODOS) con `require_scopes`. Destilado del Auth de la primera app real.
+- **`set_revocation_check(fn)`**: API pública para el hook de revocación de tokens que antes era
+  solo un seam privado (`Passport._is_revoked`) — el proyecto conecta su consulta (p. ej. contra
+  `oauth_access_tokens` del legacy) sin monkeypatchear; el monkeypatch viejo sigue funcionando.
+- **`@Fallback` (catch-all post-mounts)**: registro OPT-IN de un controller que `create_app()` monta
+  AL FINAL — después de `/static`, `/vite` y `/status`. Una SPA puede ser dueña de la raíz sin
+  tragarse los estáticos (en Starlette gana el primer match; antes el workaround era prefijo propio
+  + redirect de `/`).
+- **`assets_dev()`**: el template/shell ya puede saber si los assets vienen del dev server o del
+  build (la convención del hot-file, expuesta) — para gatear speculation rules y similares sin que
+  cada app replique la convención. Disponible como global de Jinja y opcional en `window.__ENV`.
+- **El beat agenda los `@cron_task`** *(adoptado de tequio)*: `collect_beat_schedule()` fusiona los
+  `@cron_task(schedule=…)` auto-descubiertos (su expresión cron convertida con el nuevo
+  `to_crontab()`, conversor estricto de 5 campos que truena claro ante una expresión rara) con los
+  `beat_schedule` de `Console/Kernel.py` (la vía declarativa, con precedencia). El
+  `demo.daily_digest` que declaraba `daily_at("08:00")` desde 0.x por fin entra al calendario de
+  `schedule work`. Los gates de ejecución (anti-overlap, `environments`) siguen en `@cron_task`.
+  OJO operativo: beat **o** crontab del SO con `schedule run` — las dos vías a la vez = doble
+  despacho.
+- Skeleton: `pythonpath = ["."]` en el `pyproject.toml` generado — los tests del proyecto importan
+  `app.*` sin tocar `sys.path` (feedback de la primera app real).
+- 24 tests nuevos, incluidos los guardrails `test_WorkerTaskDiscovery` (las tasks del framework
+  quedan registradas en el worker), `test_FallbackOrder` (los mounts ganan al fallback) y
+  `test_FakerLazy` (importar factories no exige la dep de dev).
+
+### Changed
+
+- **`Mail.queue`/`enqueue_mail` truenan AL ENCOLAR** si el `__init__` del Mailable exige argumentos
+  y no se pasó `init_kwargs` *(bug real cazado en tequio)*: antes el `TypeError` ocurría en el
+  worker al reinstanciar — fallo asíncrono invisible para quien encoló. Ahora el `ValueError` sale
+  en el proceso que encola, con instrucción accionable.
+- **Faker perezoso** (`_LazyFaker` proxy): importar `Core/Database/Faker` (y por tanto cualquier
+  factory) ya no exige tener `faker` instalado — el error accionable sale solo al USARLO. Defensa
+  en profundidad: hoy el discovery de milpa no importa factories en runtime, pero cualquier import
+  futuro lo haría tronar en una instalación sin dev-deps *(le pasó a tequio en su smoke de CI)*.
+- `make:mailable` genera un stub rico: asume la cola **`emails`** (`Mail.queue(..., queue="emails",
+  init_kwargs=…)`, se consume con `queue work --queue emails`), apunta la plantilla a la convención
+  namespaced del módulo y recuerda el contrato de `init_kwargs`.
+- `resolve_apps()` (Vite) ahora se cachea — la estructura de surcos no se re-escanea del filesystem
+  en cada uso; el estado VIVO del hot-file (dev vs build) NO se congela. Escape: `clear_apps_cache()`.
+
+### Fixed
+
+- Docstrings que mentían: `CeleryApp`/`ScheduleWorkCommand` decían que el beat juntaba los crons de
+  todos los módulos (solo leía `Console/Kernel.py` — ahora con el cambio de arriba la frase es
+  verdad y quedó precisa); `Clock.py` afirmaba el patrón `self._database.clock.now()` que nunca
+  estuvo cableado (el reloj se inyecta a mano; `FixedClock` = `Carbon::setTestNow`).
+
 ## [0.4.0] - 2026-06-04
 
 Frontend a la milpa: asset-pipeline **Vite** estilo `laravel-vite`, **microfrontends por vertical**
@@ -100,60 +171,51 @@ abre CORS con la config congelada en *build-time*; estilo milpa el backend es du
 
 ## [0.3.1] - 2026-06-02
 
-Primer release **publicado a PyPI**. Consolida el paquete instalable (extraído en `0.3.0a0`) con el
-set completo de patrones estilo milpa, la API REST estilo DRF, el demo integral y el manual.
-
-### Added
-
-- **Patrones estilo milpa** (OPT-IN, auto-descubribles): `Events`/`Observers` (1:N, transporte
-  adaptativo worker/síncrono), `Mediator` (command bus 1:1, transport-neutral HTTP+CLI) y `Pipeline`
-  (modelo cebolla). No impuestos: patrones que un arquitecto puede sugerir.
-- **Background**: `@job` (on-demand, `.dispatch()`) separado a propósito de `@cron_task` (agendado).
-- **API REST (estilo DRF)**: versionado (`@Controller(version="v1")`), rate limiting (`@rate_limit`),
-  filtering DSL (`FilterQueryModel`) + paginación por cursor, negociación de contenido (una ruta
-  sirve JSON o HTML según `Accept`) y serializers Pydantic v2 (`computed_field`).
-- **Módulo `Demo`** integral (reemplaza a `Example`): users/notes ejercitando auth dual, RBAC+ABAC,
-  los tres patrones, correos por evento + mailables firmados, y UI HTMX + Alpine + Pico.css.
-- **Manual** ampliado (mkdocs): eventos/observers, mediator, pipeline, jobs, versionado, rate
-  limiting, filtrado/paginación, negociación de contenido, serializadores y errores RFC 9457.
-- **Skeleton del scaffolder**: `.env.example` con sección de correo (`MAIL_DRIVER=log` por default,
-  que imprime en la terminal de `jornal serve`; Mailpit para inbox web) y `docker-compose.yml`
-  (redis + mailpit) para la infra de dev.
+Arreglo para que `milpa new --demo` corra **de fábrica** (OOTB) + ajustes de docs.
 
 ### Fixed
 
-- **`milpa new --demo` funciona out-of-the-box**: `faker` se incluye en el grupo dev del proyecto
-  generado y `Core/Database/Faker.py` da un error accionable si falta (las factories/seeders lo
-  necesitan; es dependencia de dev, no de producción).
+- **`milpa new --demo` funciona OOTB** — el proyecto generado traía Faker (factories/seeders del
+  demo) fuera del *dev-group*; ahora va en el grupo `dev` del skeleton, así un `milpa new --demo`
+  recién clonado siembra sin instalar nada a mano.
 
-### Changed
+### Docs
 
-- Heredado de `0.3.0a0`: `DATABASE_URL` con default `sqlite`, `pymysql` movido al extra
-  `milpa-core[mysql]` (core agnóstico de dialecto), y el paquete importable `app` → `milpa`.
+- README actualizado a **v0.3.0** (características, estructura `src/milpa`, módulo Demo) y aclaración
+  de la **instalación local** (todavía no en PyPI).
 
-## [0.3.0a0] - 2026-06-01
+## [0.3.0] - 2026-06-02
 
-Primera versión **INSTALABLE**: milpa se extrae como paquete (`pip install milpa-core`) con un
-scaffolder de proyectos. Alpha — la API puede cambiar entre versiones.
+milpa pasa de *repo que se clona* a **paquete instalable** + un scaffolder `milpa new` que genera
+tu proyecto. Fases A–C del *packaging*: extraer el framework a `src/milpa`, que el Core resuelva el
+código del USUARIO desde Settings, y embeber un skeleton que `milpa new` materializa.
 
 ### Added
 
-- **Paquete instalable** (`pip install milpa-core` / `uv add milpa-core`): src-layout (`src/milpa`),
-  `[build-system]` hatchling, comando de consola `milpa`, versión single-source en `__init__`.
-- **`milpa new <app>`** — scaffolder que genera un proyecto listo para correr (estilo
-  `laravel new` / `django-admin startproject`) desde un skeleton embebido en el paquete.
-- **Config-seam**: el Core resuelve módulos/modelos/recursos/migraciones del proyecto desde
-  `Settings`/`.env` (`MODULES_PACKAGE`, `MODELS_PACKAGE`, `USER_VIEWS_DIR`, …) en vez de rutas
-  hardcodeadas — un proyecto externo apunta milpa a su propio código. Nuevo `milpa.Core.Discovery`.
-- Pipeline de release a PyPI (Trusted Publishing OIDC) + gates de empaquetado en CI
-  (`uv build` + smoke de instalación).
+#### Packaging + scaffolder
 
-### Changed
+- **Framework extraído a paquete instalable** — el código del Core/Modules vive en `src/milpa` y se
+  instala como paquete; ya no se asume el layout de un repo clonado.
+- **El Core resuelve el código del USUARIO desde `Settings`** (Fase B) — módulos, modelos, recursos
+  y migraciones del proyecto se leen de config (`MODULES_PACKAGE`, `MODELS_PACKAGE`,
+  `USER_VIEWS_DIR`, `MIGRATIONS_DIR`, …), no contando carpetas desde el propio paquete (eso, en
+  *site-packages*, apuntaba a otro lado).
+- **Scaffolder `milpa new` + skeleton embebido** (Fase C) — genera un proyecto nuevo a partir de un
+  skeleton que viaja DENTRO del paquete (archivos `.tmpl` que se renderizan sustituyendo el nombre
+  del proyecto).
 
-- **`DATABASE_URL`** ahora tiene default `sqlite:///./milpa.db` (zero-config: milpa arranca sin
-  configurar nada, como Django en dev). En QA/prod se pone el motor real en `.env`.
-- **`pymysql`** sale del core → extra opcional `milpa-core[mysql]` (el core queda agnóstico de dialecto).
-- El paquete importable se renombró `app` → `milpa`.
+#### Consola
+
+- **`make:*` escribe en el `app/` del USUARIO** (`settings.app_dir`), no en el paquete instalado —
+  tus controllers/modelos/módulos generados aterrizan en tu proyecto, donde el Registry los
+  auto-monta.
+- **El módulo `Hello` generado usa `@Controller` class-based** — el stub de bienvenida estrena el
+  routing estilo Spring (`@Controller` + `@Get`) en vez del `APIRouter`.
+
+### Tests
+
+- Guardrail que **ejecuta el launcher `jornal`** (regresión del rename del entrypoint) tras
+  corregir que importaba el símbolo equivocado (`milpa` en vez de `app`).
 
 ## [0.2.0] - 2026-05-30
 
@@ -233,6 +295,7 @@ Primera versión: el esqueleto del microframework + auth, demo y herramientas de
 
 [Unreleased]: https://github.com/calcifux/milpa/compare/v0.4.0...HEAD
 [0.4.0]: https://github.com/calcifux/milpa/compare/v0.3.1...v0.4.0
-[0.3.1]: https://github.com/calcifux/milpa/compare/v0.2.0...v0.3.1
+[0.3.1]: https://github.com/calcifux/milpa/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/calcifux/milpa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/calcifux/milpa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/calcifux/milpa/releases/tag/v0.1.0

@@ -24,6 +24,7 @@ from milpa.Core.Cron.Schedule import (
     hourly,
     hourly_at,
     monthly,
+    to_crontab,
     weekly,
 )
 
@@ -44,5 +45,6 @@ __all__ = [
     "monthly",
     "registered_crons",
     "reset_cron_registry",
+    "to_crontab",
     "weekly",
 ]

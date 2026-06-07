@@ -145,3 +145,18 @@ def Can(ability: str, *, guard: str | None = None) -> Callable[[Any], Any]:
         return func
 
     return decorator
+
+
+def Scope(*accepted_scopes: str) -> Callable[[Any], Any]:
+    """Decorador de método de `@Controller`: exige ALGUNO de los scopes del token
+    (any-of, el `scope:a,b` de Passport) — azúcar sobre `require_any_scope`, igual que
+    `@Roles`/`@Can` lo son sobre sus dependencies."""
+
+    def decorator(func: Any) -> Any:
+        from milpa.Core.Auth.Passport import require_any_scope
+        from milpa.Core.Http.Routing import add_route_dependency
+
+        add_route_dependency(func, Depends(require_any_scope(*accepted_scopes)))
+        return func
+
+    return decorator

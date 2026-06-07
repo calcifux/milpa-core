@@ -28,6 +28,7 @@ from milpa.Core.Registry import (
     import_all_models,
     import_all_observers,
     import_all_policies,
+    iter_fallback_routes,
     iter_routers,
     iter_static_mounts,
     module_packages,
@@ -143,5 +144,15 @@ def create_app() -> FastAPI:
     @app.get("/status")
     async def root() -> dict[str, object]:
         return {"servicio": settings.app_name, "modulos": _module_names(), "status": "ok"}
+
+    # Rutas @Fallback de los controllers, montadas A PROPÓSITO AL FINAL (después de los
+    # routers, los estáticos, /vite y /status). Es la pieza que hace seguro un catch-all en
+    # la RAÍZ (`@Fallback @Get("/{path:path}")` para el shell de una SPA): en Starlette gana
+    # el PRIMER match, así que /api, /static, /vite y /status ya ganaron el suyo y el catch-all
+    # solo recoge lo que nadie reclamó. Sin esto, una SPA debía usar prefijo /app + redirect de
+    # "/" para no comerse los estáticos (ver Core/Http/Routing.Fallback). El discovery es
+    # dinámico (no importa Modules estático), como iter_routers.
+    for endpoint, path, methods, route_kwargs in iter_fallback_routes():
+        app.add_api_route(path, endpoint, methods=methods, **route_kwargs)
 
     return app

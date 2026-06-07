@@ -42,7 +42,7 @@ from markupsafe import Markup
 from milpa.Core.Config import settings
 from milpa.Core.Discovery import package_dir
 from milpa.Core.Translate import t as default_translate
-from milpa.Core.View.Vite import vite, vite_asset, vite_react_refresh
+from milpa.Core.View.Vite import assets_dev, vite, vite_asset, vite_react_refresh
 
 # Raíz del PAQUETE milpa (…/src/milpa/Core/View/TemplateEngine.py -> parents[2]).
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -163,6 +163,11 @@ class TemplateEngine:
         self._env.globals["vite"] = vite
         self._env.globals["vite_asset"] = vite_asset
         self._env.globals["vite_react_refresh"] = vite_react_refresh
+        # `assets_dev()`: True si los assets salen del dev server (hot-file vivo), False en
+        # build. Las apps gatean en el template lo que SOLO va en build —speculation rules,
+        # @view-transition cross-document— sin replicar la convención del hot-file a mano; la
+        # detección la publica Core/View/Vite. Uso: `{% if not assets_dev() %}…{% endif %}`.
+        self._env.globals["assets_dev"] = assets_dev
         # `env_script()`: el <script> de window.__ENV (runtime-config del shell) sin
         # copiar el tag ni el `| safe` en cada template — lee env_json del contexto.
         self._env.globals["env_script"] = _env_script
