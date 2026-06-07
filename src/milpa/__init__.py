@@ -35,7 +35,7 @@ from __future__ import annotations
 # La versión vive AQUÍ como única fuente de verdad: hatch la lee para el pyproject
 # ([tool.hatch.version]). Esta línea es la divergencia deliberada con el repo de
 # desarrollo (milpa-framework, que no publica paquete y versiona en su pyproject).
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 from importlib import import_module
 from typing import TYPE_CHECKING, Any, Final

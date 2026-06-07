@@ -7,6 +7,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-06-07
+
 ### Added
 
 - **`queue work --pool`** *(de tequio, donde nació y nunca viajó — lo cazó el drift-guard)*:
