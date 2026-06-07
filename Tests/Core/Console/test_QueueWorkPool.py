@@ -84,3 +84,30 @@ def test_non_windows_omits_pool_by_default(monkeypatch: MonkeyPatch, platform: s
 
     assert result.exit_code == 0
     assert "--pool" not in captured["argv"]
+
+
+# ----------------------------------------------------------------- QUEUE_NAMESPACE
+def test_queue_list_passthrough_without_namespace(monkeypatch: MonkeyPatch) -> None:
+    """Sin namespace, `--queue emails,celery` llega a -Q tal cual (el dev teclea las peladas)."""
+    monkeypatch.setattr(settings, "queue_namespace", "")
+    captured = _capture_worker_main(monkeypatch)
+
+    result = CliRunner().invoke(_queue_app(), ["work", "--queue", "emails,celery"])
+
+    assert result.exit_code == 0
+    argv = captured["argv"]
+    assert argv[argv.index("-Q") + 1] == "emails,celery"
+
+
+def test_queue_list_qualifies_each_name_with_namespace(monkeypatch: MonkeyPatch) -> None:
+    """Con QUEUE_NAMESPACE, CADA nombre de la lista se prefija: 'emails,celery' ->
+    'aqua.emails,aqua.celery'. El worker consume las MISMAS colas a las que despachan
+    Mail/Jobs/crons (incluida la default `aqua.celery`)."""
+    monkeypatch.setattr(settings, "queue_namespace", "aqua")
+    captured = _capture_worker_main(monkeypatch)
+
+    result = CliRunner().invoke(_queue_app(), ["work", "--queue", "emails,celery"])
+
+    assert result.exit_code == 0
+    argv = captured["argv"]
+    assert argv[argv.index("-Q") + 1] == "aqua.emails,aqua.celery"

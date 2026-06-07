@@ -57,6 +57,21 @@ def test_cron_task_with_queue_sets_options_queue() -> None:
     assert entry["options"] == {"queue": "emails"}
 
 
+def test_beat_options_queue_qualified_with_namespace(monkeypatch: MonkeyPatch) -> None:
+    """Con QUEUE_NAMESPACE el beat agenda a la cola PREFIJADA: options.queue 'emails' ->
+    'aqua.emails'. El beat de otra app sobre el mismo db no consume esta entrada."""
+    monkeypatch.setattr(settings, "queue_namespace", "aqua")
+
+    @cron_task(name="reg.test.qns", schedule=every_minute(), queue="emails")
+    def task_qns() -> str:
+        return "ran"
+
+    entry = collect_beat_schedule()["reg.test.qns"]
+
+    assert isinstance(entry, dict)
+    assert entry["options"] == {"queue": "aqua.emails"}
+
+
 def test_cron_task_without_schedule_is_not_in_beat() -> None:
     @cron_task(name="reg.test.noSched")
     def task_no_schedule() -> str:

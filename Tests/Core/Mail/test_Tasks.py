@@ -161,3 +161,36 @@ def test_enqueue_without_init_kwargs_passes_for_no_arg_mailables(monkeypatch: Mo
     enqueue_mail(_SinArgs(), to=["a@example.com"])
 
     assert captured["kwargs"]["mailable_kwargs"] == {}
+
+
+# ---------------------------------------------------------------- QUEUE_NAMESPACE
+def test_enqueue_mail_qualifies_queue_with_namespace(monkeypatch: MonkeyPatch) -> None:
+    """Con QUEUE_NAMESPACE el correo se encola en la cola PREFIJADA: 'emails' -> 'aqua.emails'.
+    Así dos apps en el mismo redis db no se cruzan los mail.send."""
+    monkeypatch.setattr(settings, "queue_namespace", "aqua")
+    captured: dict[str, Any] = {}
+
+    def _capture(*args: Any, **kwargs: Any) -> None:
+        captured.update(kwargs)
+
+    monkeypatch.setattr(Tasks.send_mail_task, "apply_async", _capture)
+
+    enqueue_mail(_SinArgs(), to=["a@example.com"], queue="emails")
+
+    assert captured["queue"] == "aqua.emails"
+
+
+def test_enqueue_mail_default_queue_stays_none_with_namespace(monkeypatch: MonkeyPatch) -> None:
+    """queue=None sigue siendo None aun con namespace: la cola por defecto la aísla
+    task_default_queue (a `{ns}.celery`), no el call-site."""
+    monkeypatch.setattr(settings, "queue_namespace", "aqua")
+    captured: dict[str, Any] = {}
+
+    def _capture(*args: Any, **kwargs: Any) -> None:
+        captured.update(kwargs)
+
+    monkeypatch.setattr(Tasks.send_mail_task, "apply_async", _capture)
+
+    enqueue_mail(_SinArgs(), to=["a@example.com"])
+
+    assert captured["queue"] is None

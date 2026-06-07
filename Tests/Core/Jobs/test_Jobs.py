@@ -7,6 +7,7 @@ from kombu.exceptions import OperationalError
 from pytest import MonkeyPatch
 
 from milpa.Core.CeleryApp import QueueUnavailableError
+from milpa.Core.Config import settings
 from milpa.Core.Jobs import Job, job
 
 
@@ -59,3 +60,23 @@ def test_dispatch_passes_args_and_queue(monkeypatch: MonkeyPatch) -> None:
     work.dispatch(5)
     assert seen["args"] == [5]
     assert seen["queue"] == "emails"  # cola por defecto del job
+
+
+def test_dispatch_qualifies_queue_with_namespace(monkeypatch: MonkeyPatch) -> None:
+    """Con QUEUE_NAMESPACE el dispatch despacha a la cola PREFIJADA (bus compartido): la
+    cola por defecto del job 'emails' pasa a 'aqua.emails', así otra app sobre el mismo
+    redis db no le roba la task."""
+    monkeypatch.setattr(settings, "queue_namespace", "aqua")
+
+    @job(name="test.jobs.ns", queue="emails")
+    def work(x: int) -> None: ...
+
+    seen: dict[str, object] = {}
+
+    def record(*, args: object, kwargs: object, queue: object) -> str:
+        seen.update(queue=queue)
+        return "task-id"
+
+    monkeypatch.setattr(work._task, "apply_async", record)
+    work.dispatch(5)
+    assert seen["queue"] == "aqua.emails"

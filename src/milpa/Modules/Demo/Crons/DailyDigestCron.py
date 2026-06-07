@@ -14,7 +14,12 @@ from milpa.Core.Cron import cron_task, daily_at
 from milpa.Modules.Demo.Repositories.NoteRepository import NoteRepository
 
 
-@cron_task(name="demo.daily_digest", schedule=daily_at("08:00"), output="demo_digest")
+@cron_task(
+    name="demo.daily_digest",
+    schedule=daily_at("08:00"),
+    environments=("local", "development"),
+    output="demo_digest",
+)
 def daily_digest() -> None:
     """Corre en el WORKER cada día a las 8:00 (lo despacha `schedule run`)."""
     total = len(NoteRepository().all())
