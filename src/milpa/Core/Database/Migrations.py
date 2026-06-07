@@ -3,8 +3,8 @@
 La Config de Alembic se arma EN CÓDIGO (sin `alembic.ini` suelto): solo fija el
 `script_location` a `migrations/` en la raíz. La conexión y los modelos los resuelve
 `migrations/env.py` desde Settings (`DATABASE_URL`) y `Base.metadata`, así no se duplica
-ni la config de conexión ni la lista de modelos. Lo opera `jornal migrate ...`
-(app/Core/Console/Commands/MigrateCommands.py).
+ni la config de conexión ni la lista de modelos. Lo opera `milpa migrate ...`
+(milpa.Core.Console.Commands.MigrateCommands).
 
 Contra una BD legacy que NO administras, no generes migraciones de tablas ajenas:
 usa esto para las tablas NUEVAS del proyecto (greenfield), igual que en Laravel.

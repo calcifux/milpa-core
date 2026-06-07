@@ -7,6 +7,20 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Unreleased]
 
+### Added
+
+- **`queue work --pool`** *(de tequio, donde nació y nunca viajó — lo cazó el drift-guard)*:
+  elige el pool de Celery (`prefork`/`solo`/`threads`/`gevent`); en **Windows**, si se omite,
+  cae a `solo` automáticamente (el prefork de billiard no es confiable ahí).
+
+### Fixed
+
+- Prosa stale armonizada con tequio (cosecha del drift-guard interno): el docstring de
+  `Database/Faker.py` aún decía que el discovery "no es recursivo" (falso desde 0.6.0); rutas
+  pre-empaquetado (`app/Core/...`) en Migrations/Seeder/Timestamp/Mail; los docstrings del
+  beat (`schedule work`/`schedule run`) ahora narran la fusión del calendario y la regla
+  "beat O schedule run, nunca ambos" en ambos hermanos por igual.
+
 ## [0.6.0] - 2026-06-07
 
 El release de la **libertad de encarpetado**: el discovery deja de mirar carpetas concretas

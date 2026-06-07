@@ -9,7 +9,10 @@ queue:work` de Laravel.
 
 from __future__ import annotations
 
+import sys
+
 import typer
+from loguru import logger
 
 from milpa.Core.CeleryApp import celery_app
 from milpa.Core.Config import settings
@@ -30,15 +33,27 @@ def queue_work(
     ),
     concurrency: int | None = typer.Option(None, help="Número de procesos worker en paralelo (default: nº de CPUs)."),
     loglevel: str = typer.Option(settings.log_level, help="Nivel de log del worker."),
+    pool: str | None = typer.Option(
+        None,
+        "--pool",
+        help="Pool de ejecución de Celery (prefork, solo, threads, gevent). En Windows, si se omite, "
+        "se usa 'solo' automáticamente (el prefork de billiard no es confiable ahí).",
+    ),
 ) -> None:
     """Lanza el worker (proceso de larga duración). Bloquea hasta Ctrl-C.
 
     NO embebe el scheduler (`-B`) de forma deliberada: el despertador se arranca
     aparte con `schedule work`, así dev no auto-dispara crons.
     """
+    if pool is None and sys.platform == "win32":
+        # En Windows el prefork de billiard no es confiable: caemos a 'solo' por defecto.
+        pool = "solo"
+        logger.info("queue work | Windows detectado: usando pool 'solo' (prefork de billiard no es confiable ahí)")
     argv = ["worker", "--loglevel", loglevel]
     if queue is not None:
         argv += ["-Q", queue]  # = --queue=emails de Laravel; consume solo esa(s) cola(s)
     if concurrency is not None:
         argv += ["--concurrency", str(concurrency)]
+    if pool is not None:
+        argv += ["--pool", pool]
     celery_app.worker_main(argv=argv)

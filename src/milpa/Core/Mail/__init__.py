@@ -1,8 +1,9 @@
 """Infraestructura de envío de correo (= CÓMO se manda).
 
 Aquí viven el ABC `Mailable`, el `Mailer` (SMTP/MIME), la facade `Mail` y la task
-`mail.send` de Celery. El motor de templates (Jinja2) vive en `app/Core/View`
-(es compartido con las vistas web); los Mailables demo viven en `Modules/Demo`.
+`mail.send` de Celery. El motor de templates (Jinja2) vive en `milpa.Core.View`
+(reutilizable para cualquier salida con plantilla); los Mailables demo viven en
+`milpa.Modules.Demo`.
 
 NO aquí: los servicios de DOMINIO del correo (resolución de destinatarios, reglas
 de quién recibe qué). Eso es propio de cada proyecto y vive en su módulo

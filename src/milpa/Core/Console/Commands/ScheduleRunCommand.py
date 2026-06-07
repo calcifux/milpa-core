@@ -5,6 +5,10 @@ En cada corrida: mira el reloj, recorre los crons agendados (los `@cron_task(sch
 y para los que TOCAN este minuto —y cuyo `environments` aplica— los DESPACHA al worker
 (`queue work`). Stateless: arranca limpio, despacha, y sale en milisegundos. El trabajo
 pesado lo hace el worker (con reintentos/observabilidad de Celery), no este proceso.
+
+Es la vía estilo crontab-del-SO. ALTERNATIVA a `schedule work` (el beat de Celery),
+que ahora también agenda los `@cron_task`: elige UNA de las dos (beat O schedule
+run), no ambas, o cada cron se despacharía dos veces.
 """
 
 from __future__ import annotations

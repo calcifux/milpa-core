@@ -1,7 +1,7 @@
 """Seeders: pueblan la BD con datos iniciales/demo (= los seeders de Laravel).
 
 Subclasea `Seeder` e implementa `run()`. Se descubren en `app/Modules/<X>/Seeders/` y se corren
-con `jornal db:seed` (cada uno dentro de su propia transacción). La IDEMPOTENCIA es tu
+con `milpa db:seed` (cada uno dentro de su propia transacción). La IDEMPOTENCIA es tu
 responsabilidad (revisa si el dato ya existe antes de crearlo), igual que en Laravel.
 """
 

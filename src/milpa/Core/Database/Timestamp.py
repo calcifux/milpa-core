@@ -2,7 +2,7 @@
 o `@CreationTimestamp`/`@UpdateTimestamp` de JPA/Hibernate).
 
 La hora la pone la BD con `func.now()` (server-side), y la CONEXIÓN ya corre en
-la zona de la app (ver `app/Core/Database/Session.py` → `_set_timezone_statement`,
+la zona de la app (ver `milpa.Core.Database.Session` → `_set_timezone_statement`,
 que la fija según el dialecto: MySQL/Postgres/Oracle). Así los timestamps salen en
 hora local sin que Python intervenga ni haya que importar un reloj: cero acoplamiento.
 (En SQLite no hay zona de sesión → quedarían en UTC; solo afecta dev/tests.)

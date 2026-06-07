@@ -1,11 +1,13 @@
 """Instancia de Faker con el locale CONFIGURADO (`FAKER_LOCALE` en .env; default es_MX).
 
 `faker` es dependencia de DEV (factories/seeders/tests), NO del runtime de producción.
-Por eso el Faker real se carga PEREZOSO (defensa en profundidad): importar este módulo es
-gratis; el error accionable sale solo al USARLO (`faker.name()`, etc.). Hoy el discovery del
-core NO es recursivo, así que un `jornal list` en un wheel limpio no importa las factories;
-pero el proxy perezoso blinda cualquier import futuro de una factory en runtime (o un seeder
-arrastrado por discovery) contra el ModuleNotFoundError-en-duro al cargar el módulo.
+OJO: el discovery recursivo del CLI (libertad de encarpetado) importa TODO el árbol de los
+módulos — incluidas las factories — así que este módulo SÍ se importa en runtime (p. ej. un
+`milpa list` recién instalado de PyPI, sin dev-deps). Por eso el Faker real se carga
+PEREZOSO: importar este módulo es gratis; el error accionable sale solo al USARLO.
+
+(Bug real cazado por el smoke del CI 2026-06-06: el import en duro de `faker` tronaba
+`milpa list` en una instalación limpia del wheel.)
 """
 
 from __future__ import annotations
