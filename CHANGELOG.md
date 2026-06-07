@@ -7,6 +7,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-06-07
+
+**Re-publicación de 0.6.2** (cero cambios de código). El release v0.6.2 nunca llegó a PyPI:
+la CI del paquete lo tumbó en `ruff format --check` por el espaciado del bloque `__version__`
+inyectado por el espejo. Regla de la casa: un tag NUNCA se mueve — versión nueva y ya.
+
 ## [0.6.2] - 2026-06-07
 
 **Ciudadanía en un broker compartido.** El origen es un incidente real: en la mega-red **aqua**
