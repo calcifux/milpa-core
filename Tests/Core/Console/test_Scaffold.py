@@ -27,6 +27,16 @@ def test_new_project_renderiza_skeleton_y_sustituye_nombre(tmp_path: Path) -> No
     assert not list(dest.rglob("*.tmpl"))  # ningún .tmpl se fuga al proyecto
 
 
+def test_pyproject_pin_milpa_core_0_6_y_pythonpath(tmp_path: Path) -> None:
+    """El pyproject RENDERIZADO ancla el proyecto a milpa-core>=0.6.0 (el release) y deja el
+    `pythonpath` de pytest para que los Tests importen `app.*` desde la raíz del proyecto."""
+    dest = new_project("granja", parent=tmp_path)
+
+    pyproject = (dest / "pyproject.toml").read_text(encoding="utf-8")
+    assert "milpa-core>=0.6.0" in pyproject  # pin del skeleton al release (D3)
+    assert "pythonpath" in pyproject  # [tool.pytest.ini_options] pythonpath = ["."]
+
+
 def test_new_project_no_sobrescribe_destino_con_contenido(tmp_path: Path) -> None:
     (tmp_path / "ocupado").mkdir()
     (tmp_path / "ocupado" / "algo.txt").write_text("mío", encoding="utf-8")

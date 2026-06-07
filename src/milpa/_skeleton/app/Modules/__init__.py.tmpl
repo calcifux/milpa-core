@@ -1,0 +1,24 @@
+"""Tus módulos (features). Un paquete por módulo; cada uno autocontenido.
+
+ENCARPETADO LIBRE — esto es lo importante: el discovery de milpa importa TODO el
+árbol de cada módulo (recursivo). Las carpetas (Http/, Jobs/, Crons/, Observers/,
+Handlers/, Policies/, Console/Commands/, ...) son la CONVENCIÓN que generan los
+`make:*`, NO un requisito. Pon la pieza donde te quede —un `@job`, un `@cron_task`,
+un Observer, un `@handles(...)`, una Policy— y milpa la descubre mientras lleve su
+decorador o herede de su base. Para una prueba de concepto puedes escribir TODO de
+corrido en un solo archivo plano (job + cron + observer + handler + command juntos)
+y funciona igual.
+
+La única convención con peso real es `Console/Commands/`: de su path se DEDUCE el
+grupo CLI del `@console_command` (`app.Modules.Billing...` → grupo `billing`).
+
+OJO: el barrido recursivo también importa `Http/` de cada módulo en el CLI y el
+worker. Ahí los decoradores de ruta (`@Controller`, `@Get`, ...) SOLO se registran,
+no sirven nada: quien sirve es la capa web (`create_app()`). Importar un controller
+fuera del proceso web no levanta una ruta — es discovery, no arranque.
+
+Empieza con `Hello/` (el módulo de ejemplo) o copia su carpeta para tu primer
+módulo real (o usa `jornal make:module <Nombre>`).
+"""
+
+from __future__ import annotations

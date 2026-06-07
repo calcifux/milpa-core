@@ -66,17 +66,42 @@ Lo que comparten varios módulos:
 
 ### 3. Los módulos — `app/Modules/<Nombre>`
 
-Tus features. Cada módulo es autocontenido e independiente de los demás. La anatomía
-canónica (la del módulo `Example`):
+Tus features. Cada módulo es autocontenido e independiente de los demás. El **encarpetado
+es libre**: el discovery importa **todo el árbol** del módulo, así que sueltas la pieza
+donde te quede y milpa la descubre. Ninguna carpeta es obligatoria. La **convención que
+producen los generadores `make:*`** —una carpeta por concern— es solo una de las formas de
+organizarse:
 
 ```
 app/Modules/Example/
-  Http/            # controllers con APIRouter (se auto-montan)
-  Jobs/            # tasks de Celery y crons (@cron_task)
+  Http/            # @Controller (rutas; se auto-montan en create_app())
+  Jobs/            # @job (background on-demand)
+  Crons/           # @cron_task (agendados)
+  Observers/       # subclases de Observer (reaccionan a eventos)
+  Handlers/        # @handles(Cmd) del Mediator
+  Policies/        # políticas de autorización (RBAC/ABAC)
   Mail/            # Mailables del módulo
-  Console/         # Commands/ del módulo (@console_command) [opcional]
+  Console/
+    Commands/      # @console_command (de su path se deduce el grupo CLI)
   Resources/       # Lang/, Views/, Static/ propios (namespaced)
 ```
+
+!!! note "Este layout es una PROPUESTA, no una imposición"
+    El demo (y lo que generan los `make:*`) sigue esta convención —carpeta por concern,
+    `Jobs/ExportNotesJob.py`, `Mail/InvoiceMailable.py`, …— para que se lea de un vistazo.
+    Pero el discovery **no la exige**: importa **todo el árbol** del módulo. Si prefieres
+    aplanar (`Jobs.py`) o agrupar de otra manera, funciona igual —la pieza se descubre
+    mientras lleve su decorador o herede de su base—. Para una prueba de concepto puedes
+    escribir **todo de corrido en un solo archivo** (job + cron + observer + handler +
+    command + policy juntos) y milpa registra todo. La **única** convención con peso es
+    `Console/Commands/`, de cuyo path se deduce el grupo CLI de cada `@console_command`. El
+    guardrail `test_FreeLayoutDiscovery` fija esta libertad.
+
+!!! info "El `Http/` también se importa fuera de la web — pero ahí solo se registra"
+    El barrido recursivo importa `Http/` de cada módulo también en el CLI y el worker. Es
+    una decisión consciente: ahí los decoradores de ruta (`@Controller`, `@Get`, …) **solo
+    se registran**, no sirven nada — quien sirve es la capa web (`create_app()`, vía
+    `iter_routers()`). Importar un controller fuera del proceso web no levanta una ruta.
 
 Ver [Monolito modular](06-monolito-modular.md) para el detalle de cómo se descubre y
 monta cada cosa, y [Rutas y controladores](07-rutas-y-controladores.md) para crear el

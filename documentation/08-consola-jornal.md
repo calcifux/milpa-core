@@ -14,14 +14,38 @@ uv run python jornal --help           # ayuda de Typer (grupos)
 | Comando | Qué hace | Equivalente Laravel |
 |---------|----------|---------------------|
 | `jornal list` | Lista todos los comandos agrupados, con su ayuda. | `php artisan list` |
-| `jornal serve` | Levanta la API (uvicorn factory). Opciones `--host`, `--port`, `--reload/--no-reload`. | `php artisan serve` |
+| `jornal serve` | Levanta la API (uvicorn factory). Opciones `--host`, `--port`, `--reload/--no-reload`, `--workers`. | `php artisan serve` |
 | `jornal queue work` | Arranca el worker de Celery. Opciones `--queue`, `--concurrency`, `--loglevel`. | `php artisan queue:work` |
-| `jornal schedule work` | Arranca el beat (scheduler). Una sola instancia. | (Laravel scheduler) |
+| `jornal schedule work` | Arranca el beat (scheduler). Una sola instancia. Opción `--schedule-file`. | (Laravel scheduler) |
 | `jornal schedule run` | Despacha los crons que tocan este minuto. Lo llama el crontab del SO. | `php artisan schedule:run` |
 
 ```bash
 uv run python jornal serve --port 9000 --no-reload
+uv run python jornal serve --workers 4               # prod: varios procesos (fuerza --no-reload)
 uv run python jornal queue work --queue emails,reports --concurrency 8
+```
+
+### `serve --workers N` (varios procesos)
+
+`--workers N` (entero, default `1`) corre la app en **N procesos** uvicorn —el modo de
+prod—. Es **incompatible con `--reload`**: al pasar `workers>1`, milpa **fuerza
+`--no-reload`** (con un aviso en consola). En `N=1` (el default) no se le pasa nada a
+uvicorn por ese lado, así que el `--reload` de dev se respeta tal cual.
+
+```bash
+uv run python jornal serve --workers 4               # 4 procesos, sin recarga
+uv run python jornal serve --workers 4 --reload      # el --reload se ignora (aviso)
+```
+
+### `schedule work --schedule-file <ruta>`
+
+`schedule work` (el beat) persiste su calendario en un archivo de estado (`-s` de Celery);
+el default es `./celerybeat-schedule` del **CWD**. En contenedores con el repo montado de
+solo-lectura ese default **no se puede escribir**: apúntalo a un volumen escribible con
+`--schedule-file`.
+
+```bash
+uv run python jornal schedule work --schedule-file /tmp/celerybeat-schedule
 ```
 
 Ver [Colas y tareas](11-colas-y-tareas.md) y [Cron](12-programacion-cron.md) para

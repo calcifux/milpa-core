@@ -27,8 +27,16 @@ jornal           # tu consola (./jornal list)
 .env             # tu configuración (no se sube a git)
 ```
 
-milpa descubre todo **por convención** (no hay que registrar nada): crea un controller
-con `router = APIRouter(...)` bajo `app/Modules/<X>/Http/` y la ruta queda viva.
+milpa descubre todo **solo** (no hay que registrar nada): crea un `@Controller` bajo
+`app/Modules/<X>/Http/` y la ruta queda viva.
+
+**El encarpetado es LIBRE.** Las carpetas (`Http/`, `Jobs/`, `Crons/`, `Console/`, …)
+son la convención que generan los `make:*`, **no un requisito**: el discovery importa
+**todo el árbol** de tu módulo, así que sueltas la pieza (un `@job`, un `@cron_task`, un
+`@Controller`) donde te quede y se descubre sola. Para una prueba de concepto puedes
+escribir **todo de corrido en un solo archivo** plano y funciona igual. La única
+convención con peso es `Console/Commands/`, de donde se deduce el grupo CLI de cada
+`@console_command`.
 
 ## Comandos útiles
 

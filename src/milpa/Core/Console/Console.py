@@ -108,10 +108,22 @@ def build_cli_apps() -> Iterator[tuple[str, typer.Typer]]:
         yield group, sub_app
 
 
-def import_submodules(package_name: str) -> None:
+def import_submodules(package_name: str, *, recursive: bool = False) -> None:
     """Importa todos los submódulos (que no empiecen con `_`) de un paquete,
     para disparar sus decoradores (@console_command, @cron_task). Discovery por
     convención con `pkgutil` — el mismo mecanismo que usan Celery/Django/pytest.
+
+    Con `recursive=True` DESCIENDE a los sub-paquetes (`info.ispkg` → recursión),
+    de modo que importa TODO el árbol del paquete, no solo su primer nivel. Esto es
+    lo que libera el encarpetado: el discovery ya no exige una carpeta fija
+    (`Jobs/`, `Crons/`, `Observers/`, ...) — importa el módulo entero y los
+    decoradores corren vivan donde vivan los archivos (carpetas anidadas, archivos
+    sueltos, todo de corrido en un solo .py). Los nombres con `_` se saltan en
+    CUALQUIER nivel (archivos y sub-paquetes privados quedan fuera del barrido).
+
+    Las carpetas que generan los `make:*` (Jobs/, Crons/, Console/Commands/, ...)
+    son CONVENCIÓN PROPUESTA (la forma legible de organizar), NUNCA un requisito:
+    el barrido recursivo encuentra el decorador sin importar dónde lo pusiste.
 
     Si la carpeta de convención no existe, no hace nada (ausencia esperada). PERO si un
     archivo del módulo tiene un import roto, se RE-LANZA (faro: nunca silenciamos un bug real,
@@ -126,8 +138,13 @@ def import_submodules(package_name: str) -> None:
     if not hasattr(package, "__path__"):
         return
     for info in pkgutil.iter_modules(package.__path__):
-        if not info.name.startswith("_"):
-            importlib.import_module(f"{package_name}.{info.name}")
+        if info.name.startswith("_"):
+            continue
+        child = f"{package_name}.{info.name}"
+        if recursive and info.ispkg:
+            import_submodules(child, recursive=True)  # baja al sub-paquete (todo el árbol)
+        else:
+            importlib.import_module(child)
 
 
 def build_command_table(general: Sequence[tuple[str, str]] = ()) -> Table:

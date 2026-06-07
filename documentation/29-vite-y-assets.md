@@ -107,8 +107,28 @@ por el cache de la estructura), así prender/apagar el dev server cambia el resu
 !!! tip "Reemplaza la convención manual del hot-file"
     Antes, una app que quería este gate replicaba a mano la convención
     (`any(surcos/*/hot)`). Ahora la detección la **publica el Core** y el surco solo llama
-    `assets_dev()`. Si lo necesitas también en el **cliente** (JS gateando speculation rules),
-    pásalo a `window.__ENV` por el `extra` de `shell_context(request, {"ASSETS_DEV": assets_dev()})`.
+    `assets_dev()`.
+
+### `ASSETS_DEV` en `window.__ENV` (por default)
+
+Si el gate lo necesitas en el **cliente** (JS decidiendo si registra unas speculation rules,
+por ejemplo), no hay que pasar nada: **`ASSETS_DEV` entra al `window.__ENV` por DEFAULT**. El
+shell (`runtime_env_json` / `shell_context` de `Core/Http/Shell`) ya inyecta la clave junto a
+`APP_NAME` / `APP_ENV` / `BASE_PATH`, así que cualquier surco que sirva su template con
+`shell_context(request)` la recibe:
+
+```js
+// en el cliente del surco
+if (!window.__ENV.ASSETS_DEV) {
+  // estamos en build: aquí sí podemos prerenderear / activar view-transitions cross-doc
+}
+```
+
+El valor se calcula **en vivo** en cada render (lee la presencia del hot-file), así que
+prender/apagar el dev server lo cambia sin reiniciar el proceso. Es tolerante: sin apps Vite
+detectadas vale `False` ("no hay dev server" = "no es dev"), así que jamás tumba el render de
+una página que ni usa Vite. (Detalle de implementación: el shell hace un import **diferido**
+de `assets_dev` para no colgar una arista estática `Core/Http → Core/View/Vite`.)
 
 ## El helper `asset()` y `ASSET_URL`
 

@@ -7,6 +7,61 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-07
+
+El release de la **libertad de encarpetado**: el discovery deja de mirar carpetas concretas
+y pasa a importar **todo el árbol** de cada módulo (puerto del discovery recursivo de
+tequio-core, probado en batalla). Las carpetas (`Jobs/`, `Crons/`, `Http/`, …) quedan como
+**propuesta** —la que generan los `make:*`—, jamás un requisito: para una prueba de concepto
+puedes escribir todo de corrido en un solo archivo y funciona. Más una canasta de opciones de
+operación destiladas de la primera app real (aklara-dispersa).
+
+### Added
+
+- **Encarpetado libre (discovery recursivo TOTAL)** *(puerto de tequio)*: por cada módulo, el
+  Registry corre `import_submodules(package, recursive=True)` y baja a **todos** los
+  sub-paquetes (saltando los que empiezan con `_`). Dónde pongas un `@job`, un `@cron_task`, un
+  `Observer`, un `@handles(...)` o una Policy dentro del módulo **da igual**: si está en el
+  árbol, se descubre. La única convención con peso es `Console/Commands/` (de su path se deduce
+  el grupo CLI). Lo fija el guardrail `test_FreeLayoutDiscovery` y un test "de corrido" (un
+  módulo de UN solo archivo plano: job + cron + observer + handler + command + policy juntos).
+- **`serve --workers N`**: corre la app en N procesos uvicorn (prod). Es incompatible con
+  `--reload`; al pasar `workers>1` se fuerza `--no-reload` (con aviso). En `N=1` (default) no se
+  toca el modo `--reload` de dev.
+- **`schedule work --schedule-file <ruta>`**: reubica el archivo de estado del beat (`-s` de
+  Celery; default `./celerybeat-schedule` del CWD). Para docker con el repo montado de
+  solo-lectura, apúntalo a un volumen escribible (p. ej. `/tmp/celerybeat-schedule`).
+- **`MILPA_ENV_FILE`**: el `.env` deja de estar clavado al CWD —`Settings` lo lee de
+  `os.environ["MILPA_ENV_FILE"]` (default `.env`)—. Un mismo despliegue puede apuntar a otro
+  archivo sin symlinkear (mata el symlink-hack de los beats en docker). Documentado en el
+  `.env.example`.
+- **`ASSETS_DEV` en `window.__ENV` por DEFAULT**: el shell (`runtime_env_json`) inyecta la
+  decisión dev/build junto a `APP_NAME` / `APP_ENV` / `BASE_PATH`, así el cliente gatea
+  speculation rules y similares sin replicar la convención del hot-file. El import de
+  `assets_dev` es diferido para no colgar una arista estática `Core/Http → Core/View/Vite`.
+
+### Changed
+
+- **`import_all_*` ahora importa el árbol completo** (superset retrocompatible): `import_all_tasks`,
+  `import_all_seeders`, `import_all_observers`, `import_all_handlers` e `import_all_policies` son
+  hoy **alias** del mismo gesto (`import_submodules(package, recursive=True)` por módulo). El
+  layout convencional del demo se descubre 100% idéntico —la recursión es un superset—.
+  `iter_cli_apps` también barre el árbol (el `@console_command` se descubre viva donde viva).
+  `import_all_models` y `collect_beat_schedule` no cambian. *(Decisión consciente: el barrido
+  también importa `Http/` en el CLI y el worker; ahí los decoradores de ruta solo se registran,
+  no sirven nada — quien sirve es `create_app()`.)*
+- **El `env_file` de `Settings`** sale de `MILPA_ENV_FILE` en vez de `.env` fijo (ver Added).
+- Skeleton/docs **desanclados de las carpetas**: el `pyproject.toml` generado pinea
+  `milpa-core>=0.6.0`; el skeleton y la documentación (04-estructura, 06-monolito-modular,
+  08-consola, 12-cron, 29-vite) narran la libertad de encarpetado y las nuevas opciones.
+
+### Fixed
+
+- **Error accionable del lock store**: si `without_overlapping` no puede conectar al LOCK store
+  (redis) al adquirir el lock, el cron **no se ejecuta a ciegas**: truena con un mensaje que
+  dice que el default es un redis LOCAL y que en docker se configura `LOCK_URL=redis://<host>`
+  (caso real: aklara). **Sin** fallback mágico al broker.
+
 ## [0.5.0] - 2026-06-07
 
 Los backports de lo aprendido en los proyectos hermanos — tequio-core (la extracción worker-side,

@@ -57,16 +57,31 @@ def serve(
     host: str = typer.Option("127.0.0.1", help="Host de escucha."),
     port: int = typer.Option(settings.app_port, help="Puerto (default: APP_PORT)."),
     reload: bool = typer.Option(True, "--reload/--no-reload", help="Auto-recarga en cambios (dev)."),
+    workers: int = typer.Option(
+        1,
+        help="Procesos uvicorn; incompatible con --reload (al pasar --workers se fuerza no-reload).",
+    ),
 ) -> None:
     """Arranca FastAPI con uvicorn usando la app factory del kernel web (Core).
     En modo `--factory` uvicorn llama a `create_app()`; el string permite `--reload`.
     Si ASSET_URL es una RUTA (deploy bajo sub-ruta de reverse proxy), viaja
     también como root_path ASGI: el MISMO `jornal serve` funciona con y sin
     proxy, sin flags — una sola variable configurada (un CDN https:// no es
-    prefijo del deploy: root raíz, como siempre)."""
+    prefijo del deploy: root raíz, como siempre).
+
+    `--workers N` (N>1) corre la app en N procesos (prod): uvicorn EXIGE la app por
+    string para forkear, y el reload no convive con varios procesos — por eso al
+    pasar workers>1 se fuerza `--no-reload` (con aviso). En N=1 (default) va
+    `workers=None` (el default de uvicorn): se respeta el modo `--reload` de siempre (dev)."""
     import uvicorn
 
+    if workers > 1 and reload:
+        Console().print("[yellow]![/yellow] --workers desactiva --reload (incompatibles); corriendo sin recarga.")
+        reload = False
+
     prefix = settings.asset_url if settings.asset_url.startswith("/") else ""
+    # workers efectivo SOLO si >1: en N=1 pasamos None (default de uvicorn) para no chocar
+    # con --reload (dev). uvicorn.run acepta `workers: int | None`.
     uvicorn.run(
         "milpa.Core.Http.Http:create_app",
         factory=True,
@@ -74,6 +89,7 @@ def serve(
         port=port,
         reload=reload,
         root_path=prefix.rstrip("/"),
+        workers=workers if workers > 1 else None,
     )
 
 

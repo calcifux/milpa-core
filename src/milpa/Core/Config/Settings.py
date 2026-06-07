@@ -5,6 +5,7 @@ de verdad de secretos/config por-entorno; infraestructura va SIN default
 
 from __future__ import annotations
 
+import os
 from typing import Self
 
 from pydantic import AliasChoices, Field, model_validator
@@ -35,7 +36,15 @@ def _host_timezone() -> str:
 class Settings(BaseSettings):
     # extra="ignore": varios módulos comparten el mismo .env; cada Settings
     # ignora las variables que no declara.
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # env_file NO está clavado al CWD: se lee de MILPA_ENV_FILE (default ".env"). Así un
+    # mismo despliegue puede apuntar a otro archivo (p. ej. MILPA_ENV_FILE=/run/secrets/app.env
+    # en docker) SIN symlinkear .env al CWD del proceso — el hack que antes necesitaban los
+    # beats en contenedores. Es la ruta tal cual la entrega el SO (relativa al CWD o absoluta).
+    model_config = SettingsConfigDict(
+        env_file=os.environ.get("MILPA_ENV_FILE", ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # --- Infraestructura ---
     # Default sqlite local: milpa arranca y se usa SIN configurar nada (zero-config, como

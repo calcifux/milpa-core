@@ -126,6 +126,26 @@ Cuando un cron se ejecuta, la wrapper aplica:
 3. **Lock** — si `without_overlapping`, toma un lock Redis `cron-lock:<name>`; si ya está
    tomado (la corrida anterior sigue), se omite.
 
+### El lock store debe estar disponible (error accionable, sin fallback mágico)
+
+`without_overlapping` **exige** un lock store (redis). El default es un **redis LOCAL**
+(`LOCK_URL` vacío). La conexión es perezosa: ocurre al **adquirir** el lock, dentro del
+worker (no en el borde CLI). Si en ese momento el store **no responde**, la corrida
+**no se ejecuta a ciegas**: truena con un error que te dice exactamente qué configurar
+—**sin** caer al broker por su cuenta (nada de fallback mágico):
+
+```
+cron 'send_reminders': without_overlapping necesita el LOCK store (redis) y no se pudo
+conectar a redis://127.0.0.1:6379/0. El default es un redis LOCAL; en docker configúralo
+con LOCK_URL=redis://<host>:6379/0 (apuntando al servicio redis de tu compose), o quita
+without_overlapping de este cron.
+```
+
+El caso típico es **docker**: dentro del contenedor no hay un redis local, así que hay que
+apuntar `LOCK_URL` al servicio del compose (p. ej. `LOCK_URL=redis://redis:6379/0`). El
+store de locks es independiente del `BROKER_URL`: puedes tener el broker en RabbitMQ y el
+lock en redis.
+
 ### El invariante del lock
 
 `lock_timeout` debe ser **mayor** que `redis_visibility_timeout`. Si fueran iguales,

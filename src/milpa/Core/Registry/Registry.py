@@ -1,12 +1,35 @@
 """Registro del monolito modular: descubre y ensambla los módulos presentes.
 
-Layout estilo Laravel (PascalCase). Convención por módulo en app/Modules/<Name>/:
-  - Http/Controllers/  -> paquete que expone `routers` (lista de APIRouter)
-  - Jobs/ y Console/Commands/ -> tareas Celery (se descubren con pkgutil)
-  - Console/Kernel.py  -> diccionario `beat_schedule` (los crons; como Kernel.php)
+Layout estilo Laravel (PascalCase). Los módulos viven en `settings.modules_package`
+(default del skeleton: `app.Modules`; aquí en el repo: `milpa.Modules`) y se
+descubren SOLOS escaneando esa carpeta con pkgutil.
 
-Los módulos se descubren SOLOS escaneando app/Modules/. Tener un módulo presente
-NO dispara nada por sí mismo:
+ENCARPETADO LIBRE (estilo milpa, sin estructura rígida). El discovery YA NO exige
+una jerarquía fija dentro de cada módulo: importa TODO el árbol del módulo de forma
+recursiva (`import_submodules(package, recursive=True)`), así los decoradores
+(@job / @cron_task / @console_command / @handles / @policy / la subclase de Seeder u
+Observer) corren vivan donde vivan sus archivos. Organiza tu app como quieras; para
+una prueba de concepto puedes escribir TODO de corrido en un solo archivo y funciona
+igual.
+
+milpa PROPONE (como sugerencia de LECTURA, NO como obligación) un layout: las carpetas
+`Http/`, `Jobs/`, `Crons/`, `Observers/`, `Handlers/`, `Policies/`, `Seeders/` y
+`Console/Commands/` son la convención que generan los `make:*`. Pero como el barrido
+baja por TODO el árbol, cualquier otro encarpetado (subcarpetas, archivos sueltos)
+funciona idéntico. Lo especial sigue siendo `Console/Kernel.py`: la VÍA DECLARATIVA del
+beat_schedule, con PRECEDENCIA. Porque ahora los `@cron_task` descubiertos TAMBIÉN
+alimentan el beat (se convierten a crontab y se agendan solos), Kernel.py deja de ser la
+única fuente y pasa a ser la declaración explícita que GANA si su nombre colisiona con un
+cron auto-derivado.
+
+OJO (decisión consciente del discovery libre): como el barrido recursivo importa el
+árbol COMPLETO, en CLI/worker también se importan los archivos de `Http/` de cada
+módulo. No pasa nada por diseño: los decoradores de ruta (@Get/@Post/@Controller) SOLO
+REGISTRAN en estructuras del proceso; quien SIRVE las rutas es `create_app` por la vía
+web (`iter_routers`/`iter_fallback_routes`). Importar un controller fuera del proceso
+web no levanta nada.
+
+Tener un módulo presente NO dispara nada por sí mismo:
   - Registrar tasks (`import_all_tasks`) solo las vuelve ejecutables bajo demanda.
   - Montar rutas (`iter_routers`) solo responde a requests entrantes.
   - El único disparo AUTOMÁTICO es `celery beat` leyendo el beat_schedule; y aun
@@ -77,50 +100,83 @@ def import_all_models() -> None:
     importlib.import_module(settings.models_package)
 
 
-def import_all_tasks() -> None:
-    """Importa Jobs/, Crons/ y Console/Commands/ de cada módulo para que sus decoradores
-    (@job / @cron_task / @celery_app.task) queden registrados (los vuelve ejecutables; NO
-    los dispara). `Crons/` va aparte de `Jobs/` a propósito: refuerza la separación mental
-    job (on-demand) ≠ cron (agendado), igual que `Core/Jobs` vive separado de `Core/Cron`.
+def _import_all_modules() -> None:
+    """Corazón del discovery libre: importa TODO el árbol de cada módulo presente
+    (`import_submodules(package, recursive=True)`). Idempotente — `sys.modules`
+    cachea, así llamarlo varias veces no reimporta. Es lo que vuelve la estructura
+    interna del módulo IRRELEVANTE para el registro: corra el decorador donde corra,
+    su archivo se importa.
 
-    El discovery usa `import_submodules` (pkgutil): escanea uno a uno los
-    archivos de cada carpeta en vez de importar solo su `__init__`. Así un solo
-    mecanismo cubre todo el discovery del monolito (mismo que `iter_cli_apps`),
-    y los módulos ya no dependen de que sus `__init__.py` re-importen los
-    archivos para que las tasks se registren.
+    Las cinco `import_all_*` de abajo (tasks/seeders/observers/handlers/policies)
+    delegan TODAS aquí (hacen exactamente lo mismo). Es deliberado: con el
+    encarpetado libre ya no hay una carpeta concreta que escanear, así que el único
+    barrido honesto es el árbol completo.
     """
     for package in module_packages():
-        import_submodules(f"{package}.Jobs")
-        import_submodules(f"{package}.Crons")
-        import_submodules(f"{package}.Console.Commands")
+        import_submodules(package, recursive=True)
+
+
+def import_all_tasks() -> None:
+    """Importa el árbol completo de cada módulo para que las tasks (@job / @cron_task /
+    @celery_app.task) queden registradas (las vuelve ejecutables; NO las dispara).
+
+    Por qué sigue existiendo (y no se fusionó con las otras cuatro): el nombre es
+    DOCUMENTACIÓN en el call-site — `import_all_tasks()` en CeleryApp dice "estoy
+    cargando tasks". Con el encarpetado libre ya no importa una carpeta concreta
+    (`Jobs/`, `Crons/`), por eso las cinco delegan en `_import_all_modules` (un
+    solo barrido recursivo del árbol); las mantenemos separadas para conservar la
+    claridad de cada call-site y dejar la puerta abierta a re-especializarlas en el
+    futuro (p. ej. filtrar por convención) sin tocar a quien las llama.
+    """
+    _import_all_modules()
 
 
 def import_all_seeders() -> None:
-    """Importa Seeders/ de cada módulo para que sus subclases de `Seeder` se registren
-    (las descubre `db:seed`). Mismo discovery por convención que tasks/commands."""
-    for package in module_packages():
-        import_submodules(f"{package}.Seeders")
+    """Importa el árbol completo de cada módulo para que las subclases de `Seeder`
+    se registren (las descubre `db:seed`).
+
+    Alias de claridad (ver `import_all_tasks`): las cinco `import_all_*` hacen lo
+    mismo —un barrido recursivo del árbol del módulo— pero cada nombre documenta su
+    call-site (aquí: `db:seed` cargando seeders) y deja la opción futura de
+    re-especializar el discovery sin cambiar al llamador.
+    """
+    _import_all_modules()
 
 
 def import_all_observers() -> None:
-    """Importa Observers/ de cada módulo para que sus subclases de `Observer` se registren
-    (las dispara `Events.dispatch`). Mismo discovery por convención que seeders."""
-    for package in module_packages():
-        import_submodules(f"{package}.Observers")
+    """Importa el árbol completo de cada módulo para que las subclases de `Observer`
+    se registren (las dispara `Events.dispatch`).
+
+    Alias de claridad (ver `import_all_tasks`): las cinco `import_all_*` hacen lo
+    mismo —un barrido recursivo del árbol del módulo— pero cada nombre documenta su
+    call-site (aquí: el bootstrap de eventos cargando observers) y deja abierta la
+    re-especialización futura sin cambiar al llamador.
+    """
+    _import_all_modules()
 
 
 def import_all_handlers() -> None:
-    """Importa Handlers/ de cada módulo para que sus `@handles(Cmd)` se registren
-    (los resuelve `Mediator.send`). Mismo discovery por convención que seeders."""
-    for package in module_packages():
-        import_submodules(f"{package}.Handlers")
+    """Importa el árbol completo de cada módulo para que los `@handles(Cmd)` se
+    registren (los resuelve `Mediator.send`).
+
+    Alias de claridad (ver `import_all_tasks`): las cinco `import_all_*` hacen lo
+    mismo —un barrido recursivo del árbol del módulo— pero cada nombre documenta su
+    call-site (aquí: el Mediator cargando handlers) y deja abierta la
+    re-especialización futura sin cambiar al llamador.
+    """
+    _import_all_modules()
 
 
 def import_all_policies() -> None:
-    """Importa Policies/ de cada módulo para que sus `@policy(ability)` se registren en el Gate
-    (adiós a `register_policies()` manual). Mismo discovery por convención que seeders."""
-    for package in module_packages():
-        import_submodules(f"{package}.Policies")
+    """Importa el árbol completo de cada módulo para que sus `@policy(ability)` se
+    registren en el Gate (adiós a `register_policies()` manual).
+
+    Alias de claridad (ver `import_all_tasks`): las cinco `import_all_*` hacen lo
+    mismo —un barrido recursivo del árbol del módulo— pero cada nombre documenta su
+    call-site (aquí: el Gate cargando policies) y deja abierta la re-especialización
+    futura sin cambiar al llamador.
+    """
+    _import_all_modules()
 
 
 def collect_beat_schedule() -> dict[str, object]:
@@ -261,16 +317,17 @@ def iter_static_mounts() -> Iterator[tuple[str, str]]:
 def iter_cli_apps() -> Iterator[tuple[str, typer.Typer]]:
     """Itera los sub-apps de Typer (grupo, sub_app) de todos los módulos presentes.
 
-    Primero dispara el discovery por convención: para cada módulo importa los
-    archivos de `Console/Commands` con `import_submodules` (pkgutil), lo que
-    ejecuta los decoradores @console_command y llena el registro de Console.
-    Después delega en `build_cli_apps()`, que arma un Typer por grupo desde ese
-    registro ya poblado.
+    Primero dispara el discovery: para cada módulo importa TODO su árbol con
+    `import_submodules(package, recursive=True)`, lo que ejecuta los decoradores
+    @console_command vivan donde vivan (milpa PROPONE `Console/Commands/` para el
+    automontaje, pero el barrido recursivo encuentra el command en cualquier
+    carpeta — incluso todo de corrido en un solo archivo). Después delega en
+    `build_cli_apps()`, que arma un Typer por grupo desde el registro ya poblado.
 
     El acoplamiento hacia los módulos es por imports DINÁMICOS (rutas en string):
     Core no importa Modules de forma estática, así que import-linter no marca una
     violación Core↛Modules.
     """
     for package in module_packages():
-        import_submodules(f"{package}.Console.Commands")
+        import_submodules(package, recursive=True)
     yield from build_cli_apps()
