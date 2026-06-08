@@ -95,3 +95,4 @@ nav:
       - Correo: 10-correo.md
       - Localización (i18n): 13-localizacion-i18n.md
       - Logging: 14-logging.md
+      - Lazy imports y scan: 32-lazy-y-scan.md
