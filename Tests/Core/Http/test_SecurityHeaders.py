@@ -51,12 +51,28 @@ def test_hsts_header_when_enabled(monkeypatch: MonkeyPatch) -> None:
     assert response.headers["strict-transport-security"] == "max-age=1000; includeSubDomains"
 
 
-def test_csp_header_when_configured(monkeypatch: MonkeyPatch) -> None:
+def test_csp_header_report_only_by_default(monkeypatch: MonkeyPatch) -> None:
+    # Default csp_report_only=True: el navegador OBSERVA pero NO bloquea -> header Report-Only.
     monkeypatch.setattr(settings, "content_security_policy", "default-src 'self'")
+    monkeypatch.setattr(settings, "csp_report_only", True)
+    monkeypatch.setattr(settings, "csp_report_uri", "")
 
     response = TestClient(_app_with_route()).get("/x")
 
-    assert response.headers["content-security-policy"] == "default-src 'self'"
+    assert response.headers["content-security-policy-report-only"] == "default-src 'self'"
+    assert "content-security-policy" not in response.headers  # NO el enforcing
+
+
+def test_csp_header_enforcing_when_report_only_false(monkeypatch: MonkeyPatch) -> None:
+    # csp_report_only=False: enforcing real (Content-Security-Policy), con report-uri opcional.
+    monkeypatch.setattr(settings, "content_security_policy", "default-src 'self'")
+    monkeypatch.setattr(settings, "csp_report_only", False)
+    monkeypatch.setattr(settings, "csp_report_uri", "/csp-report")
+
+    response = TestClient(_app_with_route()).get("/x")
+
+    assert response.headers["content-security-policy"] == "default-src 'self'; report-uri /csp-report"
+    assert "content-security-policy-report-only" not in response.headers
 
 
 def test_security_headers_can_be_disabled(monkeypatch: MonkeyPatch) -> None:
