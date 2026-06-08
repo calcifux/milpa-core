@@ -74,3 +74,111 @@ def test_atributo_inexistente_levanta_attribute_error() -> None:
 
 def test_dir_lista_la_fachada_completa() -> None:
     assert set(milpa.__all__) <= set(dir(milpa))
+
+
+# Snapshot CONGELADO de la superficie pública al cortar 1.0.0 (el "juramento" del ADR 20 §2.5).
+# Desde 1.0, un símbolo público NO se elimina sin deprecación + bump MAJOR. Agregar símbolos en un
+# minor es libre (el test solo exige que este conjunto siga siendo SUBCONJUNTO del actual); quitar
+# uno hace ROJO el CI. Al cortar 2.0 se actualiza este snapshot a la nueva superficie soportada.
+_PUBLIC_API_1_0_0: frozenset[str] = frozenset(
+    {
+        "Auth",
+        "Authenticatable",
+        "AuthenticatableMixin",
+        "Base",
+        "Can",
+        "Clock",
+        "ConflictError",
+        "Controller",
+        "CurrentUser",
+        "CursorPage",
+        "Delete",
+        "DomainError",
+        "Factory",
+        "Fallback",
+        "FixedClock",
+        "Gate",
+        "Get",
+        "Hash",
+        "Job",
+        "Mail",
+        "MailContent",
+        "Mailable",
+        "Observer",
+        "Page",
+        "Patch",
+        "Pipe",
+        "Pipeline",
+        "Post",
+        "Put",
+        "Pwa",
+        "QueueUnavailableError",
+        "Repository",
+        "ResourceNotFoundError",
+        "Roles",
+        "Scope",
+        "Seeder",
+        "Settings",
+        "SoftDeleteMixin",
+        "SystemClock",
+        "TimestampMixin",
+        "TokenPrincipal",
+        "api_version",
+        "authenticated",
+        "auto_session",
+        "broker_guard",
+        "celery_app",
+        "console_command",
+        "cron",
+        "cron_task",
+        "current_locale",
+        "current_session",
+        "daily",
+        "daily_at",
+        "dispatch",
+        "every_fifteen_minutes",
+        "every_five_minutes",
+        "every_minute",
+        "every_minutes",
+        "every_ten_minutes",
+        "every_thirty_minutes",
+        "faker",
+        "get_current_token",
+        "guarded",
+        "handles",
+        "hourly",
+        "hourly_at",
+        "job",
+        "monthly",
+        "negotiate",
+        "policy",
+        "prefers_html",
+        "rate_limit",
+        "require_any_scope",
+        "require_roles",
+        "require_scopes",
+        "resolve_accept_language",
+        "retry_policy",
+        "send",
+        "session_scope",
+        "set_request_locale",
+        "set_revocation_check",
+        "settings",
+        "shell_context",
+        "t",
+        "transactional",
+        "view",
+        "weekly",
+    }
+)
+
+
+def test_superficie_publica_1_0_0_no_se_rompe() -> None:
+    """Contrato SemVer duro de la fachada (ADR 20): ningún símbolo público de 1.0.0 puede
+    desaparecer dentro de la serie 1.x. Si este test truena, QUITASTE algo público sin deprecar +
+    bump MAJOR — exactamente lo que el ADR prohíbe. Agregar símbolos nuevos (minor) NO lo rompe."""
+    eliminados = _PUBLIC_API_1_0_0 - set(milpa.__all__)
+    assert not eliminados, (
+        f"Superficie pública 1.0.0 rota — símbolos eliminados sin major: {sorted(eliminados)}. "
+        "Quitar API pública exige deprecación + bump MAJOR (ver docs/20_versioning_stability_deprecation)."
+    )

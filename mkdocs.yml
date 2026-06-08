@@ -96,3 +96,4 @@ nav:
       - Localización (i18n): 13-localizacion-i18n.md
       - Logging: 14-logging.md
       - Lazy imports y scan: 32-lazy-y-scan.md
+      - Estabilidad y versionado: 33-estabilidad-y-versionado.md

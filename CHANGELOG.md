@@ -3,9 +3,31 @@
 Todos los cambios notables de **milpa** se documentan aquí.
 
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el proyecto usa
-[Versionado Semántico](https://semver.org/lang/es/). En `0.x` la API puede cambiar entre minors.
+[Versionado Semántico](https://semver.org/lang/es/). **Desde `1.0.0` la API pública sigue SemVer
+estricto: breaking changes solo en majors, con deprecación previa** (ver
+[Estabilidad y versionado](documentation/33-estabilidad-y-versionado.md)).
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-06-08
+
+**Primer release ESTABLE.** La superficie pública de milpa queda bajo contrato SemVer duro: el código
+ya estaba a nivel 1.0; este release **lo jura por escrito**. Sin cambios de comportamiento — es el sello.
+
+### Added
+
+- **Compromiso de estabilidad de API pública (SemVer estricto).** Desde 1.0, la fachada `import milpa`
+  y lo documentado en las guías **no se rompen dentro de una serie major**; los breaking changes van solo
+  en majors, y nada público se elimina sin deprecación previa (`DeprecationWarning` + ventana de un major).
+  Política formal en `documentation/33-estabilidad-y-versionado.md`. Un **snapshot de la superficie pública
+  en CI** pone rojo el build si un símbolo público desaparece sin bump major.
+- **Batería de tests de semántica de seguridad de la auth JWT** (Passport RS256 + tokens propios HS256):
+  rechaza `alg:none`, confusión RS256→HS256, firma/payload alterados, expirado, llave/secreto/audiencia
+  equivocados, y verifica el **pineo de algoritmo**. Son guardianes de regresión de la costura de auth.
+
+### Changed
+
+- Nota de versionado: de *"en 0.x la API puede cambiar entre minors"* → **SemVer estricto** (arriba).
 
 ## [0.6.7] - 2026-06-08
 
