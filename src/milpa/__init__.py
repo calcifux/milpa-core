@@ -346,4 +346,4 @@ def __dir__() -> list[str]:
 # La versión vive AQUÍ como única fuente de verdad: hatch la lee para el pyproject
 # ([tool.hatch.version]). Esta línea es la divergencia deliberada con el repo de
 # desarrollo (milpa-framework, que no publica paquete y versiona en su pyproject).
-__version__ = "0.6.5"
+__version__ = "0.6.6"

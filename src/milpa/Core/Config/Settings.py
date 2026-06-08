@@ -136,8 +136,19 @@ class Settings(BaseSettings):
     hsts_enabled: bool = False
     hsts_max_age: int = 31536000  # 1 año (segundos)
     hsts_include_subdomains: bool = True
-    # CSP: vacío => no se manda (es ESPECÍFICO de cada app; un CSP malo rompe la página).
-    content_security_policy: str = ""
+    # CSP: defensa contra XSS (incluido el robo de tokens en cookies legibles por JS). Va en
+    # REPORT-ONLY por default (csp_report_only=True): el navegador REPORTA las violaciones pero
+    # NO bloquea — seguro para CUALQUIER app existente (un CSP estricto en enforcing sí rompe la
+    # página; en report-only nunca). Afinas con los reportes y, cuando esté limpio, pones
+    # csp_report_only=false (enforcing). El default es estricto a propósito: el `<script>` inline
+    # de __ENV se REPORTA (no se bloquea) para que sepas nóncearlo antes de enforce. Vacío => off.
+    content_security_policy: str = (
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; font-src 'self' data:; connect-src 'self'; "
+        "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    )
+    csp_report_only: bool = True  # True => header Content-Security-Policy-Report-Only (observa, no bloquea)
+    csp_report_uri: str = ""  # opcional: URL a donde el navegador POSTea las violaciones (report-uri)
 
     # --- Errores (RFC 9457 Problem Details) ---
     # Base del campo `type` de los errores. Vacío => "about:blank" (default RFC-correcto).

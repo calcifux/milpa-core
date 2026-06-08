@@ -38,7 +38,13 @@ def _security_headers() -> dict[str, str]:
     if settings.security_frame_options:
         headers["X-Frame-Options"] = settings.security_frame_options
     if settings.content_security_policy:
-        headers["Content-Security-Policy"] = settings.content_security_policy
+        policy = settings.content_security_policy
+        if settings.csp_report_uri:
+            policy += f"; report-uri {settings.csp_report_uri}"
+        # Report-Only por default: el navegador REPORTA pero NO bloquea (seguro para apps
+        # existentes). enforce real con csp_report_only=false (cuando la política esté afinada).
+        name = "Content-Security-Policy-Report-Only" if settings.csp_report_only else "Content-Security-Policy"
+        headers[name] = policy
     if settings.hsts_enabled:
         value = f"max-age={settings.hsts_max_age}"
         if settings.hsts_include_subdomains:

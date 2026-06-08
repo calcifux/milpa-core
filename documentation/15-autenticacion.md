@@ -132,6 +132,40 @@ El carril cookie va con protección **CSRF double-submit** automática (`CsrfMid
 - Config: `CSRF_ENABLED`, `CSRF_COOKIE`, `CSRF_HEADER`; sesión: `SESSION_SECRET` (obligatorio para
   el guard `session`), `SESSION_SECURE` (=`true` en prod/HTTPS), `SESSION_SAME_SITE`.
 
+## Security headers + CSP (por default, report-only)
+
+milpa inyecta un set de **security headers** sin que configures nada (`SecurityHeadersMiddleware`,
+defaults seguros): `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `X-Frame-Options`, y —si lo
+prendes— `Strict-Transport-Security` (HSTS).
+
+Desde **0.6.6** trae además **Content-Security-Policy por default**, en modo **Report-Only**:
+
+```bash
+# .env (defaults — no necesitas ponerlos, vienen así)
+CONTENT_SECURITY_POLICY="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+CSP_REPORT_ONLY=true        # default: el navegador REPORTA violaciones pero NO bloquea
+CSP_REPORT_URI=""           # opcional: a dónde mandar los reportes
+```
+
+**Por qué importa (el caso real de la flota legacy):** si una app guarda el token en un cookie
+**legible por JS** (error de diseño de hace años — no `HttpOnly`), un XSS puede leerlo y exfiltrarlo.
+CSP es la mitigación que **NO toca el flujo de auth**: al restringir `script-src` a `'self'`, un
+`<script>` inyectado de un origen externo no corre y un `connect-src 'self'` corta la salida del
+token a un dominio del atacante. Es defensa en profundidad mientras se migra el cookie a `HttpOnly`.
+
+**Report-Only es seguro para apps existentes:** el navegador observa y (si pones `CSP_REPORT_URI`)
+reporta lo que SE bloquearía, pero **no rompe nada**. Afinas la política con esos reportes y, cuando
+esté limpia, pasas a *enforcing* con `CSP_REPORT_ONLY=false`. El header cambia solo
+(`Content-Security-Policy-Report-Only` → `Content-Security-Policy`).
+
+> En modo *enforcing*, un `<script>` **inline** necesita `nonce`/`hash` para correr. milpa inyecta un
+> inline para `__ENV` (Vite): en report-only lo verás reportado; el nonce para enforcing llega en una
+> mejora siguiente. Por eso el default es report-only.
+
+`jornal scan --only auth` te dice en qué punto estás (sin CSP / report-only / enforcing, y CSRF
+on/off) — el copiloto que enseña el camino sin romper el demo. Ver
+[Imports perezosos y análisis](32-lazy-y-scan.md).
+
 ## Migrar desde Laravel (Passport, RS256)
 
 Cuando el emisor de tokens sigue siendo el legacy, milpa **valida** (no emite): copia la llave

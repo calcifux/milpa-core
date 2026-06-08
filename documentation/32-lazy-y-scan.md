@@ -80,6 +80,7 @@ discovery que ya existe) y corre **capacidades** por concern:
 | `http` | clientes http crudos (requests, httpx...) → centraliza timeouts/trazas y difiere |
 | `db` | engine/session de SQLAlchemy a mano → usa la sesión ambiente (`@transactional`) |
 | `mongo` | drivers de Mongo crudos → aísla la conexión (lazy + config por `.env`) |
+| `auth` | seguridad de la auth web: te dice si vas sin CSP / en report-only / enforcing, y si CSRF está off (solo aplica a apps con capa web; un worker-only se salta). Ver [Autenticación → CSP](15-autenticacion.md) |
 
 No ejecuta acciones: **reporta** y te apunta al hint exacto. La magia 100% automática no es
 posible (un `from X import Y` carga sí o sí), así que el scan es **diagnóstico**: te enseña
