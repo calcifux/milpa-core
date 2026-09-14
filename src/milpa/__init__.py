@@ -103,6 +103,7 @@ if TYPE_CHECKING:
         api_version,
     )
     from milpa.Core.Http.Shell import shell_context
+    from milpa.Core.Http.Signed import URL, Signed, require_signature
     from milpa.Core.Jobs import Job, job
     from milpa.Core.Mail import Mail, Mailable, MailContent
     from milpa.Core.Mediator import handles, send
@@ -197,6 +198,10 @@ _EXPORTS: Final[dict[str, str]] = {
     "api_version": "milpa.Core.Http.Routing",
     # Rate limiting (decorador; el `limiter` crudo es interno)
     "rate_limit": "milpa.Core.Http.RateLimit",
+    # Enlaces firmados con vencimiento (= URL::temporarySignedRoute + middleware `signed`)
+    "URL": "milpa.Core.Http.Signed",
+    "Signed": "milpa.Core.Http.Signed",
+    "require_signature": "milpa.Core.Http.Signed",
     # Shell del frontend (SPA/PWA/surcos): contexto del cascarón HTML
     "shell_context": "milpa.Core.Http.Shell",
     # Vistas: render de templates y negociación HTML/JSON
@@ -274,10 +279,12 @@ __all__ = [
     "Scope",
     "Seeder",
     "Settings",
+    "Signed",
     "SoftDeleteMixin",
     "SystemClock",
     "TimestampMixin",
     "TokenPrincipal",
+    "URL",
     "api_version",
     "authenticated",
     "auto_session",
@@ -312,6 +319,7 @@ __all__ = [
     "require_any_scope",
     "require_roles",
     "require_scopes",
+    "require_signature",
     "resolve_accept_language",
     "retry_policy",
     "send",
@@ -346,4 +354,4 @@ def __dir__() -> list[str]:
 # La versión vive AQUÍ como única fuente de verdad: hatch la lee para el pyproject
 # ([tool.hatch.version]). Esta línea es la divergencia deliberada con el repo de
 # desarrollo (milpa-framework, que no publica paquete y versiona en su pyproject).
-__version__ = "1.0.0"
+__version__ = "1.0.1"

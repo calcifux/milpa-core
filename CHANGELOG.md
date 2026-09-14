@@ -9,6 +9,18 @@ estricto: breaking changes solo en majors, con deprecación previa** (ver
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-13
+
+### Added
+
+- **Enlaces firmados con vencimiento** (`URL.signed`, `URL.temporary_signed`, `@Signed`,
+  `require_signature`), el equivalente de `URL::temporarySignedRoute` + middleware `signed` de Laravel.
+  HMAC-SHA256 sobre el path y el query canónico (el host NO se firma: detrás de proxies, túneles o una
+  subcarpeta la firma sigue valiendo), `expires` dentro de lo firmado, llave derivada por `purpose`,
+  rotación con `URL_SIGNING_PREVIOUS_KEYS` y comparación en tiempo constante. Rechazos en RFC 9457:
+  403 `invalid_signature` y 403 `signature_expired`. Nuevas variables `URL_SIGNING_KEY` y
+  `URL_SIGNING_PREVIOUS_KEYS`. Guía en `documentation/15-autenticacion.md`.
+
 ## [1.0.0] - 2026-06-08
 
 **Primer release ESTABLE.** La superficie pública de milpa queda bajo contrato SemVer duro: el código

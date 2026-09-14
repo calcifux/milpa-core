@@ -195,6 +195,14 @@ class Settings(BaseSettings):
     # en True (dev/test), RE-LANZA — para que el bug del observer truene fuerte. Default False.
     events_strict: bool = False
 
+    # --- Enlaces firmados (URL.signed / URL.temporary_signed / @Signed) ---
+    # Llave maestra HMAC de los enlaces firmados. PROPIA a propósito (no la de sesión ni la del
+    # JWT): rotar una no debe invalidar las otras. Vacía => firmar/verificar truena con instrucción.
+    url_signing_key: str = Field(default="", validation_alias=AliasChoices("URL_SIGNING_KEY"))
+    # Llaves anteriores, separadas por coma: se ACEPTAN al verificar (no se firma con ellas). Es
+    # como se rota sin tirar los enlaces que ya salieron en correos.
+    url_signing_previous_keys: str = Field(default="", validation_alias=AliasChoices("URL_SIGNING_PREVIOUS_KEYS"))
+
     # --- Rate limiting (SlowAPI) ---
     # Activa los @rate_limit declarados. En False, TODOS son no-op (útil para tests/local).
     rate_limit_enabled: bool = True

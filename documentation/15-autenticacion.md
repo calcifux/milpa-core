@@ -121,6 +121,50 @@ Gate.authorize("note.update", note)        # ForbiddenError (403) si no aplica
 Para abilities SIN recurso (p. ej. `note.create`), usa `@Can("note.create")` sobre el método del
 controller. Sin policy registrada para una ability → **denegado** (seguro por default).
 
+## Enlaces firmados con vencimiento (`URL.temporary_signed` + `@Signed`)
+
+El equivalente de `URL::temporarySignedRoute` y del middleware `signed` de Laravel: un enlace que
+lleva en su query la prueba de que lo armó el servidor y hasta cuándo vale. Nadie le cambia un
+parámetro ni le alarga la vida sin romper la firma.
+
+```python
+from datetime import timedelta
+from milpa import URL, Signed, Get, Controller
+
+# Armar el enlace (en un servicio, un Mailable…). El dominio lo pones TÚ: no se firma.
+link = URL.temporary_signed(
+    "/v1/reportes/42/pdf", timedelta(hours=24),
+    purpose="report.download", base_url="https://app.cliente.mx",
+)
+
+@Controller("/reportes", version="v1")
+class ReportController:
+    @Get("/{report_id}/pdf")
+    @Signed(purpose="report.download")          # 403 invalid_signature / signature_expired
+    def download(self, report_id: int): ...
+```
+
+Cómo firma, y por qué es distinto a Laravel en dos detalles:
+
+| | Laravel | milpa |
+|---|---|---|
+| Qué se firma | la URL completa (con host) por default | el **path** + query **canónico** (ordenado, sin `signature`) |
+| Proxies / subcarpeta / túnel | 403 si cambia host o esquema; parche con `forceRootUrl` | no importan: el host no se firma y se quita el `root_path` |
+| Separación de usos | una llave para todo | `purpose` **deriva una llave por propósito** |
+| Llave | `APP_KEY` (+ `previous_keys`) | `URL_SIGNING_KEY` **propia** (+ `URL_SIGNING_PREVIOUS_KEYS`) |
+
+Siempre: HMAC-SHA256, `expires` DENTRO de lo firmado, `hmac.compare_digest`, y el vencimiento se
+revisa solo si la firma es auténtica (el código `signature_expired` no es un oráculo). Firmar sin
+`URL_SIGNING_KEY` truena con instrucción.
+
+**Lo que NO es:** un token de un solo uso. Un enlace firmado vale todas las veces que se abra hasta
+que vence y no se puede revocar (salvo rotando la llave). Úsalo para lo que se puede repetir sin
+daño —descargas que caducan, confirmar un correo—. Para **restablecer una contraseña o activar una
+cuenta** usa un token aleatorio guardado con hash en la base, que se **consume** en una sola
+sentencia (`UPDATE … WHERE used_at IS NULL AND expires_at > now() RETURNING …`) y viaja en el
+**fragmento** de la URL (`#t=…`, que no llega a logs ni al `Referer`). Ahí la firma HMAC encima es
+redundante (OWASP Forgot Password Cheat Sheet; NIST SP 800-63B-4 §4.2.1.2).
+
 ## CSRF (solo carril sesión)
 
 El carril cookie va con protección **CSRF double-submit** automática (`CsrfMiddleware`):
@@ -218,6 +262,8 @@ SESSION_SECRET=                # OBLIGATORIO para el guard 'session'
 SESSION_SECURE=false           # true en prod (HTTPS)
 SESSION_SAME_SITE=lax
 CSRF_ENABLED=true
+URL_SIGNING_KEY=               # enlaces firmados; PROPIA (no reuses JWT/SESSION)
+URL_SIGNING_PREVIOUS_KEYS=     # al rotar: las anteriores, separadas por coma
 PASSPORT_PUBLIC_KEY_PATH=/secrets/oauth-public.key   # solo para migrar (guard passport)
 ```
 
