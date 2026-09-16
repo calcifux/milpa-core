@@ -35,8 +35,13 @@ def problem_type_uri(code: str) -> str:
     return f"{base}/{code.replace('_', '-')}"
 
 
-def build_problem(*, status: int, title: str, detail: str, code: str, errors: Any = None) -> dict[str, Any]:
-    """Arma el cuerpo `application/problem+json`. `errors` (extensión) solo si viene."""
+def build_problem(
+    *, status: int, title: str, detail: str, code: str, errors: Any = None, extensions: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Arma el cuerpo `application/problem+json`. `errors` (extensión) solo si viene.
+
+    `extensions` son miembros extra de primer nivel (RFC 9457 §3.2), p. ej.
+    `remaining_attempts`. Nunca pisan los estándar ni `errors`."""
     problem: dict[str, Any] = {
         "type": problem_type_uri(code),
         "title": title,
@@ -46,4 +51,6 @@ def build_problem(*, status: int, title: str, detail: str, code: str, errors: An
     }
     if errors is not None:
         problem["errors"] = errors
+    for key, value in (extensions or {}).items():
+        problem.setdefault(key, value)
     return problem

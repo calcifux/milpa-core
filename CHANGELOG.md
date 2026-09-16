@@ -9,6 +9,22 @@ estricto: breaking changes solo en majors, con deprecación previa** (ver
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-16
+
+### Added
+
+- **Extensiones en los errores de negocio** (`DomainError(extensions={...})`): miembros extra de primer
+  nivel en el problem+json (RFC 9457 §3.2), p. ej. `remaining_attempts` en un login rechazado.
+  `build_problem(..., extensions=...)` los acepta también. Nunca pisan un miembro estándar
+  (`type`, `title`, `status`, `detail`, `code`) ni `errors`; un error sin extensiones responde idéntico a 1.0.
+
+### Security
+
+- **`Auth.validate_credentials` ya no delata qué identificadores existen por el tiempo de respuesta.**
+  Con un correo inexistente regresaba sin verificar ningún hash (microsegundos contra los ~50 ms de
+  argon2 de una contraseña equivocada). Ahora verifica contra un hash igualador del mismo algoritmo y
+  costo, calculado una vez por proceso. Afecta también a `Auth.attempt`. Sin cambios de API.
+
 ## [1.0.1] - 2026-09-13
 
 ### Added
@@ -537,7 +553,8 @@ Primera versión: el esqueleto del microframework + auth, demo y herramientas de
 ### Notas
 - Todo es **síncrono** (SQLAlchemy + Celery). Tests **sin base de datos** (fakes + monkeypatch).
 
-[Unreleased]: https://github.com/calcifux/milpa/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/calcifux/milpa/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/calcifux/milpa/compare/v1.0.1...v1.1.0
 [0.6.2]: https://github.com/calcifux/milpa/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/calcifux/milpa/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/calcifux/milpa/compare/v0.5.0...v0.6.0

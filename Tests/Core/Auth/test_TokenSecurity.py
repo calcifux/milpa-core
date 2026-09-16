@@ -60,7 +60,9 @@ def test_alg_none_is_rejected() -> None:
 # ── firma alterada ─────────────────────────────────────────────────────────────────
 def test_tampered_signature_is_rejected() -> None:
     header, payload, signature = issue_token("7").split(".")
-    flipped = signature[:-1] + ("A" if signature[-1] != "A" else "B")
+    # Se altera el PRIMER carácter: en el último, 2 de sus 6 bits son relleno de base64 y
+    # cambiarlo a veces decodifica la MISMA firma (la prueba era intermitente).
+    flipped = ("A" if signature[0] != "A" else "B") + signature[1:]
     with pytest.raises(jwt.PyJWTError):
         decode_token(f"{header}.{payload}.{flipped}")
 

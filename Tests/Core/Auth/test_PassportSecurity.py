@@ -117,7 +117,9 @@ def test_rs256_to_hs256_confusion_is_rejected(rsa_keys: tuple[bytes, str]) -> No
 def test_tampered_signature_is_rejected(rsa_keys: tuple[bytes, str]) -> None:
     priv_pem, _ = rsa_keys
     header, payload, signature = _rs256(priv_pem).split(".")
-    flipped = signature[:-1] + ("A" if signature[-1] != "A" else "B")
+    # Se altera el PRIMER carácter: en el último, 4 de sus 6 bits son relleno de base64 y
+    # cambiarlo a veces decodifica la MISMA firma (la prueba fallaba ~1 de cada 4 corridas).
+    flipped = ("A" if signature[0] != "A" else "B") + signature[1:]
     with pytest.raises(HTTPException) as exc:
         get_current_token(_creds(f"{header}.{payload}.{flipped}"))
     assert exc.value.status_code == 401

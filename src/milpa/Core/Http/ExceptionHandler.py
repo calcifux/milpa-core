@@ -32,12 +32,22 @@ from milpa.Core.Http.ProblemDetails import PROBLEM_JSON_MEDIA_TYPE, build_proble
 _LOC_PREFIXES = {"body", "query", "path", "header", "cookie"}
 
 
-def _problem_response(*, status_code: int, title: str, detail: str, code: str, errors: Any = None) -> JSONResponse:
+def _problem_response(
+    *,
+    status_code: int,
+    title: str,
+    detail: str,
+    code: str,
+    errors: Any = None,
+    extensions: dict[str, Any] | None = None,
+) -> JSONResponse:
     """JSONResponse con el cuerpo problem+json y su media type (RFC 9457)."""
     return JSONResponse(
         status_code=status_code,
         media_type=PROBLEM_JSON_MEDIA_TYPE,
-        content=build_problem(status=status_code, title=title, detail=detail, code=code, errors=errors),
+        content=build_problem(
+            status=status_code, title=title, detail=detail, code=code, errors=errors, extensions=extensions
+        ),
     )
 
 
@@ -79,6 +89,8 @@ def register_exception_handlers(app: FastAPI) -> None:
             detail=exc.message,
             code=exc.error_code,
             errors=exc.details,
+            # getattr: una subclase que no llame al __init__ base no trae el atributo.
+            extensions=getattr(exc, "extensions", None),
         )
 
     async def _handle_validation_error(_request: Request, exc: Exception) -> JSONResponse:

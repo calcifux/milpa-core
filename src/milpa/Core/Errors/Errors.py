@@ -40,10 +40,13 @@ class DomainError(Exception):
         error_code: str | None = None,
         status_code: int | None = None,
         title: str | None = None,
+        extensions: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.details = details
+        # Miembros extra del problem+json (RFC 9457 §3.2), p. ej. {"remaining_attempts": 3}.
+        self.extensions = extensions or {}
         # Permiten override por-instancia sin tener que subclasear para cada caso.
         if error_code is not None:
             self.error_code = error_code

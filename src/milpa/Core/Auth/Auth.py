@@ -12,8 +12,10 @@ user de la BD) va a un threadpool; el `set` del contextvar ocurre en el contexto
 
 from __future__ import annotations
 
+import secrets
 from collections.abc import Awaitable, Callable
 from contextvars import ContextVar
+from functools import cache
 from typing import Any
 
 from fastapi import Depends
@@ -22,8 +24,17 @@ from starlette.requests import Request
 
 from milpa.Core.Auth.Contracts import Authenticatable
 from milpa.Core.Auth.Guards import JwtGuard, get_guard
+from milpa.Core.Auth.Hash import Hash
 from milpa.Core.Auth.Providers import get_user_provider
 from milpa.Core.Errors import UnauthorizedError
+
+
+@cache
+def _equalizer_hash() -> str:
+    """Hash REAL (mismo algoritmo y costo que los de la base) de un secreto que nadie conoce.
+    Se calcula una vez por proceso: el primer login sin cuenta paga un `make` extra."""
+    return Hash.make(secrets.token_urlsafe(32))
+
 
 _current_user: ContextVar[Authenticatable | None] = ContextVar("current_user", default=None)
 
@@ -40,9 +51,13 @@ class Auth:
     def validate_credentials(identifier: str, password: str) -> Authenticatable | None:
         provider = get_user_provider()
         user = provider.by_identifier(identifier)
-        if user is not None and provider.validate(user, password):
-            return user
-        return None
+        if user is None:
+            # Se paga el mismo costo de argon2 aunque no haya a quién validar: sin esto, el
+            # tiempo de respuesta delata qué correos tienen cuenta (OWASP Authentication
+            # Cheat Sheet, "Authentication and Error Messages").
+            Hash.verify(password, _equalizer_hash())
+            return None
+        return user if provider.validate(user, password) else None
 
     @staticmethod
     def attempt(identifier: str, password: str) -> str | None:
