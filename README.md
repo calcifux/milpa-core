@@ -169,16 +169,23 @@ JWT/sesión, Passport), `Events`/`Mediator`/`Pipeline`, `Jobs`/`Cron`, `Mail`, `
 `Translate` (i18n), `Console` (kernel Typer). No tocas el kernel: el framework descubre tus
 modelos, diccionarios, recursos, comandos y crons por convención.
 
+> **milpa = [tequio](https://github.com/calcifux/tequio-core) + la capa web.** Desde 1.3.0 milpa instala
+> `tequio-core` (el mismo kernel sin HTTP, para workers) y solo trae lo web: `Http`, `Auth`, vistas/Vite/PWA,
+> `serve` y los `make` de controller/policy/vista. Las rutas de siempre (`from milpa.Core.Database import
+> Repository`) siguen valiendo: son el mismo módulo de tequio.
+
 ### Agregar un módulo
 
 ```bash
 uv run python jornal make module Facturacion
 ```
 
-Crea `app/Modules/Facturacion/` con `Http/`, `Services/`, `Repositories/`, `Jobs/`, `Crons/`,
-`Observers/`, `Handlers/`, `Pipes/`, `Policies/`, `Mail/`, `Resources/`, `Console/Commands/`. La API
-y el beat lo **descubren solos**; el `import-linter` garantiza que no se enrede con otros módulos
-(cada módulo es un microservicio en potencia: se puede extraer sin desenredar imports cruzados).
+Crea `app/Modules/Facturacion/` con su `Http/` y un controller. Las demás carpetas nacen cuando generas
+la primera pieza de ese tipo, una por pieza y con el nombre de lo que hace (`make job Facturacion
+EmitirTimbres` → `Jobs/EmitirTimbres.py`; también `make observer|handler|repository|service|policy|…`):
+un módulo nuevo no trae carpetas vacías. La API y el beat lo **descubren solos**; el `import-linter`
+garantiza que no se enrede con otros módulos (cada módulo es un microservicio en potencia: se puede
+extraer sin desenredar imports cruzados).
 
 ---
 
