@@ -149,6 +149,10 @@ class Settings(BaseSettings):
     )
     csp_report_only: bool = True  # True => header Content-Security-Policy-Report-Only (observa, no bloquea)
     csp_report_uri: str = ""  # opcional: URL a donde el navegador POSTea las violaciones (report-uri)
+    # Nonce de CSP: un valor nuevo en cada request que se agrega a `script-src` ('nonce-…') y que el shell pone en sus
+    # <script> pegados (env_script() y `{{ csp_nonce() }}`): con él la política ya no los reporta y en enforcing corren.
+    # Si la política ya permite 'unsafe-inline' no se agrega (un nonce lo apagaría y romperían los scripts sin nonce).
+    csp_nonce_enabled: bool = True
 
     # --- Errores (RFC 9457 Problem Details) ---
     # Base del campo `type` de los errores. Vacío => "about:blank" (default RFC-correcto).

@@ -9,6 +9,17 @@ estricto: breaking changes solo en majors, con deprecación previa** (ver
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-19
+
+### Added
+
+- **Nonce de CSP en cada request** (`CSP_NONCE_ENABLED`, por default `true`): un valor nuevo de 128 bits que va en el
+  `script-src` del header (`'nonce-…'`) y en `request.state.csp_nonce`. `shell_context(request)` lo pasa al template
+  (`csp_nonce_value`), `{{ env_script() }}` ya lo pone en su `<script>` y `{{ csp_nonce() }}` sirve para un script propio
+  pegado en el template. Con él, el `<script>` de `window.__ENV` deja de reportarse y en *enforcing* corre. Si la política
+  ya permite `'unsafe-inline'` no se agrega (un nonce lo apagaría). `csp_nonce_of(request)` exportado desde
+  `milpa.Core.Http`.
+
 ## [1.1.0] - 2026-09-16
 
 ### Added
@@ -553,7 +564,8 @@ Primera versión: el esqueleto del microframework + auth, demo y herramientas de
 ### Notas
 - Todo es **síncrono** (SQLAlchemy + Celery). Tests **sin base de datos** (fakes + monkeypatch).
 
-[Unreleased]: https://github.com/calcifux/milpa/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/calcifux/milpa/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/calcifux/milpa/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/calcifux/milpa/compare/v1.0.1...v1.1.0
 [0.6.2]: https://github.com/calcifux/milpa/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/calcifux/milpa/compare/v0.6.0...v0.6.1

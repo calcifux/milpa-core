@@ -3,7 +3,7 @@ y sin pisar los que el endpoint ya fijó. Sin red real (TestClient en proceso)."
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
@@ -73,6 +73,69 @@ def test_csp_header_enforcing_when_report_only_false(monkeypatch: MonkeyPatch) -
 
     assert response.headers["content-security-policy"] == "default-src 'self'; report-uri /csp-report"
     assert "content-security-policy-report-only" not in response.headers
+
+
+def _app_reading_the_nonce() -> FastAPI:
+    """Una ruta que regresa el nonce que vio en request.state (el que el shell pone en sus <script>)."""
+    app = FastAPI()
+    register_middlewares(app)
+
+    @app.get("/nonce")
+    def _nonce(request: Request) -> dict[str, str]:
+        return {"nonce": getattr(request.state, "csp_nonce", "")}
+
+    return app
+
+
+def test_csp_nonce_en_script_src_y_en_request_state(monkeypatch: MonkeyPatch) -> None:
+    # El nonce de la request va en script-src del header Y en request.state: es el mismo valor.
+    monkeypatch.setattr(settings, "content_security_policy", "default-src 'self'; script-src 'self'")
+    monkeypatch.setattr(settings, "csp_report_only", True)
+    monkeypatch.setattr(settings, "csp_report_uri", "")
+    monkeypatch.setattr(settings, "csp_nonce_enabled", True)
+
+    response = TestClient(_app_reading_the_nonce()).get("/nonce")
+    nonce = response.json()["nonce"]
+
+    assert len(nonce) >= 20
+    assert (
+        response.headers["content-security-policy-report-only"]
+        == f"default-src 'self'; script-src 'self' 'nonce-{nonce}'"
+    )
+
+
+def test_csp_nonce_cambia_en_cada_request(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "content_security_policy", "script-src 'self'")
+    monkeypatch.setattr(settings, "csp_nonce_enabled", True)
+
+    client = TestClient(_app_reading_the_nonce())
+    first, second = client.get("/nonce").json()["nonce"], client.get("/nonce").json()["nonce"]
+
+    assert first and second and first != second
+
+
+def test_csp_nonce_no_toca_una_politica_con_unsafe_inline(monkeypatch: MonkeyPatch) -> None:
+    # Con 'unsafe-inline' un nonce lo apagaría (CSP 2) y romperían los scripts pegados sin nonce: se deja tal cual.
+    monkeypatch.setattr(settings, "content_security_policy", "script-src 'self' 'unsafe-inline'")
+    monkeypatch.setattr(settings, "csp_report_only", True)
+    monkeypatch.setattr(settings, "csp_report_uri", "")
+    monkeypatch.setattr(settings, "csp_nonce_enabled", True)
+
+    response = TestClient(_app_with_route()).get("/x")
+
+    assert response.headers["content-security-policy-report-only"] == "script-src 'self' 'unsafe-inline'"
+
+
+def test_csp_nonce_se_puede_apagar(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "content_security_policy", "script-src 'self'")
+    monkeypatch.setattr(settings, "csp_report_only", True)
+    monkeypatch.setattr(settings, "csp_report_uri", "")
+    monkeypatch.setattr(settings, "csp_nonce_enabled", False)
+
+    response = TestClient(_app_reading_the_nonce()).get("/nonce")
+
+    assert response.headers["content-security-policy-report-only"] == "script-src 'self'"
+    assert response.json()["nonce"] == ""
 
 
 def test_security_headers_can_be_disabled(monkeypatch: MonkeyPatch) -> None:

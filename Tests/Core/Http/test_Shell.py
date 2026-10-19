@@ -75,6 +75,8 @@ def test_runtime_env_escapa_menor_que_para_script_inline() -> None:
 def test_shell_context_trae_env_json_y_base_path() -> None:
     context = shell_context(_request("/pre"))
 
-    assert set(context) == {"env_json", "base_path"}
+    assert set(context) == {"env_json", "base_path", "csp_nonce_value"}
     assert context["base_path"] == "/pre"
+    # sin SecurityHeadersMiddleware (o con el nonce apagado) no hay nonce: el shell pinta su <script> sin él
+    assert context["csp_nonce_value"] == ""
     assert json.loads(str(context["env_json"]))["BASE_PATH"] == "/pre"

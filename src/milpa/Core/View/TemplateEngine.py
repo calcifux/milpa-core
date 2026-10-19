@@ -91,7 +91,17 @@ def _env_script(context: Context) -> Markup:
             "env_script() necesita `env_json` en el contexto del template: renderiza el shell con "
             "view('tu/shell', shell_context(request)) — Core/Http/Shell."
         )
-    return Markup(f"<script>window.__ENV = {env_json};</script>")
+    # con el nonce de CSP de esta request (shell_context lo trae), la política no lo reporta y en enforcing corre
+    nonce = _csp_nonce(context)
+    nonce_attribute = Markup(' nonce="{}"').format(nonce) if nonce else ""
+    return Markup(f"<script{nonce_attribute}>window.__ENV = {env_json};</script>")
+
+
+@pass_context
+def _csp_nonce(context: Context) -> str:
+    """`{{ csp_nonce() }}` — el nonce de CSP de esta request, para un `<script>` propio pegado en el template:
+    `<script nonce="{{ csp_nonce() }}">…</script>`. Lo trae `shell_context(request)` (csp_nonce_value); sin él, ""."""
+    return str(context.get("csp_nonce_value") or "")
 
 
 def _build_loader(templates_dir: Path | None) -> BaseLoader:
@@ -171,6 +181,8 @@ class TemplateEngine:
         # `env_script()`: el <script> de window.__ENV (runtime-config del shell) sin
         # copiar el tag ni el `| safe` en cada template — lee env_json del contexto.
         self._env.globals["env_script"] = _env_script
+        # `csp_nonce()`: el nonce de CSP de la request para un <script> propio pegado en el template.
+        self._env.globals["csp_nonce"] = _csp_nonce
 
     def render(self, template_name: str, context: dict[str, object]) -> str:
         """Renderiza el template `template_name` con el `context` dado."""

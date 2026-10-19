@@ -82,6 +82,18 @@ def test_env_script_emite_el_tag_completo_sin_escapar(tmp_path: Path) -> None:
     assert "&lt;" not in html
 
 
+def test_env_script_y_csp_nonce_llevan_el_nonce_de_la_request(tmp_path: Path) -> None:
+    """Con csp_nonce en el contexto (shell_context lo trae), env_script() y `{{ csp_nonce() }}` lo ponen en su
+    <script>: la política de CSP no los reporta y en enforcing corren."""
+    _write_template(tmp_path, "shell.html.j2", '{{ env_script() }}<script nonce="{{ csp_nonce() }}">propio()</script>')
+    engine = TemplateEngine(templates_dir=tmp_path)
+
+    html = engine.render("shell.html.j2", {"env_json": '{"BASE_PATH": ""}', "csp_nonce_value": "abc123"})
+
+    assert '<script nonce="abc123">window.__ENV = {"BASE_PATH": ""};</script>' in html
+    assert '<script nonce="abc123">propio()</script>' in html
+
+
 def test_env_script_sin_contexto_truena_con_instruccion(tmp_path: Path) -> None:
     """Sin env_json en el contexto no falla en silencio: instruye usar shell_context."""
     _write_template(tmp_path, "shell.html.j2", "{{ env_script() }}")

@@ -202,9 +202,13 @@ reporta lo que SE bloquearía, pero **no rompe nada**. Afinas la política con e
 esté limpia, pasas a *enforcing* con `CSP_REPORT_ONLY=false`. El header cambia solo
 (`Content-Security-Policy-Report-Only` → `Content-Security-Policy`).
 
-> En modo *enforcing*, un `<script>` **inline** necesita `nonce`/`hash` para correr. milpa inyecta un
-> inline para `__ENV` (Vite): en report-only lo verás reportado; el nonce para enforcing llega en una
-> mejora siguiente. Por eso el default es report-only.
+> En modo *enforcing*, un `<script>` **inline** necesita `nonce`/`hash` para correr. milpa pone un
+> **nonce nuevo en cada request** (`CSP_NONCE_ENABLED=true`, el default): va en el `script-src` del
+> header (`'nonce-…'`) y en `request.state.csp_nonce`, y `shell_context(request)` lo pasa al template.
+> `{{ env_script() }}` ya lo pone en su `<script>`; para un script propio pegado en el template:
+> `<script nonce="{{ csp_nonce() }}">…</script>`. Un script inyectado no trae el nonce de esa respuesta
+> y no corre. Si tu política ya permite `'unsafe-inline'`, milpa NO agrega el nonce (en los navegadores
+> con CSP 2 un nonce apaga `'unsafe-inline'` y romperías tus scripts sin nonce).
 
 `jornal scan --only auth` te dice en qué punto estás (sin CSP / report-only / enforcing, y CSRF
 on/off) — el copiloto que enseña el camino sin romper el demo. Ver

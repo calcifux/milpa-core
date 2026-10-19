@@ -53,8 +53,19 @@ def runtime_env_json(request: Request, extra: Mapping[str, object] | None = None
     return json.dumps(runtime_env, ensure_ascii=False).replace("<", "\\u003c")
 
 
+def csp_nonce_of(request: Request) -> str:
+    """El nonce de CSP de esta request (lo pone SecurityHeadersMiddleware), o "" si no hay."""
+    return str(getattr(request.state, "csp_nonce", "") or "")
+
+
 def shell_context(request: Request, extra: Mapping[str, object] | None = None) -> dict[str, object]:
     """Contexto Jinja del shell de un surco: `env_json` (el `window.__ENV`) +
-    `base_path` (para los href del propio template — manifest de la PWA, etc.).
+    `base_path` (para los href del propio template — manifest de la PWA, etc.) +
+    `csp_nonce_value` (el nonce de CSP de esta request: `env_script()` y `{{ csp_nonce() }}` lo ponen en sus
+    <script>; OJO: no se llama `csp_nonce` porque taparía a esa función en el template).
     `extra` va al `__ENV`; claves extra del template se agregan con `{**...}`."""
-    return {"env_json": runtime_env_json(request, extra), "base_path": base_path(request)}
+    return {
+        "env_json": runtime_env_json(request, extra),
+        "base_path": base_path(request),
+        "csp_nonce_value": csp_nonce_of(request),
+    }

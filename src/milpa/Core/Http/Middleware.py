@@ -58,7 +58,12 @@ def register_middlewares(app: FastAPI) -> None:
     SecurityHeaders (interno) → GZip → TrustedHost → CORS (externo). Cada uno solo si aplica."""
     # SecurityHeaders: el más interno (ve la respuesta ya formada y le pega los headers).
     if settings.security_headers_enabled:
-        app.add_middleware(SecurityHeadersMiddleware, headers=_security_headers())
+        # el nonce de CSP solo tiene sentido si hay CSP que lo use
+        app.add_middleware(
+            SecurityHeadersMiddleware,
+            headers=_security_headers(),
+            csp_nonce=settings.csp_nonce_enabled and bool(settings.content_security_policy),
+        )
 
     # CSRF (double-submit): protege el carril cookie/sesión; exime bearer/JWT.
     if settings.csrf_enabled:
