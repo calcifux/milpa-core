@@ -871,6 +871,7 @@ dependencies = [
     { name = "slowapi" },
     { name = "sqlalchemy" },
     { name = "sqlalchemy-easy-softdelete" },
+    { name = "tequio-core" },
     { name = "typer" },
     { name = "tzdata" },
     { name = "tzlocal" },
@@ -927,6 +928,7 @@ requires-dist = [
     { name = "slowapi", specifier = ">=0.1.9" },
     { name = "sqlalchemy", specifier = ">=2.0.50" },
     { name = "sqlalchemy-easy-softdelete", specifier = ">=0.9.0" },
+    { name = "tequio-core", specifier = ">=0.2,<0.3" },
     { name = "typer", specifier = ">=0.26.2" },
     { name = "tzdata", specifier = ">=2026.2" },
     { name = "tzlocal", specifier = ">=5.3.1" },
@@ -1556,6 +1558,31 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/95/66/4d20cdf39a8d6a51e663b7038e3b828ff211d3891a43a713fe7e4643f3a8/starlette-1.1.0.tar.gz", hash = "sha256:e83c7fe0ddecd8719c5b840080325aec0260acec86e9832899e377b91d65e90f", size = 2660060, upload-time = "2026-05-23T16:55:41.376Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/93/79/920b8e0a8b20f793e8d64855095cb8febabf6175b8550b6f7a547d813891/starlette-1.1.0-py3-none-any.whl", hash = "sha256:7f0dfd38e428aad5cb6f9f667f0ca1d2d8ca3f3385dccac8305f79ec98458382", size = 72899, upload-time = "2026-05-23T16:55:39.201Z" },
+]
+
+[[package]]
+name = "tequio-core"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "alembic" },
+    { name = "celery", extra = ["redis"] },
+    { name = "croniter" },
+    { name = "i18nice", extra = ["yaml"] },
+    { name = "jinja2" },
+    { name = "loguru" },
+    { name = "pydantic-settings" },
+    { name = "redis" },
+    { name = "rich" },
+    { name = "sqlalchemy" },
+    { name = "sqlalchemy-easy-softdelete" },
+    { name = "typer" },
+    { name = "tzdata" },
+    { name = "tzlocal" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/96/a3/1d3e160d9029d03d67a7542b643b1d2dcfb9fecc6f0e6e8a872d3ad31d34/tequio_core-0.2.0.tar.gz", hash = "sha256:63294b739bfea860e2701ee55a8c922640f07e7e7c1423cd8c5adc8771aba787", size = 125106, upload-time = "2026-10-19T20:56:29.664Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/21/7e0866042dc095b04dee9fa91e6be182d1926afb0610032aa5a2576ce6af/tequio_core-0.2.0-py3-none-any.whl", hash = "sha256:dd7ffcfdf742b7a20ffc01f9ed52c2d618d01fc8ed0c1372b003ad4c80b6e261", size = 162663, upload-time = "2026-10-19T20:56:28.373Z" },
 ]
 
 [[package]]

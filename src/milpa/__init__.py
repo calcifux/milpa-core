@@ -108,9 +108,9 @@ if TYPE_CHECKING:
     from milpa.Core.Mail import Mail, Mailable, MailContent
     from milpa.Core.Mediator import handles, send
     from milpa.Core.Pipeline import Pipe, Pipeline
+    from milpa.Core.Translate.AcceptLanguage import resolve_accept_language
     from milpa.Core.Translate.I18n import (
         current_locale,
-        resolve_accept_language,
         set_request_locale,
         t,
     )
@@ -236,7 +236,7 @@ _EXPORTS: Final[dict[str, str]] = {
     "t": "milpa.Core.Translate.I18n",
     "current_locale": "milpa.Core.Translate.I18n",
     "set_request_locale": "milpa.Core.Translate.I18n",
-    "resolve_accept_language": "milpa.Core.Translate.I18n",
+    "resolve_accept_language": "milpa.Core.Translate.AcceptLanguage",
 }
 
 # Lista ESTÁTICA a propósito (no `sorted(_EXPORTS)`): mypy y ruff solo entienden
