@@ -18,10 +18,13 @@ puede vivir en Core sin romper "Core ↛ Modules" (que es sobre imports estátic
 
 from __future__ import annotations
 
+import importlib
+
 import typer
 from loguru import logger
 from rich.console import Console
 
+from milpa.Core import SHARED_MODULES
 from milpa.Core.Config import settings
 from milpa.Core.Console import build_command_table, import_submodules
 from milpa.Core.Errors import DomainError
@@ -154,6 +157,12 @@ def new(
 # El discovery importa cada archivo y, al importarse, sus `@console_command` se
 # registran. Debe ir ANTES del loop para que ya estén en el registro cuando
 # `iter_cli_apps` arme los grupos.
+# Los comunes (cola, crons, migraciones, base de datos) son de tequio y no viven en la carpeta de milpa:
+# se importan por su nombre de milpa (el puente entrega el módulo de tequio) para que se registren. Los
+# `make …` NO: milpa trae los suyos (generan código que importa de milpa y suman controller/policy/vista).
+for shared_module in sorted(SHARED_MODULES):
+    if shared_module.startswith("Console.Commands."):
+        importlib.import_module(f"milpa.Core.{shared_module}")
 import_submodules("milpa.Core.Console.Commands")
 import_submodules(settings.app_commands_package)
 

@@ -50,11 +50,18 @@ dependencies = [
     "slowapi>=0.1.9",
     "sqlalchemy>=2.0.50",
     "sqlalchemy-easy-softdelete>=0.9.0",
+    # El kernel compartido (jobs, crons, BD, correo, eventos, consola, errores, idioma): milpa = tequio + web.
+    "tequio-core>=0.2,<0.3",
     "typer>=0.26.2",
     "tzdata>=2026.2",
     "tzlocal>=5.3.1",
     "uvicorn>=0.48.0",
 ]
+
+# milpa se anuncia como paquete que se monta ENCIMA de tequio: tequio toma de aquí la configuración con
+# los campos web, las plantillas y textos de milpa, sus funciones de plantilla y sus registros.
+[project.entry-points."tequio.extensions"]
+milpa = "milpa.Core.TequioExtension"
 
 # Links que PyPI muestra en la barra lateral del paquete. Documentation apunta al sitio
 # canónico (gh-pages de calcifux/milpa, que es público); el repo del paquete es milpa-core.

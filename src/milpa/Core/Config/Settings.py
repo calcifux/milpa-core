@@ -1,41 +1,31 @@
-"""Configuración central tipada (pydantic-settings). El .env es la ÚNICA fuente
-de verdad de secretos/config por-entorno; infraestructura va SIN default
-(obligatoria) para fallar claro si falta.
+"""Configuración de milpa = la de tequio (BD, broker, correo, zona, logging, layout del proyecto) más lo
+que solo usa la web: puerto, middlewares, encabezados de seguridad, CSP, sesión, CSRF, JWT, Passport,
+enlaces firmados, límites de peticiones y Vite.
+
+Hay UN solo objeto de configuración por proceso, y es de ESTA clase: tequio la toma de milpa al
+arrancar (ver `milpa.Core.TequioExtension`). Lo que lee el worker y lo que lee la web es lo mismo,
+y una prueba que cambia un campo lo cambia para los dos.
+
+El .env es la ÚNICA fuente de verdad de secretos/config por-entorno.
 """
 
 from __future__ import annotations
 
 import os
-from typing import Self
+from typing import TYPE_CHECKING, Any, Self
 
 from pydantic import AliasChoices, Field, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import SettingsConfigDict
 
-# Default local para lo ENCOLADO (broker y lock) cuando no se configura nada. Es solo
-# un FALLBACK de conveniencia para dev; no asumimos que siempre haya redis (los flujos
-# síncronos no lo tocan). El config expone BROKER_URL/LOCK_URL (agnósticos), no un
-# "REDIS_URL" redis-específico.
-_DEFAULT_LOCAL_REDIS = "redis://localhost:6379/0"
+# OJO: se importa el ARCHIVO de la clase y no `tequio.Core.Config`: este módulo se carga mientras tequio
+# todavía arma su objeto de configuración, y en ese momento la clase ya existe pero el objeto no.
+from tequio.Core.Config.Settings import Settings as WorkerSettings
 
-
-def _host_timezone() -> str:
-    """IANA timezone del HOST — el default cuando no se define TIMEZONE en .env.
-
-    El framework NO impone zona horaria: es responsabilidad del dev/devops fijar
-    TIMEZONE explícito (importante sobre todo si quien monta la app no es quien la
-    programa — un server suele estar en UTC). Cae a 'UTC' si no se puede detectar.
-    """
-    try:
-        import tzlocal
-
-        return str(tzlocal.get_localzone_name() or "UTC")
-    except Exception:
-        return "UTC"
+if TYPE_CHECKING:
+    settings: Settings
 
 
-class Settings(BaseSettings):
-    # extra="ignore": varios módulos comparten el mismo .env; cada Settings
-    # ignora las variables que no declara.
+class Settings(WorkerSettings):
     # env_file NO está clavado al CWD: se lee de MILPA_ENV_FILE (default ".env"). Así un
     # mismo despliegue puede apuntar a otro archivo (p. ej. MILPA_ENV_FILE=/run/secrets/app.env
     # en docker) SIN symlinkear .env al CWD del proceso — el hack que antes necesitaban los
@@ -48,70 +38,12 @@ class Settings(BaseSettings):
 
     # --- Infraestructura ---
     # Default sqlite local: milpa arranca y se usa SIN configurar nada (zero-config, como
-    # Django en dev) → `milpa new`/`milpa serve` funcionan de inmediato. Siempre hay BD
-    # (milpa la requiere); el default solo evita el crash de primer arranque. En QA/prod
-    # pon tu motor real en .env: DATABASE_URL=postgresql+psycopg://... (o mysql+pymysql://...).
+    # Django en dev) → `milpa new`/`milpa serve` funcionan de inmediato. En QA/prod pon tu
+    # motor real en .env: DATABASE_URL=postgresql+psycopg://... (o mysql+pymysql://...).
     database_url: str = "sqlite:///./milpa.db"
 
-    # --- Colas / broker-agnostic ---
-    # BROKER de Celery: CUALQUIER transporte (redis://, amqp:// RabbitMQ, sqs://, ...).
-    # Vacío => redis local por default. Solo se usa para lo ENCOLADO (los flujos
-    # síncronos no lo tocan). ActiveMQ NO es compatible (AMQP 1.0).
-    broker_url: str = ""
-    # Result backend: OPCIONAL. Nuestros crons son fire-and-forget, así que por default
-    # NO hay backend (vacío). Ponlo solo si necesitas leer resultados (AsyncResult).
-    result_backend_url: str = ""
-    # Store de LOCKS para without_overlapping: redis da `.lock()`, los MQ no. Va aparte
-    # del broker (un redis chico basta). Vacío => redis local por default.
-    lock_url: str = ""
-
-    # Visibility-timeout (segundos) — SOLO aplica a redis/SQS: si una task no se
-    # reconoce en este tiempo, el broker la REENTREGA. El default lock de @cron_task se
-    # deriva de aquí para garantizar `lock_timeout > visibility_timeout` por construcción.
-    redis_visibility_timeout: int = 3600
-
-    # Namespace de COLAS para convivir en un BROKER COMPARTIDO. Vacío (default) = el de
-    # siempre, 100% retrocompatible. El porqué: dos apps apuntando al MISMO redis db se
-    # ROBAN tasks entre sí — la cola por defecto ('celery') y las tasks framework-wide
-    # (mail.send, events.handle) están registradas en TODAS, así que un worker ajeno
-    # consume la task de otra app y la corre con SU config (ejecución cruzada silenciosa)
-    # o la rebota como "unregistered" (corrida perdida). El db-por-app mitiga, pero muere
-    # en Redis Cluster (solo db 0). Con un namespace, cada app vive en SUS colas
-    # (f"{ns}.celery", f"{ns}.emails", ...) dentro del mismo db: aislamiento que SÍ
-    # sobrevive en Cluster. El prefijo lo aplica un resolvedor único (qualified_queue,
-    # en Core/CeleryApp/Dispatch.py) y el lock de cron se namespacea igual (cron-lock:{ns}:).
-    queue_namespace: str = ""
-
-    # Cola DEDICADA para los eventos/observers (events.handle). Vacío (default) = caen en la
-    # cola por defecto ({ns}.celery), mezclados con jobs/mail — comportamiento de siempre.
-    # Con un valor (p. ej. "events"), enqueue_observer los rutea a su propia cola
-    # qualified_queue("events") = "{ns}.events": Prometheus/Grafana ven la carga de eventos
-    # como serie aparte (queue depth, latencia, fallos) SIN gastar otro proceso — el MISMO
-    # worker la drena si la agregas a `queue work --queue ...,events`. Solo se le da un
-    # worker propio si la métrica muestra que pesa (entonces sí, su [program:] dedicado).
-    events_queue: str = ""
-
-    # --- Reintentos de tasks (defaults framework-wide; backoff exponencial con jitter) ---
-    # Son los DEFAULTS de `retry_policy(...)` (app/Core/CeleryApp). Se pueden fijar por .env
-    # O sobreescribir A MANO en código al declarar cada task. Solo afectan a tasks que OPTAN
-    # por reintentar (pasan `autoretry_for`); NUNCA a los crons. 0 => sin reintentos.
-    task_max_retries: int = 3
-    task_retry_backoff: int = 2  # segundos base del 1er reintento (luego se duplica)
-    task_retry_backoff_max: int = 600  # tope del backoff entre reintentos (10 min)
-
     # --- Operativo ---
-    # Default GENÉRICO (Core es reutilizable): cada proyecto pone su APP_NAME en .env.
-    app_name: str = "App"
-    app_env: str = "qa"  # local | qa | production (como config('app.env') del legacy)
     app_port: int = 8000  # puerto del servidor web (`jornal serve`)
-    # Locale de fallback de toda la app (i18n transversal: correos, API, etc.) cuando
-    # no se pasa locale explícito. Override en .env con APP_FALLBACK_LOCALE.
-    app_fallback_locale: str = "es"
-    # Locale de Faker para factories/seeders (datos falsos). Configurable: "es_MX", "es_ES",
-    # "en_US", … (cualquier locale de Faker). Lo usa milpa.Core.Database.Faker.
-    faker_locale: str = "es_MX"
-    # Default = zona del HOST (no la imponemos). El dev/devops DEBE fijar TIMEZONE en .env.
-    timezone: str = Field(default_factory=_host_timezone)
 
     # --- HTTP / middlewares (todos coma-separados; defaults SEGUROS) ---
     # CORS: vacío => NO se monta CORS (same-origin, seguro). En dev pon el origin de
@@ -162,29 +94,10 @@ class Settings(BaseSettings):
     # --- Correo (fallback de destinatarios cuando system_config no tiene el name) ---
     admin_system_mails: str = ""  # coma-separado; = config('constants.admin_system_mails')
     mail_cco_recipient: str = ""  # = config('constants.mail_cco_recipient')
-
-    # --- Correo (equivalente a config('mail.*') del legacy) ---
-    # En local apuntan a Mailpit (localhost:1025); en QA/prod al SMTP corporativo.
-    # MAIL_DRIVER (= mail.default de Laravel): cómo se MANDA.
-    #   "smtp" (default) -> envía por SMTP real.
-    #   "log"            -> NO envía: escribe el correo en el log (dev/sin SMTP; cross-platform).
-    #   "null"/"array"   -> no-op: descarta el correo (tests / silenciar).
-    mail_driver: str = "smtp"
-    mail_host: str = "localhost"
-    mail_port: int = 1025
-    mail_username: str = ""
-    mail_password: str = ""
-    mail_encryption: str = ""  # "" (sin cifrado, ej. Mailpit) | "tls" (STARTTLS) | "ssl" (SMTPS)
-    # Remitente. Aceptamos el nombre de Laravel (MAIL_FROM_ADDRESS) y el natural.
-    mail_from_email: str = Field(
-        default="no-reply@example.com",
-        validation_alias=AliasChoices("MAIL_FROM_ADDRESS", "MAIL_FROM_EMAIL"),
-    )
-    mail_from_name: str = "App"
     # Compartimos BD con esquema legacy: NUNCA crear/alterar tablas solos.
     auto_create_tables: bool = False
 
-    # --- Auth propia (login de milpa: JWT + sesión; ver app/Core/Auth) ---
+    # --- Auth propia (login de milpa: JWT + sesión; ver milpa/Core/Auth) ---
     auth_guard: str = "jwt"  # guard por default: jwt | session | passport
     # Modelo Authenticatable que usa el SqlAlchemyUserProvider (ruta dotted). Lo genera el demo.
     auth_user_model: str = "milpa.Models.User.User"
@@ -195,9 +108,6 @@ class Settings(BaseSettings):
     # y se LOGUEA (WARNING). Con esto en True (dev/test), TRUENA en su lugar — para cazar el
     # olvido del @policy o del discovery de inmediato. Default False (secure en prod).
     auth_strict_abilities: bool = False
-    # Igual para los Observers: un observer que falla se loguea ruidoso (best-effort). Con esto
-    # en True (dev/test), RE-LANZA — para que el bug del observer truene fuerte. Default False.
-    events_strict: bool = False
 
     # --- Enlaces firmados (URL.signed / URL.temporary_signed / @Signed) ---
     # Llave maestra HMAC de los enlaces firmados. PROPIA a propósito (no la de sesión ni la del
@@ -255,33 +165,8 @@ class Settings(BaseSettings):
     passport_public_key_path: str | None = None
     passport_expected_audience: str | None = None
 
-    # --- Logging (Loguru) ---
-    log_level: str = "INFO"
-    log_json: bool = False
-    log_dir: str = "logs"
-
-    # --- Layout del PROYECTO: DÓNDE vive el código del USUARIO ---
-    # milpa instalado como paquete NO puede adivinar dónde está tu proyecto contando
-    # carpetas desde sí mismo (en site-packages eso apunta a otro lado). Lo lee de aquí.
-    # Los DEFAULTS = el layout de ESTE repo, así no se rompe nada si no configuras.
-    # Un proyecto EXTERNO los apunta a su propio paquete/carpetas vía .env:
-    #   MODULES_PACKAGE=app.Modules   MODELS_PACKAGE=app.Models
-    #   USER_VIEWS_DIR=app/Resources/Views   MIGRATIONS_DIR=migrations  ...
-    # Paquetes (notación punteada, importables):
-    # Defaults = el layout que genera `milpa new` (app/*), NO el paquete del framework: si
-    # apuntaran a `milpa.*`, una instalación SIN .env auto-descubriría el Demo EMPAQUETADO y
-    # agendaría el cron del Demo en el broker del usuario. El dev que trabaja DENTRO de este
-    # repo (código en src/milpa) los re-apunta a `milpa.*` vía .env / conftest.
-    modules_package: str = "app.Modules"  # dónde escanear los módulos (rutas/jobs/crons/seeders/i18n/vistas)
-    models_package: str = "app.Models"  # dónde viven los modelos (se cargan en Base.metadata)
-    app_commands_package: str = "app.Console.Commands"  # commands GENERALES del proyecto (opcional; tolera ausencia)
-    # Carpetas de recursos del USUARIO (relativas al cwd del proyecto). "" => no se usan
-    # (en ESTE repo van vacías: las vistas/lang/static del framework salen del paquete).
-    user_views_dir: str = ""  # p. ej. "app/Resources/Views" en un proyecto externo
-    user_lang_dir: str = ""  # p. ej. "app/Resources/Lang"
+    # --- Layout del PROYECTO (lo web; lo demás viene de tequio) ---
     user_static_dir: str = ""  # p. ej. "app/Resources/Static" (se sirve en "/static")
-    # Carpeta de migraciones Alembic, relativa al cwd del proyecto. Default "migrations".
-    migrations_dir: str = "migrations"
 
     # Prefijo PÚBLICO de los assets (= ASSET_URL de Laravel): se antepone a las URLs
     # que EMITEN asset() y vite()/vite_asset() — para deploy detrás de un reverse
@@ -316,30 +201,6 @@ class Settings(BaseSettings):
     # o directo en "<assets_url>" (modo explícito). DEBE coincidir con el `base` del
     # vite.config del frontend (los chunks se referencian entre sí con esa base).
     vite_assets_url: str = "/vite"
-    # Raíz del código del USUARIO donde escribe `make:*` (modelos/controllers/módulos),
-    # relativa al cwd. Default "app" (el layout que genera `milpa new`). En el repo del
-    # PROPIO framework, donde el código vive en src/milpa, pon APP_DIR=src/milpa en .env.
-    app_dir: str = "app"
-
-    @property
-    def effective_broker_url(self) -> str:
-        """Broker de Celery; cae al redis local por default si BROKER_URL está vacío."""
-        return self.broker_url or _DEFAULT_LOCAL_REDIS
-
-    @property
-    def effective_lock_url(self) -> str:
-        """Store de locks (redis); cae al redis local por default si LOCK_URL está vacío."""
-        return self.lock_url or _DEFAULT_LOCAL_REDIS
-
-    @property
-    def effective_result_backend(self) -> str | None:
-        """Result backend; None (sin backend) por default — crons fire-and-forget."""
-        return self.result_backend_url or None
-
-    @property
-    def broker_uses_visibility_timeout(self) -> bool:
-        """visibility_timeout solo aplica a redis/SQS (no a RabbitMQ/AMQP, etc.)."""
-        return self.effective_broker_url.startswith(("redis://", "rediss://", "sqs://"))
 
     def load_passport_public_key(self) -> str | None:
         if self.passport_public_key:
@@ -350,4 +211,10 @@ class Settings(BaseSettings):
         return None
 
 
-settings = Settings()
+def __getattr__(name: str) -> Any:
+    """`from milpa.Core.Config.Settings import settings` = el objeto único del proceso (lo arma tequio)."""
+    if name == "settings":
+        from tequio.Core.Config import settings
+
+        return settings
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
