@@ -9,6 +9,30 @@ estricto: breaking changes solo en majors, con deprecación previa** (ver
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-19
+
+### Changed
+
+- **milpa = tequio + la capa web.** milpa instala `tequio-core` (>=0.2) y ya no trae su copia del kernel:
+  jobs, crons, base de datos, correo, eventos, mediator, pipeline, logging, los comandos comunes de la
+  consola, los errores generales, las traducciones y el motor de plantillas son los de tequio. En milpa
+  queda lo web (Http, Auth, vistas/Vite/PWA, `serve`, `make controller|policy|view|lang|module`) y lo
+  que extiende a tequio al lado: `Errors/WebErrors.py`, `Registry/WebRegistry.py`,
+  `Translate/AcceptLanguage.py`, `View/TemplateGlobals.py`.
+- **Una sola configuración por proceso**, de la clase de milpa (la de tequio más los campos web): tequio
+  la toma de milpa por el entry point `tequio.extensions` (`milpa.Core.TequioExtension`).
+
+### Sin romper
+
+- Las rutas profundas siguen valiendo (`from milpa.Core.Database import Repository`): un puente en
+  `milpa/Core/__init__.py` entrega EL MISMO módulo de tequio (mismas clases, mismo registro; un
+  `monkeypatch` o un `isinstance` se comportan igual). Para el editor y mypy, un mapa de tipos `.pyi`
+  generado con `scripts/sync_tequio_stubs.py` (una prueba avisa si se queda atrás).
+- Verificado con Tamiz (proyecto real con 596 pruebas, que importa `milpa.Core.Database` más de cien
+  veces) sin tocar su código: mismo resultado que con 1.1.0 y 1.2.0.
+- El README ya no dice que `make module` crea todas las carpetas: crea el módulo con su `Http/` y un
+  controller, y cada carpeta nace al generar su primera pieza (así ya era el código).
+
 ## [1.2.0] - 2026-10-19
 
 ### Added
@@ -564,7 +588,8 @@ Primera versión: el esqueleto del microframework + auth, demo y herramientas de
 ### Notas
 - Todo es **síncrono** (SQLAlchemy + Celery). Tests **sin base de datos** (fakes + monkeypatch).
 
-[Unreleased]: https://github.com/calcifux/milpa/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/calcifux/milpa/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/calcifux/milpa/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/calcifux/milpa/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/calcifux/milpa/compare/v1.0.1...v1.1.0
 [0.6.2]: https://github.com/calcifux/milpa/compare/v0.6.1...v0.6.2
